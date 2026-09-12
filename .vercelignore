@@ -1,0 +1,9 @@
+# Shared by both Vercel projects (web + glido-api) deployed from this repo root —
+# each project's own rootDirectory setting picks its subfolder; the 3 Flutter
+# apps are never needed by either.
+node_modules
+apps/mobile
+apps/delivery
+apps/restaurant-partner
+.dart_tool
+*.log

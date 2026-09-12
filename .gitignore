@@ -29,3 +29,6 @@ apps/api/uploads/*
 *.apk
 *.aab
 *.ipa
+
+.vercel
+.env*

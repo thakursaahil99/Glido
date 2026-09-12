@@ -1,5 +1,7 @@
 import { randomUUID } from "crypto";
-import { extname } from "path";
+import { existsSync, mkdirSync } from "fs";
+import { tmpdir } from "os";
+import { extname, join } from "path";
 import {
   BadRequestException,
   Controller,
@@ -16,6 +18,11 @@ import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
+// On Vercel the whole filesystem except /tmp is read-only, and /tmp itself is wiped between
+// invocations — uploads there won't persist. Fine for keeping the demo API from crashing;
+// real persistent uploads on serverless need object storage (Vercel Blob/S3/Cloudinary).
+const UPLOADS_DIR = process.env.VERCEL ? join(tmpdir(), "uploads") : join(process.cwd(), "uploads");
+
 @ApiTags("uploads")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -26,7 +33,10 @@ export class UploadsController {
   @UseInterceptors(
     FileInterceptor("file", {
       storage: diskStorage({
-        destination: "./uploads",
+        destination: (_req, _file, callback) => {
+          if (!existsSync(UPLOADS_DIR)) mkdirSync(UPLOADS_DIR, { recursive: true });
+          callback(null, UPLOADS_DIR);
+        },
         filename: (_req, file, callback) => {
           callback(null, `${randomUUID()}${extname(file.originalname).toLowerCase()}`);
         },

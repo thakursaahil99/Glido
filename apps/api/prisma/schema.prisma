@@ -4,7 +4,10 @@
 // DTO validation in src/**/dto/*.ts.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" for local dev (Windows); rhel-openssl-3.0.x for Vercel's serverless
+  // Node.js runtime — without it Prisma has no query engine binary to load there.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
