@@ -295,6 +295,15 @@ class _Hero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+              children: [
+                TextSpan(text: 'Glido', style: TextStyle(color: GlidoColors.primary)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
               Icon(Icons.location_on, size: 17, color: GlidoColors.primaryDark),

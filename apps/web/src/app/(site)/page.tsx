@@ -214,39 +214,39 @@ export default function HomePage() {
 
       {/* Get the app */}
       <section className="container-glido py-10">
-        <div className="card-glido p-6 md:p-10 bg-gradient-to-br from-[var(--glido-ink)] to-[#2a2f36] text-white border-none overflow-hidden relative">
+        <div className="card-glido p-6 md:p-10 bg-gradient-to-br from-[var(--glido-primary-light)] to-white text-[var(--glido-ink)] overflow-hidden relative">
           <div
-            className="absolute inset-0 opacity-[0.07] pointer-events-none"
+            className="absolute inset-0 opacity-[0.05] pointer-events-none"
             style={{
-              backgroundImage: "radial-gradient(circle, white 1.5px, transparent 1.5px)",
+              backgroundImage: "radial-gradient(circle, var(--glido-ink) 1.5px, transparent 1.5px)",
               backgroundSize: "20px 20px",
             }}
           />
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
             <div className="flex items-start gap-4">
               <div className="flex -space-x-2 shrink-0">
-                <div className="h-12 w-12 rounded-2xl bg-[var(--glido-primary)] flex items-center justify-center ring-4 ring-[var(--glido-ink)]">
-                  <UtensilsCrossed size={20} />
+                <div className="h-12 w-12 rounded-2xl bg-[var(--glido-primary)] flex items-center justify-center ring-4 ring-white">
+                  <UtensilsCrossed size={20} className="text-white" />
                 </div>
-                <div className="h-12 w-12 rounded-2xl bg-[var(--glido-success)] flex items-center justify-center ring-4 ring-[var(--glido-ink)]">
-                  <ShoppingCart size={20} />
+                <div className="h-12 w-12 rounded-2xl bg-[var(--glido-success)] flex items-center justify-center ring-4 ring-white">
+                  <ShoppingCart size={20} className="text-white" />
                 </div>
-                <div className="h-12 w-12 rounded-2xl bg-[#2563EB] flex items-center justify-center ring-4 ring-[var(--glido-ink)]">
-                  <Car size={20} />
+                <div className="h-12 w-12 rounded-2xl bg-[#2563EB] flex items-center justify-center ring-4 ring-white">
+                  <Car size={20} className="text-white" />
                 </div>
               </div>
               <div>
-                <div className="flex items-center gap-2 text-white/60 text-xs font-semibold uppercase tracking-wide mb-1">
+                <div className="flex items-center gap-2 text-[var(--glido-muted)] text-xs font-semibold uppercase tracking-wide mb-1">
                   <Smartphone size={14} /> Glido for Android
                 </div>
-                <h3 className="font-bold text-xl">Food, grocery and rides — in one app</h3>
-                <p className="text-sm text-white/70 mt-1.5 max-w-md">
+                <h3 className="font-bold text-xl text-[var(--glido-ink)]">Food, grocery and rides — in one app</h3>
+                <p className="text-sm text-[var(--glido-muted)] mt-1.5 max-w-md">
                   Everything on this site, faster on your phone. Direct APK download — no Play
                   Store needed.
                 </p>
                 <ul className="mt-4 space-y-1.5">
                   {APP_FEATURES.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-white/85">
+                    <li key={f} className="flex items-center gap-2 text-sm text-[var(--glido-ink)]">
                       <Check size={15} className="text-[var(--glido-success)] shrink-0" />
                       {f}
                     </li>
@@ -256,7 +256,7 @@ export default function HomePage() {
             </div>
             <a
               href={APP_DOWNLOADS.customer}
-              className="inline-flex items-center gap-2 rounded-xl bg-white text-[var(--glido-ink)] font-semibold px-6 py-3.5 shrink-0 hover:bg-white/90 w-full md:w-auto justify-center"
+              className="btn-primary inline-flex items-center gap-2 px-6 py-3.5 shrink-0 w-full md:w-auto justify-center"
             >
               <Download size={18} /> Download for Android
             </a>
