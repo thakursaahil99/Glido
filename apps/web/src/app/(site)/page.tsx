@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Car, MapPin, Rocket, ShoppingBag, ShoppingCart, UtensilsCrossed } from "lucide-react";
+import { ArrowRight, Car, Download, MapPin, Rocket, ShoppingBag, ShoppingCart, Smartphone, UtensilsCrossed } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { api, ApiError, resolveMediaUrl } from "@/lib/api";
+import { APP_DOWNLOADS } from "@/lib/app-downloads";
 import type { Banner, Paginated, Restaurant } from "@/lib/types";
 import { RestaurantCard, RestaurantCardSkeleton } from "@/components/restaurant-card";
 import { ErrorState } from "@/components/empty-state";
@@ -139,6 +140,30 @@ export default function HomePage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Get the app */}
+      <section className="container-glido py-10">
+        <div className="card-glido p-6 md:p-8 bg-gradient-to-br from-[var(--glido-ink)] to-[#2a2f36] text-white border-none flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
+              <Smartphone size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">Get the Glido app</h3>
+              <p className="text-sm text-white/70 mt-1 max-w-md">
+                Order food, groceries and rides from your phone. Android APK — direct download, no
+                Play Store needed.
+              </p>
+            </div>
+          </div>
+          <a
+            href={APP_DOWNLOADS.customer}
+            className="inline-flex items-center gap-2 rounded-xl bg-white text-[var(--glido-ink)] font-semibold px-5 py-3 shrink-0 hover:bg-white/90"
+          >
+            <Download size={18} /> Download for Android
+          </a>
+        </div>
       </section>
 
       {/* How Glido works */}
