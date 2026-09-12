@@ -7,7 +7,7 @@ import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useGroceryCart } from "@/lib/grocery-cart-context";
 import type { GroceryCategory, GroceryProduct, Paginated } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/components/empty-state";
-import { ProductGalleryModal } from "@/components/product-gallery-modal";
+import { ProductDetailModal } from "@/components/product-gallery-modal";
 
 export default function GroceryPage() {
   const { items, addItem, updateQuantity, itemCount, subtotal } = useGroceryCart();
@@ -160,14 +160,15 @@ export default function GroceryPage() {
                       </span>
                     )}
                   </button>
-                  <div className="p-3">
+                  <button onClick={() => setGalleryProduct(p)} className="block w-full text-left p-3">
                     <p className="text-sm font-medium leading-tight line-clamp-2">{p.name}</p>
                     <p className="text-xs text-[var(--glido-muted)] mt-0.5">{p.unit}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <span className="text-sm font-bold">₹{p.price}</span>
                       {p.mrp > p.price && <span className="text-xs text-[var(--glido-muted)] line-through">₹{p.mrp}</span>}
                     </div>
-
+                  </button>
+                  <div className="px-3 pb-3">
                     {p.stockQty === 0 ? (
                       <p className="text-xs text-[var(--glido-danger)] font-medium mt-2">Out of stock</p>
                     ) : qty === 0 ? (
@@ -219,9 +220,20 @@ export default function GroceryPage() {
       )}
 
       {galleryProduct && (
-        <ProductGalleryModal
-          name={galleryProduct.name}
-          images={galleryProduct.images?.length ? galleryProduct.images : galleryProduct.imageUrl ? [galleryProduct.imageUrl] : []}
+        <ProductDetailModal
+          product={galleryProduct}
+          quantity={cartQtyFor(galleryProduct.id)}
+          onAdd={() =>
+            addItem({
+              productId: galleryProduct.id,
+              name: galleryProduct.name,
+              price: galleryProduct.price,
+              unit: galleryProduct.unit,
+              imageUrl: galleryProduct.imageUrl,
+              maxStock: galleryProduct.stockQty,
+            })
+          }
+          onChangeQuantity={(q) => updateQuantity(galleryProduct.id, q)}
           onClose={() => setGalleryProduct(null)}
         />
       )}
