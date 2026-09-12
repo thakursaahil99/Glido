@@ -7,6 +7,7 @@ import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useGroceryCart } from "@/lib/grocery-cart-context";
 import type { GroceryCategory, GroceryProduct, Paginated } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/components/empty-state";
+import { ProductGalleryModal } from "@/components/product-gallery-modal";
 
 export default function GroceryPage() {
   const { items, addItem, updateQuantity, itemCount, subtotal } = useGroceryCart();
@@ -16,6 +17,7 @@ export default function GroceryPage() {
   const [products, setProducts] = useState<GroceryProduct[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [galleryProduct, setGalleryProduct] = useState<GroceryProduct | null>(null);
 
   useEffect(() => {
     api.get<GroceryCategory[]>("/grocery/categories").then(setCategories).catch(() => setCategories([]));
@@ -136,7 +138,11 @@ export default function GroceryPage() {
               const image = resolveMediaUrl(p.imageUrl);
               return (
                 <div key={p.id} className="card-glido overflow-hidden">
-                  <div className="aspect-square bg-gray-50 relative overflow-hidden">
+                  <button
+                    onClick={() => setGalleryProduct(p)}
+                    aria-label={`View photos of ${p.name}`}
+                    className="block w-full aspect-square bg-gray-50 relative overflow-hidden"
+                  >
                     {image ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={image} alt={p.name} className="h-full w-full object-cover" />
@@ -148,7 +154,12 @@ export default function GroceryPage() {
                     {discountPct > 0 && (
                       <span className="absolute top-2 left-2 badge bg-[var(--glido-success)] text-white">{discountPct}% off</span>
                     )}
-                  </div>
+                    {(p.images?.length ?? 0) > 1 && (
+                      <span className="absolute bottom-2 right-2 badge bg-black/60 text-white">
+                        1/{p.images!.length}
+                      </span>
+                    )}
+                  </button>
                   <div className="p-3">
                     <p className="text-sm font-medium leading-tight line-clamp-2">{p.name}</p>
                     <p className="text-xs text-[var(--glido-muted)] mt-0.5">{p.unit}</p>
@@ -205,6 +216,14 @@ export default function GroceryPage() {
         >
           View cart · {itemCount} items · ₹{subtotal.toFixed(0)}
         </Link>
+      )}
+
+      {galleryProduct && (
+        <ProductGalleryModal
+          name={galleryProduct.name}
+          images={galleryProduct.images?.length ? galleryProduct.images : galleryProduct.imageUrl ? [galleryProduct.imageUrl] : []}
+          onClose={() => setGalleryProduct(null)}
+        />
       )}
     </div>
   );
