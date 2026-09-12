@@ -1,9 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Wallet } from "lucide-react";
+import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
+import type { WalletSummary } from "@/lib/types";
 import { GlidoLogo } from "./logo";
 import { NotificationBell } from "./notification-bell";
 
@@ -17,9 +21,32 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { user } = useAuth();
   const { itemCount } = useCart();
+  const [scrolled, setScrolled] = useState(false);
+  const [wallet, setWallet] = useState<WalletSummary | null>(null);
+
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 4);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setWallet(null);
+      return;
+    }
+    api.get<WalletSummary>("/wallet/me").then(setWallet).catch(() => undefined);
+  }, [user]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--glido-border)] bg-white/95 backdrop-blur">
+    <header
+      className={`sticky top-0 z-40 border-b bg-white/95 backdrop-blur transition-shadow ${
+        scrolled ? "border-transparent shadow-[var(--shadow-md)]" : "border-[var(--glido-border)]"
+      }`}
+    >
       <div className="container-glido flex h-16 items-center justify-between gap-4">
         <Link href="/">
           <GlidoLogo className="text-xl" />
@@ -42,6 +69,15 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {user && (
+            <Link
+              href="/wallet"
+              className="hidden sm:flex items-center gap-1.5 rounded-xl border border-[var(--glido-border)] px-3 py-2 text-sm font-semibold text-[var(--glido-ink)] hover:border-[var(--glido-primary)] hover:bg-[var(--glido-primary-light)] transition-colors"
+            >
+              <Wallet size={15} className="text-[var(--glido-primary)]" />
+              {wallet ? `₹${wallet.balance.toFixed(0)}` : "—"}
+            </Link>
+          )}
           <Link href="/cart" className="btn-secondary relative text-sm !py-2 !px-3">
             Cart
             {itemCount > 0 && (

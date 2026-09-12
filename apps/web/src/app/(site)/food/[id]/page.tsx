@@ -74,6 +74,7 @@ export default function RestaurantDetailPage() {
       addonNames,
       addonsPrice,
       isVeg: item.isVeg,
+      imageUrl: item.imageUrl,
     });
     show(`Added ${item.name} to cart`, "success");
   }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Car } from "lucide-react";
+import { Car, Search } from "lucide-react";
 import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
@@ -27,6 +27,12 @@ export default function CabPage() {
   const [drop, setDrop] = useState<Point | null>(null);
   const [settingMode, setSettingMode] = useState<"pickup" | "drop">("pickup");
   const [locating, setLocating] = useState(true);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<{ address: string; lat: number; lng: number }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
 
   const [rideTypes, setRideTypes] = useState<RideType[] | null>(null);
   const [zones, setZones] = useState<City[]>([]);
@@ -89,6 +95,43 @@ export default function CabPage() {
     const address = await reverseGeocode(lat, lng);
     if (settingMode === "pickup") setPickup({ lat, lng, address });
     else setDrop({ lat, lng, address });
+  }
+
+  useEffect(() => {
+    if (searchQuery.trim().length < 3) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    const handle = setTimeout(() => {
+      api
+        .get<{ address: string; lat: number; lng: number }[]>(`/geocode/search?q=${encodeURIComponent(searchQuery)}`)
+        .then((results) => setSearchResults(results))
+        .catch(() => setSearchResults([]))
+        .finally(() => setSearching(false));
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) setShowResults(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  function selectSearchResult(result: { address: string; lat: number; lng: number }) {
+    if (settingMode === "pickup") {
+      setPickup(result);
+      setSettingMode("drop");
+    } else {
+      setDrop(result);
+    }
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowResults(false);
   }
 
   useEffect(() => {
@@ -173,7 +216,7 @@ export default function CabPage() {
         <div className="absolute top-3 left-3 right-3 md:left-auto md:right-4 md:w-80 card-glido p-2 text-xs text-[var(--glido-muted)] shadow-lg">
           {locating
             ? "Finding your location..."
-            : `Tap the map to set your ${settingMode === "pickup" ? "pickup" : "drop"} point`}
+            : `Search below or tap the map to set your ${settingMode === "pickup" ? "pickup" : "drop"} point`}
         </div>
       </div>
 
@@ -202,9 +245,43 @@ export default function CabPage() {
             <span className="h-3.5 w-3.5 shrink-0 rotate-45" style={{ background: "#E40014" }} />
             <div className="flex-1 min-w-0">
               <p className="text-xs text-[var(--glido-muted)]">Drop</p>
-              <p className="text-sm font-medium truncate">{drop ? drop.address : "Tap the map to set your destination"}</p>
+              <p className="text-sm font-medium truncate">{drop ? drop.address : "Search or tap the map to set your destination"}</p>
             </div>
           </button>
+        </div>
+
+        <div ref={searchBoxRef} className="relative mb-5">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--glido-muted)]" />
+            <input
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowResults(true);
+              }}
+              onFocus={() => setShowResults(true)}
+              placeholder={`Search ${settingMode === "pickup" ? "pickup" : "drop"} location...`}
+              className="input-glido pl-9"
+            />
+          </div>
+          {showResults && searchQuery.trim().length >= 3 && (
+            <div className="absolute z-10 mt-1 w-full card-glido max-h-64 overflow-y-auto p-1">
+              {searching && <p className="px-3 py-2 text-sm text-[var(--glido-muted)]">Searching...</p>}
+              {!searching && searchResults.length === 0 && (
+                <p className="px-3 py-2 text-sm text-[var(--glido-muted)]">No results found.</p>
+              )}
+              {!searching &&
+                searchResults.map((r, i) => (
+                  <button
+                    key={i}
+                    onClick={() => selectSearchResult(r)}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50 truncate"
+                  >
+                    {r.address}
+                  </button>
+                ))}
+            </div>
+          )}
         </div>
 
         {pickup && drop && zoneError && (

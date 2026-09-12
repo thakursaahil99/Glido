@@ -163,7 +163,7 @@ export class GroceryOrdersService {
       where: { id: orderId, userId },
       include: {
         address: true,
-        items: true,
+        items: { include: { product: { select: { imageUrl: true } } } },
         statusHistory: { orderBy: { changedAt: "asc" } },
         deliveryPartner: true,
       },

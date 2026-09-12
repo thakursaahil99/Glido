@@ -6,8 +6,8 @@ import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useToast } from "@/lib/toast-context";
 import type { GroceryCategory, GroceryProduct, Paginated } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/components/empty-state";
-import { ImageUploadField } from "@/components/image-upload-field";
 import { Modal } from "@/components/modal";
+import { MultiImageUploadField } from "@/components/multi-image-upload-field";
 import { RequirePermission } from "@/components/require-permission";
 
 const emptyForm = {
@@ -15,7 +15,7 @@ const emptyForm = {
   name: "",
   brand: "",
   description: "",
-  imageUrl: "",
+  images: [] as string[],
   unit: "",
   mrp: 0,
   price: 0,
@@ -86,7 +86,11 @@ function ProductsContent() {
   async function createProduct(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await api.post("/admin/grocery/products", { ...form, categoryId: form.categoryId || undefined });
+      await api.post("/admin/grocery/products", {
+        ...form,
+        categoryId: form.categoryId || undefined,
+        imageUrl: form.images[0] ?? "",
+      });
       show("Product added", "success");
       setShowCreate(false);
       setForm(emptyForm);
@@ -100,11 +104,13 @@ function ProductsContent() {
     e.preventDefault();
     if (!editing) return;
     try {
+      const images = editing.images ?? [];
       await api.patch(`/admin/grocery/products/${editing.id}`, {
         name: editing.name,
         brand: editing.brand,
         unit: editing.unit,
-        imageUrl: editing.imageUrl,
+        images,
+        imageUrl: images[0] ?? "",
         mrp: editing.mrp,
         price: editing.price,
         stockQty: editing.stockQty,
@@ -183,7 +189,10 @@ function ProductsContent() {
                     </button>
                   </td>
                   <td className="py-2.5 px-4 space-x-3">
-                    <button onClick={() => setEditing(p)} className="text-[var(--glido-primary)] font-medium">
+                    <button
+                      onClick={() => setEditing({ ...p, images: p.images?.length ? p.images : p.imageUrl ? [p.imageUrl] : [] })}
+                      className="text-[var(--glido-primary)] font-medium"
+                    >
                       Edit
                     </button>
                     <button onClick={() => remove(p.id)} className="text-[var(--glido-danger)] font-medium">
@@ -197,8 +206,8 @@ function ProductsContent() {
         </div>
       )}
 
-      <Modal open={showCreate} title="Add product" onClose={() => setShowCreate(false)}>
-        <form onSubmit={createProduct} className="space-y-2">
+      <Modal open={showCreate} title="Add product" onClose={() => setShowCreate(false)} size="lg">
+        <form onSubmit={createProduct} className="space-y-3">
           <input className="input-glido" placeholder="Product name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <input className="input-glido" placeholder="Brand" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
           <select className="input-glido" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
@@ -210,7 +219,7 @@ function ProductsContent() {
             ))}
           </select>
           <input className="input-glido" placeholder="Unit (e.g. 500 g, 1 L)" required value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
-          <ImageUploadField value={form.imageUrl} onChange={(imageUrl) => setForm({ ...form, imageUrl })} />
+          <MultiImageUploadField label="Photos" values={form.images} onChange={(images) => setForm({ ...form, images })} />
           <div className="grid grid-cols-3 gap-2">
             <label className="text-xs">
               MRP
@@ -230,8 +239,8 @@ function ProductsContent() {
       </Modal>
 
       {editing && (
-        <Modal open title={`Edit ${editing.name}`} onClose={() => setEditing(null)}>
-          <form onSubmit={saveEdit} className="space-y-2">
+        <Modal open title={`Edit ${editing.name}`} onClose={() => setEditing(null)} size="lg">
+          <form onSubmit={saveEdit} className="space-y-3">
             <input className="input-glido" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
             <input className="input-glido" placeholder="Brand" value={editing.brand ?? ""} onChange={(e) => setEditing({ ...editing, brand: e.target.value })} />
             <select
@@ -247,7 +256,11 @@ function ProductsContent() {
               ))}
             </select>
             <input className="input-glido" value={editing.unit} onChange={(e) => setEditing({ ...editing, unit: e.target.value })} />
-            <ImageUploadField value={editing.imageUrl ?? ""} onChange={(imageUrl) => setEditing({ ...editing, imageUrl })} />
+            <MultiImageUploadField
+              label="Photos"
+              values={editing.images ?? []}
+              onChange={(images) => setEditing({ ...editing, images, imageUrl: images[0] ?? editing.imageUrl })}
+            />
             <div className="grid grid-cols-3 gap-2">
               <label className="text-xs">
                 MRP

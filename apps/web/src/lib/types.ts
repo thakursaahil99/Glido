@@ -121,6 +121,7 @@ export interface OrderItem {
   quantity: number;
   addonsJson?: string | null;
   subtotal: number;
+  menuItem?: { imageUrl: string | null } | null;
 }
 
 export interface OrderStatusHistoryEntry {
@@ -228,6 +229,7 @@ export interface GroceryProduct {
   description?: string | null;
   brand?: string | null;
   imageUrl?: string | null;
+  images?: string[];
   unit: string;
   mrp: number;
   price: number;
@@ -242,6 +244,7 @@ export interface GroceryOrderItem {
   priceSnapshot: number;
   quantity: number;
   subtotal: number;
+  product?: { imageUrl: string | null } | null;
 }
 
 export interface GroceryOrder {

@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { getSocket } from "@/lib/socket";
-import { Phone, Star } from "lucide-react";
+import { Phone, Star, UtensilsCrossed } from "lucide-react";
 import type { Order } from "@/lib/types";
 import { OrderTimeline, StatusBadge } from "@/components/order-status";
 import { ConfirmDialog } from "@/components/modal";
@@ -175,8 +175,18 @@ export default function OrderDetailPage() {
         <h3 className="font-semibold mb-2">Items</h3>
         <div className="space-y-2 text-sm">
           {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between">
-              <span>
+            <div key={item.id} className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                {resolveMediaUrl(item.menuItem?.imageUrl) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={resolveMediaUrl(item.menuItem?.imageUrl)} alt={item.nameSnapshot} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <UtensilsCrossed size={14} className="text-gray-300" />
+                  </div>
+                )}
+              </div>
+              <span className="flex-1">
                 {item.quantity} × {item.nameSnapshot}
               </span>
               <span>₹{item.subtotal.toFixed(2)}</span>

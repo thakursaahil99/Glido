@@ -2,21 +2,30 @@
 
 import { X } from "lucide-react";
 
+const MAX_WIDTH_CLASSES = {
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-2xl",
+} as const;
+
 export function Modal({
   open,
   title,
   children,
   onClose,
+  size = "md",
 }: {
   open: boolean;
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  /** "md" (default, forms with a handful of fields) · "lg" · "xl" (image galleries, longer forms) */
+  size?: keyof typeof MAX_WIDTH_CLASSES;
 }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[90] flex items-end md:items-center justify-center bg-black/40 p-4">
-      <div className="card-glido w-full max-w-md p-5 animate-[fadeIn_.15s_ease]">
+      <div className={`card-glido w-full ${MAX_WIDTH_CLASSES[size]} p-5 max-h-[90vh] overflow-y-auto animate-[fadeIn_.15s_ease]`}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-[var(--glido-ink)]">{title}</h3>
           <button onClick={onClose} className="text-[var(--glido-muted)] hover:text-[var(--glido-ink)]">

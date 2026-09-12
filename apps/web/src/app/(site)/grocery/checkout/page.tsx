@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { api, ApiError } from "@/lib/api";
+import { ShoppingCart } from "lucide-react";
+import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useGroceryCart } from "@/lib/grocery-cart-context";
 import { useToast } from "@/lib/toast-context";
@@ -254,6 +255,29 @@ export default function GroceryCheckoutPage() {
 
       <section className="card-glido p-4 mb-4 text-sm">
         <h2 className="font-semibold mb-3">Order summary</h2>
+        <div className="space-y-3 mb-3 pb-3 border-b border-[var(--glido-border)]">
+          {items.map((item) => (
+            <div key={item.productId} className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                {resolveMediaUrl(item.imageUrl) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={resolveMediaUrl(item.imageUrl)} alt={item.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <ShoppingCart size={16} className="text-gray-300" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate">
+                  {item.quantity} × {item.name}
+                </p>
+                <p className="text-xs text-[var(--glido-muted)]">{item.unit}</p>
+              </div>
+              <p className="font-medium shrink-0">₹{(item.price * item.quantity).toFixed(2)}</p>
+            </div>
+          ))}
+        </div>
         <div className="space-y-1.5">
           <div className="flex justify-between"><span className="text-[var(--glido-muted)]">Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
           <div className="flex justify-between"><span className="text-[var(--glido-muted)]">Delivery fee</span><span>{deliveryFee === 0 ? "Free" : `₹${deliveryFee.toFixed(2)}`}</span></div>

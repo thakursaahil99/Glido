@@ -525,7 +525,8 @@ model GroceryProduct {
   name        String
   description String?
   brand       String?
-  imageUrl    String?
+  imageUrl    String? // cover image — always the first of `images` once any are set
+  images      String[] @default([]) // additional gallery images, shown alongside the cover image
   unit        String // e.g. "500 g", "1 L", "6 pcs"
   mrp         Float
   price       Float

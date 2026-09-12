@@ -195,7 +195,7 @@ export class OrdersService {
       include: {
         restaurant: true,
         address: true,
-        items: true,
+        items: { include: { menuItem: { select: { imageUrl: true } } } },
         payment: true,
         statusHistory: { orderBy: { changedAt: "asc" } },
         review: true,

@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Min } from "class-validator";
+import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, Min } from "class-validator";
 
 export class UpsertGroceryCategoryDto {
   @IsString()
@@ -36,6 +36,11 @@ export class UpsertGroceryProductDto {
   @IsOptional()
   @IsString()
   imageUrl?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
 
   @IsString()
   unit: string;

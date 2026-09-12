@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ShoppingCart, X } from "lucide-react";
+import { resolveMediaUrl } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useGroceryCart } from "@/lib/grocery-cart-context";
 import { EmptyState } from "@/components/empty-state";
@@ -49,6 +50,16 @@ export default function GroceryCartPage() {
       <div className="space-y-3">
         {items.map((item) => (
           <div key={item.productId} className="card-glido p-4 flex items-center gap-3">
+            <div className="h-16 w-16 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+              {resolveMediaUrl(item.imageUrl) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={resolveMediaUrl(item.imageUrl)} alt={item.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center">
+                  <ShoppingCart size={20} className="text-gray-300" />
+                </div>
+              )}
+            </div>
             <div className="flex-1">
               <p className="font-medium">{item.name}</p>
               <p className="text-xs text-[var(--glido-muted)]">{item.unit}</p>

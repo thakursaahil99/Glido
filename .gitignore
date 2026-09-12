@@ -36,3 +36,6 @@ apps/api/uploads/*
 
 .vercel
 .env*
+
+# Claude Code local session state
+.claude/

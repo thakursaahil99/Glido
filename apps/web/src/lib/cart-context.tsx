@@ -10,6 +10,7 @@ export interface CartLineItem {
   addonNames: string[];
   addonsPrice: number;
   isVeg: boolean;
+  imageUrl?: string | null;
 }
 
 export interface Cart {

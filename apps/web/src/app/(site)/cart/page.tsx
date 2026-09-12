@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ShoppingBag, X } from "lucide-react";
+import { resolveMediaUrl } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
 import { EmptyState } from "@/components/empty-state";
@@ -50,6 +51,16 @@ export default function CartPage() {
       <div className="space-y-3">
         {cart.items.map((item) => (
           <div key={item.menuItemId + item.addonNames.join(",")} className="card-glido p-4 flex items-center gap-3">
+            <div className="h-16 w-16 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+              {resolveMediaUrl(item.imageUrl) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={resolveMediaUrl(item.imageUrl)} alt={item.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center">
+                  <ShoppingBag size={20} className="text-gray-300" />
+                </div>
+              )}
+            </div>
             <div className="flex-1">
               <p className="font-medium">{item.name}</p>
               {item.addonNames.length > 0 && (
