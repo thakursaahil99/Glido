@@ -26,9 +26,13 @@ apps/api/uploads/*
 **/windows/flutter/ephemeral/
 **/linux/flutter/ephemeral/
 **/ios/Pods/
+# *.apk/*.aab/*.ipa are ignored everywhere EXCEPT apps/web/public/downloads/ — those are
+# committed on purpose so the live site's download links survive every git-triggered redeploy
+# (Vercel builds from a fresh checkout; a locally-built APK not in git disappears on the next push).
 *.apk
 *.aab
 *.ipa
+!apps/web/public/downloads/*.apk
 
 .vercel
 .env*
