@@ -59,6 +59,16 @@ h1, h2, h3, h4, h5, h6 {
   padding-inline: 1rem;
 }
 
+/*
+ * Everything below is layered as Tailwind "components" — one level below its own
+ * "utilities" layer. Without this, these plain-CSS rules count as unlayered, and
+ * unlayered CSS always beats layered CSS regardless of specificity or source order —
+ * so e.g. `className="card-glido bg-gradient-to-br ..."` would silently keep
+ * card-glido's white background no matter what utility classes came after it.
+ * Layering these here is what lets a later Tailwind utility win as expected.
+ */
+@layer components {
+
 .btn-primary {
   position: relative;
   background: linear-gradient(155deg, #ff7f1f, var(--glido-primary) 55%, var(--glido-primary-dark));
@@ -191,3 +201,5 @@ button.card-glido:hover {
   border-radius: 1.25rem;
   box-shadow: var(--shadow-lg);
 }
+
+} /* @layer components */
