@@ -146,7 +146,10 @@ class _CabBookingScreenState extends State<CabBookingScreen> {
         'paymentMethod': _paymentMethod,
       });
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => RideTrackingScreen(rideId: res['id'])));
+      // A plain push (not pushReplacement) — CabBookingScreen lives inside HomeShell's
+      // IndexedStack, so replacing it here replaced the entire tab shell, leaving no way
+      // back to Home/Food/Grocery once a ride was booked.
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => RideTrackingScreen(rideId: res['id'])));
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
