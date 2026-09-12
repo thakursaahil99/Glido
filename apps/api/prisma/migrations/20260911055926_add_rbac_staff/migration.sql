@@ -1,0 +1,13 @@
+-- CreateEnum
+CREATE TYPE "AdminRole" AS ENUM ('SUPER_ADMIN', 'OPERATIONS_MANAGER', 'FOOD_MANAGER', 'GROCERY_MANAGER', 'CAB_MANAGER', 'FINANCE_MANAGER', 'SUPPORT_MANAGER', 'MARKETING_MANAGER', 'DELIVERY_MANAGER');
+
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "adminRole" "AdminRole",
+ADD COLUMN     "createdById" TEXT,
+ADD COLUMN     "permissions" TEXT[] DEFAULT ARRAY[]::TEXT[];
+
+-- CreateIndex
+CREATE INDEX "User_role_idx" ON "User"("role");
+
+-- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;

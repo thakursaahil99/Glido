@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand orange — shared family identity with glideinbir.vercel.app */
+  --glido-primary: #ff6a00;
+  --glido-primary-dark: #c94f00;
+  --glido-primary-light: #fff1e6;
+
+  /* Amber — "needs attention" highlights (pending approvals, etc.) */
+  --glido-accent: #f99c00;
+  --glido-accent-light: #fef6e6;
+
+  /* Semantic status colors */
+  --glido-success: #0ea36c;
+  --glido-success-light: #e6f7ef;
+  --glido-danger: #e40014;
+  --glido-danger-light: #fdeaec;
+  --glido-warning: #f99c00;
+
+  /* Neutrals */
+  --glido-ink: #101418;
+  --glido-muted: #5b6470;
+  --glido-surface: #ffffff;
+  --glido-border: #e5e7eb;
+  --glido-bg: #f7f7f8;
+
+  /* Elevation — layered "raised" shadows for a classy, tactile feel */
+  --shadow-sm: 0 1px 2px rgba(16, 20, 24, 0.06);
+  --shadow-md: 0 2px 6px rgba(16, 20, 24, 0.06), 0 8px 20px -8px rgba(16, 20, 24, 0.12);
+  --shadow-lg: 0 4px 10px rgba(16, 20, 24, 0.06), 0 20px 40px -16px rgba(16, 20, 24, 0.22);
+  --shadow-primary: 0 8px 20px -8px rgba(255, 106, 0, 0.45);
+
+  --background: var(--glido-bg);
+  --foreground: var(--glido-ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--glido-primary);
+  --color-primary-dark: var(--glido-primary-dark);
+  --color-accent: var(--glido-accent);
+  --font-sans: var(--font-space-grotesk);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.01em;
+}
+
+.container-glido {
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+.btn-primary {
+  position: relative;
+  background: linear-gradient(155deg, #ff7f1f, var(--glido-primary) 55%, var(--glido-primary-dark));
+  color: white;
+  font-weight: 600;
+  border-radius: 0.85rem;
+  padding: 0.7rem 1.35rem;
+  box-shadow: var(--shadow-primary);
+  transition: box-shadow 0.2s ease, transform 0.15s ease, filter 0.15s ease;
+}
+.btn-primary:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 10px 24px -8px rgba(255, 106, 0, 0.55);
+  transform: translateY(-1px);
+}
+.btn-primary:active {
+  transform: scale(0.98) translateY(0);
+}
+.btn-primary:disabled {
+  background: #f0b98c;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--glido-ink);
+  font-weight: 600;
+  border: 1px solid var(--glido-border);
+  border-radius: 0.85rem;
+  padding: 0.7rem 1.35rem;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+.btn-secondary:hover {
+  border-color: var(--glido-primary);
+  background: var(--glido-primary-light);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-danger-outline {
+  background: white;
+  color: var(--glido-danger);
+  font-weight: 600;
+  border: 1px solid #f6c6cc;
+  border-radius: 0.85rem;
+  padding: 0.55rem 1.1rem;
+}
+.btn-danger-outline:hover {
+  background: var(--glido-danger-light);
+}
+
+.card-glido {
+  background: var(--glido-surface);
+  border: 1px solid var(--glido-border);
+  border-radius: 1.1rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+a.card-glido:hover,
+button.card-glido:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: #e0dcd6;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+.badge-veg {
+  background: var(--glido-success-light);
+  color: var(--glido-success);
+}
+.badge-nonveg {
+  background: var(--glido-danger-light);
+  color: var(--glido-danger);
+}
+.badge-status {
+  background: var(--glido-primary-light);
+  color: var(--glido-primary-dark);
+}
+.badge-muted {
+  background: #eef0f2;
+  color: var(--glido-muted);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #eef0f2 25%, #e2e5e8 37%, #eef0f2 63%);
+  background-size: 400% 100%;
+  animation: skeleton-loading 1.4s ease infinite;
+  border-radius: 0.5rem;
+}
+@keyframes skeleton-loading {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+.input-glido {
+  width: 100%;
+  border: 1px solid var(--glido-border);
+  border-radius: 0.7rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.95rem;
+  background: white;
+  box-shadow: inset 0 1px 2px rgba(16, 20, 24, 0.04);
+  transition: outline-color 0.15s ease, border-color 0.15s ease;
+}
+.input-glido:focus {
+  outline: 2px solid var(--glido-primary);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+/* A soft, layered "raised" surface — used for hero panels and stat tiles */
+.panel-raised {
+  background: linear-gradient(180deg, #ffffff, #fcfbfa);
+  border: 1px solid var(--glido-border);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-lg);
+}

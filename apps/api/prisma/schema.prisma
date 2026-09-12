@@ -1,0 +1,728 @@
+// Glido — Prisma schema (Food module MVP + shared platform entities)
+// PostgreSQL datasource, running locally (see apps/api/.env). Native Postgres
+// enums are used for DB-level constraints in addition to the class-validator
+// DTO validation in src/**/dto/*.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+  RESTAURANT_OWNER
+  DELIVERY_PARTNER
+}
+
+/// Which department/desk an ADMIN-role user belongs to. Only meaningful when
+/// User.role == ADMIN. SUPER_ADMIN implicitly has every permission; every
+/// other role's default permission set lives in packages/shared (DEFAULT_PERMISSIONS_BY_ADMIN_ROLE)
+/// and is copied onto User.permissions at staff-creation time, then editable per employee.
+enum AdminRole {
+  SUPER_ADMIN
+  OPERATIONS_MANAGER
+  FOOD_MANAGER
+  GROCERY_MANAGER
+  CAB_MANAGER
+  FINANCE_MANAGER
+  SUPPORT_MANAGER
+  MARKETING_MANAGER
+  DELIVERY_MANAGER
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  SUSPENDED
+}
+
+enum RestaurantStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+/// Driver approval/account status — mirrors RestaurantStatus. Drivers have no
+/// login of their own yet (no driver app); admin manages this directory and
+/// toggles isOnline/isAvailable to simulate real driver presence for matching.
+enum DriverStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum RideStatus {
+  REQUESTED
+  DRIVER_ASSIGNED
+  DRIVER_ARRIVED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  COD
+  ONLINE
+  WALLET
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum CouponType {
+  PERCENT
+  FLAT
+}
+
+enum WalletTxnType {
+  CREDIT
+  DEBIT
+}
+
+enum NotificationType {
+  ORDER
+  PROMOTION
+  SYSTEM
+}
+
+/// A City doubles as a serviceable zone: a circle of serviceRadiusKm around
+/// (centerLat, centerLng). Cab ride booking validates pickup falls inside an
+/// active zone (src/cab/geo.util.ts isPointInAnyZone) — the same fields are
+/// available to gate Food/Grocery availability by location later.
+model City {
+  id              String       @id @default(cuid())
+  name            String       @unique
+  state           String?
+  centerLat       Float?
+  centerLng       Float?
+  serviceRadiusKm Float        @default(15)
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  restaurants      Restaurant[]
+  addresses        Address[]
+  drivers          Driver[]
+  deliveryPartners DeliveryPartner[]
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String?
+  email        String?    @unique
+  phone        String?    @unique
+  passwordHash String? // set for admin/staff accounts that log in with email+password instead of OTP
+  role         UserRole   @default(CUSTOMER)
+  adminRole    AdminRole? // only set when role == ADMIN
+  permissions  String[]   @default([]) // granular permission keys — see packages/shared PERMISSIONS
+  status       UserStatus @default(ACTIVE)
+  referralCode  String   @unique @default(cuid())
+  referredById  String?
+  loyaltyPoints Int      @default(0)
+  createdById  String? // which admin created this staff account, if any
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  addresses     Address[]
+  orders        Order[]
+  groceryOrders GroceryOrder[]
+  rides         Ride[]
+  reviews       Review[]
+  wallet        Wallet?
+  notifications Notification[]
+  refreshTokens RefreshToken[]
+  restaurant    Restaurant?    @relation("RestaurantOwner")
+  deliveryPartner DeliveryPartner? @relation("DeliveryPartnerAccount")
+  auditLogs     AuditLog[]
+  createdBy     User?          @relation("StaffCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdStaff  User[]         @relation("StaffCreatedBy")
+  referredBy    User?          @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals     User[]         @relation("Referrals")
+  supportMessages SupportMessage[]
+
+  @@index([role])
+}
+
+model SupportMessage {
+  id         String   @id @default(cuid())
+  userId     String
+  senderRole String // "CUSTOMER" | "ADMIN" — who wrote this message
+  message    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Otp {
+  id         String   @id @default(cuid())
+  identifier String // email or phone
+  code       String
+  consumed   Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([identifier])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revoked   Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  label        String   @default("Home")
+  line1        String
+  line2        String?
+  cityId       String?
+  pincode      String?
+  lat          Float?
+  lng          Float?
+  isDefault    Boolean  @default(false)
+  instructions String?
+  createdAt    DateTime @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city          City?          @relation(fields: [cityId], references: [id])
+  orders        Order[]
+  groceryOrders GroceryOrder[]
+
+  @@index([userId])
+}
+
+model Restaurant {
+  id                 String           @id @default(cuid())
+  name               String
+  description        String?
+  cuisineTags        String? // comma separated, simple for MVP
+  imageUrl           String?
+  cityId             String?
+  addressLine        String?
+  lat                Float?
+  lng                Float?
+  status             RestaurantStatus @default(PENDING)
+  isOpen             Boolean          @default(true)
+  openingTime        String           @default("09:00")
+  closingTime        String           @default("23:00")
+  avgDeliveryTimeMin Int              @default(35)
+  deliveryFee        Float            @default(25)
+  packagingFee       Float            @default(10)
+  minOrderAmount     Float            @default(0)
+  commissionPercent  Float            @default(15)
+  ratingAvg          Float            @default(0)
+  ratingCount        Int              @default(0)
+  ownerUserId        String?          @unique
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  city           City?           @relation(fields: [cityId], references: [id])
+  owner          User?           @relation("RestaurantOwner", fields: [ownerUserId], references: [id])
+  menuCategories MenuCategory[]
+  menuItems      MenuItem[]
+  orders         Order[]
+  reviews        Review[]
+  coupons        Coupon[]
+
+  @@index([cityId])
+  @@index([status])
+}
+
+model MenuCategory {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items      MenuItem[]
+
+  @@index([restaurantId])
+}
+
+model MenuItem {
+  id           String   @id @default(cuid())
+  restaurantId String
+  categoryId   String?
+  name         String
+  description  String?
+  price        Float
+  imageUrl     String?
+  isVeg        Boolean  @default(true)
+  isAvailable  Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant      @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category   MenuCategory?   @relation(fields: [categoryId], references: [id])
+  addons     MenuItemAddon[]
+  orderItems OrderItem[]
+
+  @@index([restaurantId])
+  @@index([categoryId])
+}
+
+model MenuItemAddon {
+  id         String @id @default(cuid())
+  menuItemId String
+  name       String
+  price      Float  @default(0)
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@index([menuItemId])
+}
+
+model Coupon {
+  id             String     @id @default(cuid())
+  code           String     @unique
+  type           CouponType
+  value          Float
+  maxDiscount    Float?
+  minOrderAmount Float      @default(0)
+  usageLimit     Int?
+  perUserLimit   Int        @default(1)
+  usedCount      Int        @default(0)
+  restaurantId   String?
+  isActive       Boolean    @default(true)
+  validFrom      DateTime   @default(now())
+  validTo        DateTime?
+  createdAt      DateTime   @default(now())
+
+  restaurant    Restaurant?    @relation(fields: [restaurantId], references: [id])
+  orders        Order[]
+  groceryOrders GroceryOrder[]
+  rides         Ride[]
+
+  @@index([code])
+}
+
+model Order {
+  id                    String        @id @default(cuid())
+  orderNumber           String        @unique
+  userId                String
+  restaurantId          String
+  addressId             String
+  status                OrderStatus   @default(PENDING)
+  subtotal              Float
+  deliveryFee           Float         @default(0)
+  packagingFee          Float         @default(0)
+  taxAmount             Float         @default(0)
+  discountAmount        Float         @default(0)
+  totalAmount           Float
+  paymentMethod         PaymentMethod @default(COD)
+  paymentStatus         PaymentStatus @default(PENDING)
+  couponId              String?
+  deliveryInstructions  String?
+  cancelReason          String?
+  deliveryPartnerId     String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  user            User                 @relation(fields: [userId], references: [id])
+  restaurant      Restaurant           @relation(fields: [restaurantId], references: [id])
+  address         Address              @relation(fields: [addressId], references: [id])
+  coupon          Coupon?              @relation(fields: [couponId], references: [id])
+  deliveryPartner DeliveryPartner?     @relation(fields: [deliveryPartnerId], references: [id])
+  items           OrderItem[]
+  statusHistory   OrderStatusHistory[]
+  payment         Payment?
+  review          Review?
+
+  @@index([userId])
+  @@index([restaurantId])
+  @@index([status])
+  @@index([deliveryPartnerId])
+}
+
+model OrderItem {
+  id            String  @id @default(cuid())
+  orderId       String
+  menuItemId    String
+  nameSnapshot  String
+  priceSnapshot Float
+  quantity      Int
+  addonsJson    String? // JSON-encoded array of { name, price }
+  subtotal      Float
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@index([orderId])
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  note      String?
+  changedAt DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String        @unique
+  provider          String        @default("razorpay")
+  providerOrderId   String?
+  providerPaymentId String?
+  amount            Float
+  status            PaymentStatus @default(PENDING)
+  method            PaymentMethod
+  rawResponseJson   String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  userId       String
+  restaurantId String
+  orderId      String   @unique
+  rating       Int
+  comment      String?
+  createdAt    DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id])
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  order      Order      @relation(fields: [orderId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Float    @default(0)
+  updatedAt DateTime @updatedAt
+
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id          String        @id @default(cuid())
+  walletId    String
+  type        WalletTxnType
+  amount      Float
+  reason      String
+  referenceId String?
+  createdAt   DateTime      @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  type      NotificationType @default(SYSTEM)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String
+  link      String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String // JSON-encoded value
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  adminUserId String
+  action      String
+  entity      String
+  entityId    String?
+  beforeJson  String?
+  afterJson   String?
+  ip          String?
+  createdAt   DateTime @default(now())
+
+  admin User @relation(fields: [adminUserId], references: [id])
+
+  @@index([adminUserId])
+}
+
+// --- Glido Grocery ---
+// Single citywide catalogue for the MVP (no separate "store" entity yet —
+// quick-commerce dark-store selection can be layered on later without
+// touching Category/Product). Orders are a separate model from food Order
+// rather than a generalized polymorphic order, to avoid risking the
+// already-shipped Food order pipeline while this module is new.
+
+model GroceryCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  imageUrl  String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  products GroceryProduct[]
+}
+
+model GroceryProduct {
+  id          String   @id @default(cuid())
+  categoryId  String
+  name        String
+  description String?
+  brand       String?
+  imageUrl    String?
+  unit        String // e.g. "500 g", "1 L", "6 pcs"
+  mrp         Float
+  price       Float
+  stockQty    Int      @default(0)
+  isAvailable Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category   GroceryCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems GroceryOrderItem[]
+
+  @@index([categoryId])
+}
+
+model GroceryOrder {
+  id                   String        @id @default(cuid())
+  orderNumber          String        @unique
+  userId               String
+  addressId            String
+  status               OrderStatus   @default(PENDING)
+  subtotal             Float
+  deliveryFee          Float         @default(0)
+  taxAmount            Float         @default(0)
+  discountAmount       Float         @default(0)
+  totalAmount          Float
+  paymentMethod        PaymentMethod @default(COD)
+  paymentStatus        PaymentStatus @default(PENDING)
+  couponId             String?
+  deliveryInstructions String?
+  cancelReason         String?
+  deliveryPartnerId    String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  user            User                        @relation(fields: [userId], references: [id])
+  address         Address                     @relation(fields: [addressId], references: [id])
+  coupon          Coupon?                     @relation(fields: [couponId], references: [id])
+  deliveryPartner DeliveryPartner?            @relation(fields: [deliveryPartnerId], references: [id])
+  items           GroceryOrderItem[]
+  statusHistory   GroceryOrderStatusHistory[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([deliveryPartnerId])
+}
+
+model GroceryOrderItem {
+  id            String @id @default(cuid())
+  orderId       String
+  productId     String
+  nameSnapshot  String
+  priceSnapshot Float
+  quantity      Int
+  subtotal      Float
+
+  order   GroceryOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product GroceryProduct @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model GroceryOrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  note      String?
+  changedAt DateTime    @default(now())
+
+  order GroceryOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+// --- Glido Cab ---
+// No driver app yet, so Driver is an admin-managed directory rather than a
+// full account — admin toggles isOnline/isAvailable to simulate presence.
+// Distance is computed server-side with the Haversine formula (straight-line,
+// via src/cab/geo.util.ts) rather than a routing API, since no paid routing
+// provider is wired in — good enough for a fare estimate, not turn-by-turn nav.
+
+model RideType {
+  id                String   @id @default(cuid())
+  name              String   @unique // Bike, Auto, Mini, Sedan, SUV, Premium
+  imageUrl          String?
+  baseFare          Float    @default(30)
+  perKmFare         Float    @default(12)
+  perMinuteFare     Float    @default(1.5)
+  minFare           Float    @default(40)
+  cancellationFee   Float    @default(20)
+  capacity          Int      @default(4)
+  isActive          Boolean  @default(true)
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  drivers Driver[]
+  rides   Ride[]
+}
+
+model Driver {
+  id            String       @id @default(cuid())
+  name          String
+  phone         String       @unique
+  photoUrl      String?
+  vehicleNumber String
+  vehicleModel  String?
+  rideTypeId    String
+  cityId        String?
+  status        DriverStatus @default(PENDING)
+  isOnline      Boolean      @default(false)
+  isAvailable   Boolean      @default(true) // false while on an active ride
+  currentLat    Float?
+  currentLng    Float?
+  ratingAvg     Float        @default(5)
+  ratingCount   Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  rideType RideType @relation(fields: [rideTypeId], references: [id])
+  city     City?    @relation(fields: [cityId], references: [id])
+  rides    Ride[]
+
+  @@index([rideTypeId])
+  @@index([status])
+}
+
+/// Delivery riders for Food & Grocery orders — kept separate from cab Driver
+/// since they aren't tied to a RideType and can be assigned to either order kind.
+model DeliveryPartner {
+  id            String       @id @default(cuid())
+  userId        String?      @unique
+  name          String
+  phone         String       @unique
+  photoUrl      String?
+  vehicleType   String       @default("Bike")
+  vehicleNumber String?
+  cityId        String?
+  status        DriverStatus @default(PENDING)
+  isOnline      Boolean      @default(false)
+  isAvailable   Boolean      @default(true) // false while on an active delivery
+  currentLat    Float?
+  currentLng    Float?
+  ratingAvg     Float        @default(5)
+  ratingCount   Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user          User?          @relation("DeliveryPartnerAccount", fields: [userId], references: [id])
+  city          City?          @relation(fields: [cityId], references: [id])
+  orders        Order[]
+  groceryOrders GroceryOrder[]
+
+  @@index([status])
+}
+
+model Ride {
+  id             String        @id @default(cuid())
+  rideNumber     String        @unique
+  userId         String
+  rideTypeId     String
+  driverId       String?
+  status         RideStatus    @default(REQUESTED)
+  pickupAddress  String
+  pickupLat      Float
+  pickupLng      Float
+  dropAddress    String
+  dropLat        Float
+  dropLng        Float
+  distanceKm     Float
+  estimatedFare  Float
+  finalFare      Float?
+  paymentMethod  PaymentMethod @default(COD) // COD doubles as "pay driver in cash" here
+  paymentStatus  PaymentStatus @default(PENDING)
+  couponId       String?
+  cancelReason   String?
+  requestedAt    DateTime      @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user          User               @relation(fields: [userId], references: [id])
+  rideType      RideType           @relation(fields: [rideTypeId], references: [id])
+  driver        Driver?            @relation(fields: [driverId], references: [id])
+  coupon        Coupon?            @relation(fields: [couponId], references: [id])
+  statusHistory RideStatusHistory[]
+
+  @@index([userId])
+  @@index([driverId])
+  @@index([status])
+}
+
+model RideStatusHistory {
+  id        String     @id @default(cuid())
+  rideId    String
+  status    RideStatus
+  note      String?
+  changedAt DateTime   @default(now())
+
+  ride Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@index([rideId])
+}

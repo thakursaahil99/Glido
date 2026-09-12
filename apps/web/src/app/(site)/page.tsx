@@ -1,0 +1,188 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, Car, MapPin, Rocket, ShoppingBag, ShoppingCart, UtensilsCrossed } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { api, ApiError, resolveMediaUrl } from "@/lib/api";
+import type { Banner, Paginated, Restaurant } from "@/lib/types";
+import { RestaurantCard, RestaurantCardSkeleton } from "@/components/restaurant-card";
+import { ErrorState } from "@/components/empty-state";
+
+const HOW_IT_WORKS: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: MapPin, title: "Set your location", desc: "Tell us where you are so we can show what's nearby." },
+  { icon: ShoppingBag, title: "Order what you need", desc: "Food, groceries or a ride — all in one place." },
+  { icon: Rocket, title: "Track it live", desc: "Watch your order move from prep to your doorstep." },
+];
+
+export default function HomePage() {
+  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [restaurants, setRestaurants] = useState<Restaurant[] | null>(null);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const [restaurantsRes, bannersRes] = await Promise.all([
+        api.get<Paginated<Restaurant>>("/restaurants?pageSize=6"),
+        api.get<Banner[]>("/banners"),
+      ]);
+      setRestaurants(restaurantsRes.items);
+      setBanners(bannersRes);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Could not load the homepage. Check that the API is running.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  function onSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    router.push(`/food${search ? `?search=${encodeURIComponent(search)}` : ""}`);
+  }
+
+  return (
+    <div>
+      {/* Hero */}
+      <section className="bg-gradient-to-b from-[var(--glido-primary-light)] to-transparent">
+        <div className="container-glido py-12 md:py-16">
+          <div className="flex items-center gap-1.5 text-sm text-[var(--glido-muted)] mb-3">
+            <MapPin size={15} />
+            <span className="font-medium text-[var(--glido-ink)]">Mumbai</span>
+            <span className="text-xs">(tap to change — coming soon)</span>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[var(--glido-ink)] max-w-2xl">
+            Food, groceries and rides.
+            <br />
+            <span className="text-[var(--glido-primary)]">One app. Everything local.</span>
+          </h1>
+          <form onSubmit={onSearchSubmit} className="mt-6 max-w-xl flex gap-2">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search restaurants or dishes..."
+              className="input-glido"
+            />
+            <button type="submit" className="btn-primary shrink-0">
+              Search
+            </button>
+          </form>
+
+          <div className="mt-8 grid grid-cols-3 gap-3 max-w-xl">
+            <Link href="/food" className="card-glido p-4 text-center hover:border-[var(--glido-primary)]">
+              <UtensilsCrossed size={26} className="mx-auto mb-1.5 text-[var(--glido-primary)]" />
+              <div className="text-sm font-semibold">Food</div>
+            </Link>
+            <Link href="/grocery" className="card-glido p-4 text-center hover:border-[var(--glido-primary)]">
+              <ShoppingCart size={26} className="mx-auto mb-1.5 text-[var(--glido-primary)]" />
+              <div className="text-sm font-semibold">Grocery</div>
+            </Link>
+            <Link href="/cab" className="card-glido p-4 text-center hover:border-[var(--glido-primary)]">
+              <Car size={26} className="mx-auto mb-1.5 text-[var(--glido-primary)]" />
+              <div className="text-sm font-semibold">Cab</div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Banners */}
+      {banners.length > 0 && (
+        <section className="container-glido py-6">
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {banners.map((b) => (
+              <Link
+                key={b.id}
+                href={b.link ?? "/food"}
+                className="shrink-0 w-[280px] md:w-[360px] card-glido overflow-hidden"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={resolveMediaUrl(b.imageUrl)} alt={b.title} className="h-32 w-full object-cover" />
+                <div className="p-3 text-sm font-semibold">{b.title}</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Featured restaurants */}
+      <section className="container-glido py-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-[var(--glido-ink)]">Popular restaurants near you</h2>
+          <Link href="/food" className="flex items-center gap-1 text-sm font-medium text-[var(--glido-primary)]">
+            See all <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        {error && <ErrorState message={error} onRetry={load} />}
+
+        {!error && loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <RestaurantCardSkeleton key={i} />
+            ))}
+          </div>
+        )}
+
+        {!error && !loading && restaurants && restaurants.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {restaurants.map((r) => (
+              <RestaurantCard key={r.id} restaurant={r} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* How Glido works */}
+      <section className="bg-white border-y border-[var(--glido-border)]">
+        <div className="container-glido py-12">
+          <h2 className="text-xl font-bold text-center mb-8">How Glido works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {HOW_IT_WORKS.map((step) => {
+              const Icon = step.icon;
+              return (
+                <div key={step.title} className="text-center">
+                  <div className="h-12 w-12 rounded-full bg-[var(--glido-primary-light)] flex items-center justify-center mx-auto mb-3">
+                    <Icon size={22} className="text-[var(--glido-primary)]" />
+                  </div>
+                  <h3 className="font-semibold">{step.title}</h3>
+                  <p className="text-sm text-[var(--glido-muted)] mt-1">{step.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Partner / driver CTA */}
+      <section className="container-glido py-12 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="card-glido p-6 bg-[var(--glido-primary-light)] border-none">
+          <h3 className="font-bold text-lg">Partner with Glido</h3>
+          <p className="text-sm text-[var(--glido-muted)] mt-1">
+            List your restaurant or store and reach thousands of local customers.
+          </p>
+          <Link href="/partner-with-us" className="btn-primary inline-block mt-4">
+            Become a partner
+          </Link>
+        </div>
+        <div className="card-glido p-6 bg-[var(--glido-accent-light)] border-none">
+          <h3 className="font-bold text-lg">Deliver with Glido</h3>
+          <p className="text-sm text-[var(--glido-muted)] mt-1">
+            Flexible hours, weekly payouts. Be your own boss.
+          </p>
+          <Link href="/become-a-delivery-partner" className="btn-secondary inline-block mt-4">
+            Become a delivery partner
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}
