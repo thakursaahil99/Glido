@@ -55,7 +55,18 @@ class _GroceryScreenState extends State<GroceryScreen> {
     final cart = context.watch<GroceryCartState>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Grocery'), actions: const [NotificationBellButton()]),
+      appBar: AppBar(
+        title: RichText(
+          text: TextSpan(
+            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+            children: [
+              TextSpan(text: 'Glido', style: TextStyle(color: GlidoColors.primary)),
+              TextSpan(text: ' Grocery', style: TextStyle(color: GlidoColors.ink)),
+            ],
+          ),
+        ),
+        actions: const [NotificationBellButton()],
+      ),
       body: Stack(
         children: [
           Column(
