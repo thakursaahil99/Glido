@@ -71,7 +71,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-[var(--glido-border)] py-4">
         <p className="container-glido text-xs text-[var(--glido-muted)]">
-          © {new Date().getFullYear()} Glido. This is a demo project — not a registered business.
+          © {new Date().getFullYear()} Glido. All rights reserved.
         </p>
       </div>
     </footer>

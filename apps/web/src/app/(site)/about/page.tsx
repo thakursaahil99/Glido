@@ -5,14 +5,14 @@ export default function AboutPage() {
     <InfoPage title="About Glido">
       <p>
         Glido is a local-commerce super app bringing food delivery, grocery delivery and ride
-        booking into one place. This build is a demo/portfolio project showcasing a full-stack
-        architecture — not a registered business.
+        booking into one place — one account, one wallet, one app.
       </p>
-      <h2>What we&apos;re building</h2>
+      <h2>What&apos;s live today</h2>
       <p>
-        Glido Food is live in this demo: browse restaurants, order, pay, and track delivery in
-        real time. Glido Grocery and Glido Cab share the same account, wallet and design system,
-        and are the next modules planned on this platform.
+        Glido Food, Glido Grocery and Glido Cab are all live: browse restaurants and stores, order,
+        pay, book a ride, and track everything in real time. Restaurant and delivery partners
+        manage their side of the business from their own partner apps, connected to the same
+        platform.
       </p>
     </InfoPage>
   );

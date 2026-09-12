@@ -6,7 +6,7 @@ import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { getSocket } from "@/lib/socket";
-import { Phone, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Phone, ShoppingCart } from "lucide-react";
 import type { GroceryOrder } from "@/lib/types";
 import { OrderTimeline, StatusBadge } from "@/components/order-status";
 import { ConfirmDialog } from "@/components/modal";
@@ -80,6 +80,12 @@ export default function GroceryOrderDetailPage() {
 
   return (
     <div className="container-glido py-8 max-w-2xl">
+      <button
+        onClick={() => router.push("/grocery/orders")}
+        className="flex items-center gap-1.5 text-sm font-medium text-[var(--glido-muted)] hover:text-[var(--glido-primary)] mb-4"
+      >
+        <ArrowLeft size={16} /> Back to orders
+      </button>
       <div className="flex items-center justify-between mb-1">
         <h1 className="text-2xl font-bold">Order #{order.orderNumber}</h1>
         <StatusBadge status={order.status} />

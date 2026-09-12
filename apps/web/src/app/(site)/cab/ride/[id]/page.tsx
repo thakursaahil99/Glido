@@ -6,7 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { getSocket } from "@/lib/socket";
-import { Phone } from "lucide-react";
+import { ArrowLeft, Phone } from "lucide-react";
 import type { Ride } from "@/lib/types";
 import { RideStatusBadge, RideTimeline } from "@/components/ride-status";
 import { MapView, type MapMarker } from "@/components/map-view";
@@ -88,12 +88,21 @@ export default function RideTrackingPage() {
 
   return (
     <div>
-      <MapView
-        center={{ lat: ride.pickupLat, lng: ride.pickupLng }}
-        markers={markers}
-        polyline={[{ lat: ride.pickupLat, lng: ride.pickupLng }, { lat: ride.dropLat, lng: ride.dropLng }]}
-        height="38vh"
-      />
+      <div className="relative">
+        <MapView
+          center={{ lat: ride.pickupLat, lng: ride.pickupLng }}
+          markers={markers}
+          polyline={[{ lat: ride.pickupLat, lng: ride.pickupLng }, { lat: ride.dropLat, lng: ride.dropLng }]}
+          height="38vh"
+        />
+        <button
+          onClick={() => router.push("/cab/rides")}
+          aria-label="Back to your rides"
+          className="absolute top-3 left-3 h-10 w-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-50"
+        >
+          <ArrowLeft size={18} className="text-[var(--glido-ink)]" />
+        </button>
+      </div>
 
       <div className="container-glido py-6 max-w-2xl">
         <div className="flex items-center justify-between mb-1">

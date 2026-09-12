@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Clock, IndianRupee } from "lucide-react";
+import { ArrowLeft, Clock, IndianRupee } from "lucide-react";
 import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/lib/toast-context";
@@ -95,11 +95,18 @@ export default function RestaurantDetailPage() {
 
   return (
     <div>
-      <div className="h-48 md:h-64 bg-gray-100 overflow-hidden">
+      <div className="h-48 md:h-64 bg-gray-100 overflow-hidden relative">
         {resolveMediaUrl(restaurant.imageUrl) ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={resolveMediaUrl(restaurant.imageUrl)} alt={restaurant.name} className="h-full w-full object-cover" />
         ) : null}
+        <Link
+          href="/food"
+          aria-label="Back to restaurants"
+          className="absolute top-3 left-3 h-10 w-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-50"
+        >
+          <ArrowLeft size={18} className="text-[var(--glido-ink)]" />
+        </Link>
       </div>
 
       <div className="container-glido -mt-8 relative">

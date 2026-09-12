@@ -39,4 +39,3 @@ apps/api/uploads/*
 
 # Claude Code local session state
 .claude/
-

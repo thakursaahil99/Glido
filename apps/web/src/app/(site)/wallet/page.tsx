@@ -140,7 +140,7 @@ export default function WalletPage() {
           </button>
         </div>
         <p className="text-xs text-[var(--glido-muted)] mt-2">
-          Demo mode — money is credited instantly, no real payment is charged.
+          Instant top-up — added to your wallet right away.
         </p>
       </section>
 
