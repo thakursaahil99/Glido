@@ -194,10 +194,38 @@ export class RidesService {
         rideType: true,
         driver: true,
         statusHistory: { orderBy: { changedAt: "asc" } },
+        review: true,
       },
     });
     if (!ride) throw new NotFoundException("Ride not found.");
     return ride;
+  }
+
+  async createReview(userId: string, rideId: string, rating: number, comment?: string) {
+    const ride = await this.prisma.ride.findFirst({ where: { id: rideId, userId } });
+    if (!ride) throw new NotFoundException("Ride not found.");
+    if (ride.status !== "COMPLETED") {
+      throw new BadRequestException("You can only rate a ride after it is completed.");
+    }
+    if (!ride.driverId) throw new BadRequestException("This ride has no driver to rate.");
+    const existing = await this.prisma.rideReview.findUnique({ where: { rideId } });
+    if (existing) throw new BadRequestException("You have already rated this ride.");
+
+    const review = await this.prisma.rideReview.create({
+      data: { userId, driverId: ride.driverId, rideId, rating, comment },
+    });
+
+    const agg = await this.prisma.rideReview.aggregate({
+      where: { driverId: ride.driverId },
+      _avg: { rating: true },
+      _count: true,
+    });
+    await this.prisma.driver.update({
+      where: { id: ride.driverId },
+      data: { ratingAvg: agg._avg.rating ?? rating, ratingCount: agg._count },
+    });
+
+    return review;
   }
 
   async cancel(userId: string, rideId: string, reason?: string) {

@@ -151,6 +151,7 @@ model User {
   groceryOrders GroceryOrder[]
   rides         Ride[]
   reviews       Review[]
+  rideReviews   RideReview[]
   wallet        Wallet?
   notifications Notification[]
   refreshTokens RefreshToken[]
@@ -648,6 +649,7 @@ model Driver {
   rideType RideType @relation(fields: [rideTypeId], references: [id])
   city     City?    @relation(fields: [cityId], references: [id])
   rides    Ride[]
+  reviews  RideReview[]
 
   @@index([rideTypeId])
   @@index([status])
@@ -713,10 +715,27 @@ model Ride {
   driver        Driver?            @relation(fields: [driverId], references: [id])
   coupon        Coupon?            @relation(fields: [couponId], references: [id])
   statusHistory RideStatusHistory[]
+  review        RideReview?
 
   @@index([userId])
   @@index([driverId])
   @@index([status])
+}
+
+model RideReview {
+  id        String   @id @default(cuid())
+  userId    String
+  driverId  String
+  rideId    String   @unique
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  user   User @relation(fields: [userId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
+  ride   Ride   @relation(fields: [rideId], references: [id])
+
+  @@index([driverId])
 }
 
 model RideStatusHistory {

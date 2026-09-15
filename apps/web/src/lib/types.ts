@@ -348,4 +348,5 @@ export interface Ride {
   driver?: Driver | null;
   user?: { name: string | null; email: string | null };
   statusHistory?: RideStatusHistoryEntry[];
+  review?: { id: string; rating: number; comment: string | null } | null;
 }

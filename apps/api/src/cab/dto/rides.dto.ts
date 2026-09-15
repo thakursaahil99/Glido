@@ -1,4 +1,4 @@
-import { IsIn, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 
 export class EstimateRideDto {
   @IsString()
@@ -61,4 +61,15 @@ export class CancelRideDto {
   @IsOptional()
   @IsString()
   reason?: string;
+}
+
+export class CreateRideReviewDto {
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating: number;
+
+  @IsOptional()
+  @IsString()
+  comment?: string;
 }

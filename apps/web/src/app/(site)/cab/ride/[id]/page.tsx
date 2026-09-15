@@ -6,7 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { getSocket } from "@/lib/socket";
-import { ArrowLeft, Phone } from "lucide-react";
+import { ArrowLeft, Phone, Star } from "lucide-react";
 import type { Ride } from "@/lib/types";
 import { RideStatusBadge, RideTimeline } from "@/components/ride-status";
 import { MapView, type MapMarker } from "@/components/map-view";
@@ -22,6 +22,9 @@ export default function RideTrackingPage() {
   const [ride, setRide] = useState<Ride | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   async function load() {
     setError(null);
@@ -64,6 +67,19 @@ export default function RideTrackingPage() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not cancel ride.", "error");
+    }
+  }
+
+  async function submitReview() {
+    setSubmittingReview(true);
+    try {
+      await api.post(`/cab/rides/${id}/review`, { rating: reviewRating, comment: reviewComment || undefined });
+      show("Thanks for rating your ride!", "success");
+      load();
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : "Could not submit rating.", "error");
+    } finally {
+      setSubmittingReview(false);
     }
   }
 
@@ -160,6 +176,49 @@ export default function RideTrackingPage() {
           </div>
           <p className="text-xs text-[var(--glido-muted)] mt-2">Pay the driver in cash at the end of your ride.</p>
         </div>
+
+        {ride.status === "COMPLETED" && ride.driver && !ride.review && (
+          <div className="card-glido p-4 mt-4">
+            <h3 className="font-semibold mb-2">Rate your driver</h3>
+            <div className="flex gap-1 mb-2">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button key={n} onClick={() => setReviewRating(n)}>
+                  <Star
+                    size={26}
+                    className={n <= reviewRating ? "text-[var(--glido-accent)] fill-[var(--glido-accent)]" : "text-gray-300"}
+                  />
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="input-glido"
+              rows={2}
+              placeholder={`How was your ride with ${ride.driver.name}? (optional)`}
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+            />
+            <button onClick={submitReview} disabled={submittingReview} className="btn-primary mt-2">
+              {submittingReview ? "Submitting..." : "Submit rating"}
+            </button>
+          </div>
+        )}
+        {ride.review && (
+          <div className="card-glido p-4 mt-4 text-sm">
+            <p className="font-semibold flex items-center gap-2">
+              Your rating:
+              <span className="flex gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    size={15}
+                    className={i < ride.review!.rating ? "text-[var(--glido-accent)] fill-[var(--glido-accent)]" : "text-gray-300"}
+                  />
+                ))}
+              </span>
+            </p>
+            {ride.review.comment && <p className="text-[var(--glido-muted)] mt-1">{ride.review.comment}</p>}
+          </div>
+        )}
       </div>
 
       <ConfirmDialog
