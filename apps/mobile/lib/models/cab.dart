@@ -61,6 +61,17 @@ class RideDriver {
       );
 }
 
+class RideReview {
+  final String id;
+  final int rating;
+  final String? comment;
+
+  RideReview({required this.id, required this.rating, this.comment});
+
+  factory RideReview.fromJson(Map<String, dynamic> json) =>
+      RideReview(id: json['id'], rating: json['rating'], comment: json['comment']);
+}
+
 class RideStatusHistoryEntry {
   final String status;
   final String? note;
@@ -91,6 +102,7 @@ class Ride {
   final RideType? rideType;
   final RideDriver? driver;
   final List<RideStatusHistoryEntry> statusHistory;
+  final RideReview? review;
 
   Ride({
     required this.id,
@@ -111,6 +123,7 @@ class Ride {
     this.rideType,
     this.driver,
     required this.statusHistory,
+    this.review,
   });
 
   factory Ride.fromJson(Map<String, dynamic> json) => Ride(
@@ -133,6 +146,7 @@ class Ride {
         driver: json['driver'] != null ? RideDriver.fromJson(json['driver']) : null,
         statusHistory:
             (json['statusHistory'] as List<dynamic>? ?? []).map((h) => RideStatusHistoryEntry.fromJson(h)).toList(),
+        review: json['review'] != null ? RideReview.fromJson(json['review']) : null,
       );
 }
 

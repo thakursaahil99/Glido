@@ -21,6 +21,9 @@ class RideTrackingScreen extends StatefulWidget {
 class _RideTrackingScreenState extends State<RideTrackingScreen> {
   Ride? _ride;
   String? _error;
+  int _reviewRating = 5;
+  final _reviewCommentCtrl = TextEditingController();
+  bool _submittingReview = false;
 
   @override
   void initState() {
@@ -34,6 +37,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   @override
   void dispose() {
     SocketClient.instance.socket.off('order:update', _onUpdate);
+    _reviewCommentCtrl.dispose();
     super.dispose();
   }
 
@@ -68,6 +72,22 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
       _load();
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  Future<void> _submitReview() async {
+    setState(() => _submittingReview = true);
+    try {
+      await ApiClient.instance.post('/cab/rides/${widget.rideId}/review', {
+        'rating': _reviewRating,
+        if (_reviewCommentCtrl.text.trim().isNotEmpty) 'comment': _reviewCommentCtrl.text.trim(),
+      });
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thanks for rating your ride!')));
+      _load();
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _submittingReview = false);
     }
   }
 
@@ -188,6 +208,72 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                     ),
                   ),
                 ),
+                if (ride.status == 'COMPLETED' && ride.driver != null && ride.review == null) ...[
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Rate your driver', style: TextStyle(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: List.generate(5, (i) {
+                              final n = i + 1;
+                              return IconButton(
+                                padding: EdgeInsets.zero,
+                                onPressed: () => setState(() => _reviewRating = n),
+                                icon: Icon(
+                                  n <= _reviewRating ? Icons.star : Icons.star_border,
+                                  color: GlidoColors.accent,
+                                  size: 28,
+                                ),
+                              );
+                            }),
+                          ),
+                          TextField(
+                            controller: _reviewCommentCtrl,
+                            maxLines: 2,
+                            decoration: InputDecoration(hintText: 'How was your ride with ${ride.driver!.name}? (optional)'),
+                          ),
+                          const SizedBox(height: 10),
+                          ElevatedButton(
+                            onPressed: _submittingReview ? null : _submitReview,
+                            child: Text(_submittingReview ? 'Submitting...' : 'Submit rating'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                if (ride.review != null) ...[
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('Your rating: ', style: TextStyle(fontWeight: FontWeight.w700)),
+                              ...List.generate(5, (i) => Icon(
+                                    i < ride.review!.rating ? Icons.star : Icons.star_border,
+                                    color: GlidoColors.accent,
+                                    size: 16,
+                                  )),
+                            ],
+                          ),
+                          if (ride.review!.comment != null && ride.review!.comment!.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(ride.review!.comment!, style: TextStyle(color: GlidoColors.muted)),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
