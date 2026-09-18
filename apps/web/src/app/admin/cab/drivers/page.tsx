@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bike } from "lucide-react";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useToast } from "@/lib/toast-context";
 import type { Driver, Paginated, RideType } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/components/empty-state";
@@ -28,6 +28,7 @@ function DriversContent() {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [viewing, setViewing] = useState<Driver | null>(null);
 
   async function load() {
     setError(null);
@@ -126,7 +127,9 @@ function DriversContent() {
               {drivers.map((d) => (
                 <tr key={d.id} className="border-b border-[var(--glido-border)] last:border-0">
                   <td className="py-2.5 px-4">
-                    <p className="font-medium">{d.name}</p>
+                    <button onClick={() => setViewing(d)} className="font-medium text-left hover:underline hover:text-[var(--glido-primary)]">
+                      {d.name}
+                    </button>
                     <p className="text-xs text-[var(--glido-muted)]">{d.phone}</p>
                   </td>
                   <td className="py-2.5 px-4 text-xs">
@@ -192,6 +195,45 @@ function DriversContent() {
           <input className="input-glido" placeholder="Vehicle number" required value={form.vehicleNumber} onChange={(e) => setForm({ ...form, vehicleNumber: e.target.value })} />
           <button className="btn-primary w-full mt-2">Add driver</button>
         </form>
+      </Modal>
+
+      <Modal open={!!viewing} title="Driver details" onClose={() => setViewing(null)}>
+        {viewing && (
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center gap-3">
+              {resolveMediaUrl(viewing.photoUrl) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={resolveMediaUrl(viewing.photoUrl)!} alt={viewing.name} className="h-14 w-14 rounded-full object-cover" />
+              ) : (
+                <div className="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Bike size={22} className="text-gray-400" />
+                </div>
+              )}
+              <div>
+                <p className="font-semibold">{viewing.name}</p>
+                <p className="text-[var(--glido-muted)]">{viewing.phone}</p>
+              </div>
+            </div>
+            <dl className="grid grid-cols-2 gap-y-2 text-xs">
+              <dt className="text-[var(--glido-muted)]">Vehicle</dt>
+              <dd>{viewing.vehicleModel ?? "—"} ({viewing.vehicleNumber})</dd>
+              <dt className="text-[var(--glido-muted)]">Ride type</dt>
+              <dd>{viewing.rideType?.name ?? "—"}</dd>
+              <dt className="text-[var(--glido-muted)]">City</dt>
+              <dd>{viewing.city?.name ?? "—"}</dd>
+              <dt className="text-[var(--glido-muted)]">Status</dt>
+              <dd>{viewing.status}</dd>
+              <dt className="text-[var(--glido-muted)]">Online / Available</dt>
+              <dd>{viewing.isOnline ? "Online" : "Offline"} · {viewing.isAvailable ? "Available" : "Busy"}</dd>
+              <dt className="text-[var(--glido-muted)]">Rating</dt>
+              <dd>★ {viewing.ratingAvg.toFixed(1)} ({viewing.ratingCount} ratings)</dd>
+              <dt className="text-[var(--glido-muted)]">Current location</dt>
+              <dd>{viewing.currentLat != null ? `${viewing.currentLat.toFixed(4)}, ${viewing.currentLng?.toFixed(4)}` : "Not tracked yet"}</dd>
+              <dt className="text-[var(--glido-muted)]">Joined</dt>
+              <dd>{new Date(viewing.createdAt).toLocaleDateString()}</dd>
+            </dl>
+          </div>
+        )}
       </Modal>
     </div>
   );

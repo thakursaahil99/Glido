@@ -1,44 +1,74 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Mirrors the web app's brand tokens in apps/web/src/app/globals.css.
+/// Mirrors the web app's brand tokens in apps/web/src/app/globals.css —
+/// the "Kinetic Glass-Modernism" tri-service palette.
 class GlidoColors {
-  static const primary = Color(0xFFFF6A00);
-  static const primaryDark = Color(0xFFC94F00);
-  static const primaryLight = Color(0xFFFFF1E6);
-  static const accent = Color(0xFFF99C00);
-  static const success = Color(0xFF0EA36C);
-  static const successLight = Color(0xFFE6F7EF);
-  static const danger = Color(0xFFE40014);
-  static const dangerLight = Color(0xFFFDEAEC);
-  static const ink = Color(0xFF101418);
-  static const muted = Color(0xFF5B6470);
+  static const primary = Color(0xFFFF4B26);
+  static const primaryDark = Color(0xFFB32100);
+  static const primaryLight = Color(0xFFFFDAD3);
+  static const accent = Color(0xFFF59E0B);
+  static const accentLight = Color(0xFFFEF3E2);
+  static const success = Color(0xFF00B873);
+  static const successLight = Color(0xFFE3FDF0);
+  static const danger = Color(0xFFBA1A1A);
+  static const dangerLight = Color(0xFFFFDAD6);
+  static const ink = Color(0xFF11141D);
+  static const muted = Color(0xFF5B6472);
   static const surface = Color(0xFFFFFFFF);
-  static const border = Color(0xFFEDEEF0);
-  static const bg = Color(0xFFFAF9F7);
+  static const border = Color(0xFFE8ECF2);
+  static const bg = Color(0xFFF8F9FC);
+
+  // Module identity colors — food/grocery/cab each read as their own vivid color.
+  static const food = primary;
+  static const foodDark = primaryDark;
+  static const grocery = Color(0xFF00B873);
+  static const groceryDark = Color(0xFF006D42);
+  static const groceryLight = Color(0xFFE3FDF0);
+  static const cab = Color(0xFF3E52FF);
+  static const cabDark = Color(0xFF2C41F1);
+  static const cabLight = Color(0xFFE6E9FF);
 }
 
 /// Reusable gradients — this is where the "3D"/premium feel comes from:
-/// depth via soft shadows + a warm gradient instead of flat single-tone fills.
+/// depth via soft shadows + a bold multi-hue gradient instead of flat single-tone fills.
 class GlidoGradients {
   static const primaryButton = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFFF7F1F), GlidoColors.primary, GlidoColors.primaryDark],
-    stops: [0, 0.55, 1],
+    colors: [Color(0xFFFF7A50), GlidoColors.primary, GlidoColors.primaryDark],
+    stops: [0, 0.5, 1],
   );
 
   static const heroBg = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFFFFE3CC), Color(0xFFFFF6EC), GlidoColors.bg],
-    stops: [0, 0.55, 1],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [GlidoColors.primary, GlidoColors.primaryDark, GlidoColors.ink],
+    stops: [0, 0.45, 0.95],
   );
 
   static const walletCard = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFFF7F1F), GlidoColors.primary, Color(0xFFB84500)],
+    colors: [Color(0xFFFF7A50), GlidoColors.primary, GlidoColors.primaryDark],
+  );
+
+  static const foodTile = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFFF7A50), GlidoColors.food, GlidoColors.foodDark],
+  );
+
+  static const groceryTile = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF34D399), GlidoColors.grocery, GlidoColors.groceryDark],
+  );
+
+  static const cabTile = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF7B8CFF), GlidoColors.cab, GlidoColors.cabDark],
   );
 }
 
@@ -52,7 +82,7 @@ List<BoxShadow> glidoButtonShadow() => [
     ];
 
 ThemeData buildGlidoTheme() {
-  final textTheme = GoogleFonts.spaceGroteskTextTheme().apply(
+  final textTheme = GoogleFonts.plusJakartaSansTextTheme().apply(
     bodyColor: GlidoColors.ink,
     displayColor: GlidoColors.ink,
   );
@@ -78,10 +108,10 @@ ThemeData buildGlidoTheme() {
     cardTheme: CardThemeData(
       color: GlidoColors.surface,
       elevation: 3,
-      shadowColor: Colors.black.withValues(alpha: 0.12),
+      shadowColor: Colors.black.withValues(alpha: 0.08),
       surfaceTintColor: Colors.transparent,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -89,7 +119,7 @@ ThemeData buildGlidoTheme() {
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: const StadiumBorder(),
         textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
       ),
     ),
@@ -98,7 +128,7 @@ ThemeData buildGlidoTheme() {
         foregroundColor: GlidoColors.ink,
         side: const BorderSide(color: GlidoColors.border, width: 1.4),
         padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: const StadiumBorder(),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -106,15 +136,15 @@ ThemeData buildGlidoTheme() {
       fillColor: GlidoColors.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: GlidoColors.primary, width: 1.8),
       ),
     ),

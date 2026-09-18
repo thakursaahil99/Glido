@@ -9,6 +9,8 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import type { City, Ride, RideType, WalletSummary } from "@/lib/types";
 import { MapView, type MapMarker } from "@/components/map-view";
+import { PhoneRequiredField } from "@/components/phone-required-field";
+import { TriServiceSwitcher } from "@/components/tri-service-switcher";
 
 const DEFAULT_CENTER = { lat: 18.945, lng: 72.822 }; // Marine Drive, Mumbai — used if geolocation is unavailable/denied
 
@@ -201,9 +203,15 @@ export default function CabPage() {
   const circles = zones.map((z) => ({ lat: z.centerLat!, lng: z.centerLng!, radiusMeters: z.serviceRadiusKm * 1000 }));
   const center = drop ?? pickup ?? DEFAULT_CENTER;
 
+  function openField(mode: "pickup" | "drop") {
+    setSettingMode(mode);
+    setShowResults(true);
+    setSearchQuery("");
+  }
+
   return (
-    <div className="pb-28">
-      <div className="relative">
+    <div className="pb-10 bg-[var(--glido-bg)] min-h-screen">
+      <div className="relative h-[34vh] md:h-[42vh]">
         <MapView
           center={center}
           zoom={14}
@@ -211,92 +219,98 @@ export default function CabPage() {
           circles={circles}
           polyline={pickup && drop ? [pickup, drop] : undefined}
           onClick={onMapClick}
-          height="42vh"
+          height="100%"
+          className="!rounded-none"
         />
-        <div className="absolute top-3 left-3 right-3 md:left-auto md:right-4 md:w-80 card-glido p-2 text-xs text-[var(--glido-muted)] shadow-lg">
-          {locating
-            ? "Finding your location..."
-            : `Search below or tap the map to set your ${settingMode === "pickup" ? "pickup" : "drop"} point`}
-        </div>
       </div>
 
-      <div className="container-glido py-5 max-w-lg">
-        <h1 className="text-xl font-bold mb-4">Book a ride</h1>
+      <div className="container-glido max-w-lg -mt-10 relative z-10">
+        <TriServiceSwitcher className="shadow-xl mb-3" />
 
-        <div className="space-y-2 mb-5">
-          <button
-            onClick={() => setSettingMode("pickup")}
-            className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left ${
-              settingMode === "pickup" ? "border-[var(--glido-primary)] bg-[var(--glido-primary-light)]" : "border-[var(--glido-border)] bg-white"
-            }`}
-          >
-            <span className="h-3.5 w-3.5 rounded-full shrink-0" style={{ background: "#0EA36C" }} />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-[var(--glido-muted)]">Pickup</p>
-              <p className="text-sm font-medium truncate">{pickup ? pickup.address : "Setting your location..."}</p>
-            </div>
-          </button>
-          <button
-            onClick={() => setSettingMode("drop")}
-            className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left ${
-              settingMode === "drop" ? "border-[var(--glido-primary)] bg-[var(--glido-primary-light)]" : "border-[var(--glido-border)] bg-white"
-            }`}
-          >
-            <span className="h-3.5 w-3.5 shrink-0 rotate-45" style={{ background: "#E40014" }} />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-[var(--glido-muted)]">Drop</p>
-              <p className="text-sm font-medium truncate">{drop ? drop.address : "Search or tap the map to set your destination"}</p>
-            </div>
-          </button>
-        </div>
+        <div ref={searchBoxRef} className="card-glido p-4 shadow-xl">
+          <h1 className="text-lg font-bold mb-3">Where are you headed?</h1>
 
-        <div ref={searchBoxRef} className="relative mb-5">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--glido-muted)]" />
-            <input
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowResults(true);
-              }}
-              onFocus={() => setShowResults(true)}
-              placeholder={`Search ${settingMode === "pickup" ? "pickup" : "drop"} location...`}
-              className="input-glido pl-9"
-            />
+            {/* connecting line between the pickup/drop dots */}
+            <div className="absolute left-[9px] top-6 bottom-6 w-px bg-[var(--glido-border)]" />
+
+            <button
+              onClick={() => openField("pickup")}
+              className={`w-full flex items-center gap-3 py-2.5 rounded-lg text-left ${
+                settingMode === "pickup" && showResults ? "bg-[var(--glido-primary-light)]" : ""
+              }`}
+            >
+              <span className="h-2.5 w-2.5 rounded-full shrink-0 ml-1" style={{ background: "#0EA36C" }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wide text-[var(--glido-muted)]">Pickup</p>
+                <p className="text-sm font-medium truncate">{locating ? "Finding your location..." : pickup ? pickup.address : "Set pickup point"}</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => openField("drop")}
+              className={`w-full flex items-center gap-3 py-2.5 rounded-lg text-left ${
+                settingMode === "drop" && showResults ? "bg-[var(--glido-primary-light)]" : ""
+              }`}
+            >
+              <span className="h-2.5 w-2.5 shrink-0 rotate-45 ml-1" style={{ background: "#E40014" }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wide text-[var(--glido-muted)]">Drop</p>
+                <p className="text-sm font-medium truncate">{drop ? drop.address : "Where to?"}</p>
+              </div>
+            </button>
           </div>
-          {showResults && searchQuery.trim().length >= 3 && (
-            <div className="absolute z-10 mt-1 w-full card-glido max-h-64 overflow-y-auto p-1">
-              {searching && <p className="px-3 py-2 text-sm text-[var(--glido-muted)]">Searching...</p>}
-              {!searching && searchResults.length === 0 && (
-                <p className="px-3 py-2 text-sm text-[var(--glido-muted)]">No results found.</p>
-              )}
-              {!searching &&
-                searchResults.map((r, i) => (
-                  <button
-                    key={i}
-                    onClick={() => selectSearchResult(r)}
-                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50 truncate"
-                  >
-                    {r.address}
-                  </button>
-                ))}
+
+          {showResults && (
+            <div className="mt-3 pt-3 border-t border-[var(--glido-border)]">
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--glido-muted)]" />
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={`Search ${settingMode === "pickup" ? "pickup" : "drop"} location...`}
+                  className="input-glido pl-9"
+                />
+              </div>
+              <div className="max-h-56 overflow-y-auto mt-1 -mx-1">
+                {searchQuery.trim().length >= 3 && searching && (
+                  <p className="px-3 py-2 text-sm text-[var(--glido-muted)]">Searching...</p>
+                )}
+                {searchQuery.trim().length >= 3 && !searching && searchResults.length === 0 && (
+                  <p className="px-3 py-2 text-sm text-[var(--glido-muted)]">No results found.</p>
+                )}
+                {!searching &&
+                  searchResults.map((r, i) => (
+                    <button
+                      key={i}
+                      onClick={() => selectSearchResult(r)}
+                      className="w-full text-left px-3 py-2.5 rounded-lg text-sm hover:bg-gray-50 flex items-start gap-2"
+                    >
+                      <span className="mt-0.5 text-[var(--glido-muted)]">
+                        <Search size={13} />
+                      </span>
+                      <span className="truncate">{r.address}</span>
+                    </button>
+                  ))}
+              </div>
             </div>
           )}
         </div>
 
         {pickup && drop && zoneError && (
-          <div className="card-glido p-4 mb-4 border-l-4 border-l-[var(--glido-danger)] text-sm">
+          <div className="card-glido p-4 mt-4 border-l-4 border-l-[var(--glido-danger)] text-sm">
             <p className="font-semibold text-[var(--glido-danger)]">Not serviceable yet</p>
             <p className="text-[var(--glido-muted)] mt-1">{zoneError}</p>
           </div>
         )}
 
         {pickup && drop && !zoneError && (
-          <>
+          <div className="mt-5">
             <h2 className="font-semibold mb-3">Choose a ride</h2>
             {rideTypes === null && <div className="h-24 skeleton mb-4" />}
             <div className="space-y-2 mb-5">
-              {rideTypes?.map((rt) => {
+              {rideTypes?.map((rt, i) => {
                 const est = estimates[rt.id];
                 const selected = selectedRideTypeId === rt.id;
                 return (
@@ -304,39 +318,52 @@ export default function CabPage() {
                     key={rt.id}
                     onClick={() => setSelectedRideTypeId(rt.id)}
                     disabled={!est}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left disabled:opacity-50 ${
-                      selected ? "border-[var(--glido-primary)] bg-[var(--glido-primary-light)]" : "border-[var(--glido-border)] bg-white"
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl text-left disabled:opacity-50 transition-all ${
+                      selected ? "shadow-md ring-2" : "border border-[var(--glido-border)] bg-white"
                     }`}
+                    style={selected ? { background: "var(--glido-cab-light)", boxShadow: `0 0 0 2px var(--glido-cab)` } : undefined}
                   >
-                    <div className="h-12 w-12 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                    <div
+                      className="h-14 w-14 rounded-lg overflow-hidden shrink-0 flex items-center justify-center"
+                      style={{ background: selected ? "var(--glido-cab)" : "var(--glido-bg)" }}
+                    >
                       {resolveMediaUrl(rt.imageUrl) ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={resolveMediaUrl(rt.imageUrl)} alt={rt.name} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center">
-                          <Car size={22} className="text-gray-400" />
-                        </div>
+                        <Car size={24} className={selected ? "text-white" : "text-[var(--glido-muted)]"} />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{rt.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-semibold text-sm">{rt.name}</p>
+                        {i === 0 && (
+                          <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: "var(--glido-accent-light)", color: "var(--glido-accent)" }}>
+                            Fastest
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-[var(--glido-muted)]">
-                        {rt.capacity} seats {est ? `· ${est.durationMin} min` : estimating ? "· calculating..." : ""}
+                        {rt.capacity} seats {est ? `· ${est.durationMin} min away` : estimating ? "· calculating..." : ""}
                       </p>
                     </div>
-                    <p className="font-bold text-sm shrink-0">{est ? `₹${est.estimatedFare.toFixed(0)}` : "—"}</p>
+                    <p className="font-bold text-base shrink-0" style={{ color: selected ? "var(--glido-cab-dark)" : "var(--glido-ink)" }}>
+                      {est ? `₹${est.estimatedFare.toFixed(0)}` : "—"}
+                    </p>
                   </button>
                 );
               })}
             </div>
 
+            {user && <PhoneRequiredField />}
+
             {user && (
               <div className="flex gap-2 mb-4">
-                <label className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border text-sm font-medium cursor-pointer has-[:checked]:border-[var(--glido-primary)] has-[:checked]:bg-[var(--glido-primary-light)] border-[var(--glido-border)]">
+                <label className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border text-sm font-medium cursor-pointer has-[:checked]:border-[var(--glido-cab)] has-[:checked]:bg-[var(--glido-cab-light)] border-[var(--glido-border)]">
                   <input type="radio" className="hidden" checked={paymentMethod === "COD"} onChange={() => setPaymentMethod("COD")} />
                   Cash to driver
                 </label>
-                <label className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border text-sm font-medium cursor-pointer has-[:checked]:border-[var(--glido-primary)] has-[:checked]:bg-[var(--glido-primary-light)] border-[var(--glido-border)]">
+                <label className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border text-sm font-medium cursor-pointer has-[:checked]:border-[var(--glido-cab)] has-[:checked]:bg-[var(--glido-cab-light)] border-[var(--glido-border)]">
                   <input type="radio" className="hidden" checked={paymentMethod === "WALLET"} onChange={() => setPaymentMethod("WALLET")} />
                   Wallet · ₹{(wallet?.balance ?? 0).toFixed(0)}
                 </label>
@@ -352,11 +379,13 @@ export default function CabPage() {
               onClick={bookRide}
               disabled={
                 booking ||
+                !user?.phone ||
                 !selectedRideTypeId ||
                 !estimates[selectedRideTypeId ?? ""] ||
                 (paymentMethod === "WALLET" && (wallet?.balance ?? 0) < (estimates[selectedRideTypeId ?? ""]?.estimatedFare ?? 0))
               }
-              className="btn-primary w-full"
+              className="w-full rounded-full py-3.5 font-bold text-white shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: "var(--glido-cab)", boxShadow: "0 8px 20px -4px rgba(62,82,255,0.4)" }}
             >
               {booking
                 ? "Booking..."
@@ -364,11 +393,15 @@ export default function CabPage() {
                   ? "Loading..."
                   : !user
                     ? "Log in to book"
-                    : paymentMethod === "WALLET"
-                      ? "Book ride · Pay from wallet"
-                      : "Book ride · Pay cash to driver"}
+                    : !user.phone
+                      ? "Add phone number to continue"
+                      : !selectedRideTypeId || !estimates[selectedRideTypeId]
+                        ? "Calculating fare..."
+                        : paymentMethod === "WALLET"
+                          ? "Book ride · Pay from wallet"
+                          : "Book ride · Pay cash to driver"}
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>

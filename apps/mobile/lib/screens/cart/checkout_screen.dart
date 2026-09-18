@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../models/user.dart';
+import '../../state/auth_state.dart';
 import '../../state/cart_state.dart';
+import '../../widgets/phone_required_field.dart';
 import '../orders/order_detail_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -124,6 +126,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                const PhoneRequiredField(),
                 const Text('Delivery address', style: TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
                 if (_addresses!.isEmpty) const Text('Add an address from your profile before checking out.'),
@@ -210,6 +213,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: (_placing ||
+                          context.watch<AuthState>().user?.phone == null ||
                           _selectedAddressId == null ||
                           (_paymentMethod == 'WALLET' && _walletBalance < estimatedTotal))
                       ? null

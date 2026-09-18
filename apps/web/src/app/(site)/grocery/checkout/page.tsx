@@ -8,6 +8,7 @@ import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useGroceryCart } from "@/lib/grocery-cart-context";
 import { useToast } from "@/lib/toast-context";
+import { PhoneRequiredField } from "@/components/phone-required-field";
 import type { Address, GroceryOrder, PlatformSettings, WalletSummary } from "@/lib/types";
 
 export default function GroceryCheckoutPage() {
@@ -129,6 +130,8 @@ export default function GroceryCheckoutPage() {
   return (
     <div className="container-glido py-8 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+
+      <PhoneRequiredField />
 
       <section className="card-glido p-4 mb-4">
         <h2 className="font-semibold mb-3">Delivery address</h2>
@@ -295,7 +298,7 @@ export default function GroceryCheckoutPage() {
 
       <button
         onClick={placeOrder}
-        disabled={placing || !selectedAddressId || (paymentMethod === "WALLET" && (wallet?.balance ?? 0) < estimatedTotal)}
+        disabled={placing || !user?.phone || !selectedAddressId || (paymentMethod === "WALLET" && (wallet?.balance ?? 0) < estimatedTotal)}
         className="btn-primary w-full"
       >
         {placing ? "Placing order..." : `Place order · ₹${estimatedTotal.toFixed(2)}`}

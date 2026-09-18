@@ -61,3 +61,13 @@ export class LoginDto {
   @Length(6, 100)
   password: string;
 }
+
+export class GoogleLoginDto {
+  @IsString()
+  idToken: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 50)
+  referralCode?: string;
+}

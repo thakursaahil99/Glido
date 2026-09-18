@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import type { Address } from "@/lib/types";
 import { ConfirmDialog } from "@/components/modal";
+import { PhoneRequiredField } from "@/components/phone-required-field";
 
 export default function ProfilePage() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -62,6 +63,8 @@ export default function ProfilePage() {
         </div>
         <span className="badge badge-status uppercase">{user.role}</span>
       </div>
+
+      <PhoneRequiredField />
 
       <Link href="/wallet" className="card-glido p-4 mb-4 flex items-center justify-between hover:border-[var(--glido-primary)]">
         <div>

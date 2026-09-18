@@ -61,6 +61,15 @@ function SupportInbox() {
     }
   }
 
+  async function refreshSelected(userId: string) {
+    try {
+      const res = await api.get<{ user: ConversationUser; messages: SupportMessage[] }>(`/admin/support/${userId}/messages`);
+      setMessages(res.messages);
+    } catch {
+      // best-effort — next poll will retry
+    }
+  }
+
   useEffect(() => {
     loadConversations();
     const socket = getSocket();
@@ -75,10 +84,19 @@ function SupportInbox() {
       });
     };
     socket.on("support:message", handler);
+    // Polling fallback since the live serverless API can't push over a socket.
+    const poll = setInterval(loadConversations, 8000);
     return () => {
       socket.off("support:message", handler);
+      clearInterval(poll);
     };
   }, []);
+
+  useEffect(() => {
+    if (!selectedUserId) return;
+    const poll = setInterval(() => refreshSelected(selectedUserId), 5000);
+    return () => clearInterval(poll);
+  }, [selectedUserId]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });

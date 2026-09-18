@@ -53,6 +53,11 @@ export class GroceryOrdersService {
   ) {}
 
   async create(userId: string, dto: CreateGroceryOrderDto) {
+    const orderingUser = await this.prisma.user.findUnique({ where: { id: userId }, select: { phone: true } });
+    if (!orderingUser?.phone) {
+      throw new BadRequestException("Please add a phone number to your profile before placing an order.");
+    }
+
     const address = await this.prisma.address.findFirst({ where: { id: dto.addressId, userId } });
     if (!address) throw new BadRequestException("Delivery address not found.");
 

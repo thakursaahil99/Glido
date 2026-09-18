@@ -53,8 +53,12 @@ export default function RideTrackingPage() {
       if (payload.rideId === id || payload.orderId === id) load();
     };
     socket.on("order:update", handler);
+    // Polling fallback — the live serverless API doesn't hold a persistent
+    // socket connection, so push updates aren't guaranteed; poll while the ride is active.
+    const poll = setInterval(load, 6000);
     return () => {
       socket.off("order:update", handler);
+      clearInterval(poll);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);

@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import type { Paginated, Restaurant } from "@/lib/types";
 import { RestaurantCard, RestaurantCardSkeleton } from "@/components/restaurant-card";
 import { EmptyState, ErrorState } from "@/components/empty-state";
+import { TriServiceSwitcher } from "@/components/tri-service-switcher";
 
 type SortKey = "relevance" | "rating" | "delivery_time" | "cost_low" | "cost_high";
 
@@ -72,17 +73,37 @@ function FoodListing() {
   }
 
   return (
-    <div className="container-glido py-8">
-      <h1 className="text-2xl font-bold mb-4">Order food online</h1>
-      <form onSubmit={onSubmit} className="flex gap-2 mb-6 max-w-lg">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search restaurants or cuisines..."
-          className="input-glido"
+    <div className="pb-8">
+      <section className="relative overflow-hidden bg-[var(--glido-ink)] mb-6">
+        <div
+          className="absolute inset-0 opacity-90"
+          style={{ background: "radial-gradient(120% 100% at 15% 0%, #ff8a00 0%, var(--glido-food) 45%, #14121a 85%)" }}
         />
-        <button className="btn-primary shrink-0">Search</button>
-      </form>
+        <div className="container-glido relative z-10 py-8">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Order food online</h1>
+          <p className="text-sm text-white/80 mt-1">Restaurants and cuisines near you, delivered hot.</p>
+          <form onSubmit={onSubmit} className="mt-4 flex gap-2 max-w-lg">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search restaurants or cuisines..."
+              className="input-glido !border-none shadow-xl"
+            />
+            <button
+              className="shrink-0 rounded-2xl px-5 font-bold text-white shadow-xl transition-transform hover:-translate-y-0.5"
+              style={{ background: "linear-gradient(120deg, #ff8a00, var(--glido-food) 60%, var(--glido-food-dark))" }}
+            >
+              Search
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <div className="container-glido -mt-3 mb-5">
+        <TriServiceSwitcher className="shadow-lg" />
+      </div>
+
+      <div className="container-glido">
 
       {!error && !loading && restaurants && restaurants.length > 0 && (
         <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
@@ -130,6 +151,7 @@ function FoodListing() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { X } from "lucide-react";
 import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useToast } from "@/lib/toast-context";
-import type { MenuCategory, MenuItem, Restaurant } from "@/lib/types";
+import type { City, MenuCategory, MenuItem, Restaurant } from "@/lib/types";
 import { ErrorState } from "@/components/empty-state";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { Modal } from "@/components/modal";
@@ -24,6 +24,7 @@ function RestaurantDetailContent() {
   const { show } = useToast();
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [cities, setCities] = useState<City[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [categoryName, setCategoryName] = useState("");
@@ -44,6 +45,10 @@ function RestaurantDetailContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    api.get<City[]>("/cities").then(setCities).catch(() => {});
+  }, []);
+
   async function saveDetails(e: React.FormEvent) {
     e.preventDefault();
     if (!restaurant) return;
@@ -53,9 +58,16 @@ function RestaurantDetailContent() {
         description: restaurant.description,
         cuisineTags: restaurant.cuisineTags,
         imageUrl: restaurant.imageUrl,
+        cityId: restaurant.cityId || undefined,
+        addressLine: restaurant.addressLine || undefined,
+        lat: restaurant.lat ?? undefined,
+        lng: restaurant.lng ?? undefined,
+        openingTime: restaurant.openingTime,
+        closingTime: restaurant.closingTime,
         deliveryFee: restaurant.deliveryFee,
         packagingFee: restaurant.packagingFee,
         minOrderAmount: restaurant.minOrderAmount,
+        commissionPercent: restaurant.commissionPercent,
         isOpen: restaurant.isOpen,
       });
       show("Restaurant updated", "success");
@@ -131,10 +143,22 @@ function RestaurantDetailContent() {
 
   return (
     <div className="max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-1">
         <h1 className="text-2xl font-bold">{restaurant.name}</h1>
         <span className="badge badge-status">{restaurant.status}</span>
       </div>
+      <p className="text-sm text-[var(--glido-muted)] mb-6">
+        ★ {restaurant.ratingAvg.toFixed(1)} ({restaurant.ratingCount} ratings)
+        {restaurant.createdAt && <> · Joined {new Date(restaurant.createdAt).toLocaleDateString()}</>}
+      </p>
+
+      {restaurant.owner && (
+        <div className="card-glido p-4 mb-6 text-sm">
+          <h2 className="font-semibold mb-2">Owner account</h2>
+          <p>{restaurant.owner.name ?? "—"}</p>
+          <p className="text-[var(--glido-muted)] text-xs">{restaurant.owner.email ?? "—"} · {restaurant.owner.phone ?? "—"}</p>
+        </div>
+      )}
 
       <form onSubmit={saveDetails} className="card-glido p-4 mb-6 space-y-2">
         <h2 className="font-semibold mb-1">Restaurant details</h2>
@@ -142,6 +166,41 @@ function RestaurantDetailContent() {
         <textarea className="input-glido" rows={2} value={restaurant.description ?? ""} onChange={(e) => setRestaurant({ ...restaurant, description: e.target.value })} />
         <input className="input-glido" placeholder="Cuisine tags" value={restaurant.cuisineTags ?? ""} onChange={(e) => setRestaurant({ ...restaurant, cuisineTags: e.target.value })} />
         <ImageUploadField label="Cover image" value={restaurant.imageUrl ?? ""} onChange={(imageUrl) => setRestaurant({ ...restaurant, imageUrl })} />
+        <div className="grid grid-cols-2 gap-2">
+          <label className="text-xs">
+            City
+            <select className="input-glido mt-1" value={restaurant.cityId ?? ""} onChange={(e) => setRestaurant({ ...restaurant, cityId: e.target.value })}>
+              <option value="">Select city</option>
+              {cities.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs">
+            Address
+            <input className="input-glido mt-1" value={restaurant.addressLine ?? ""} onChange={(e) => setRestaurant({ ...restaurant, addressLine: e.target.value })} />
+          </label>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="text-xs">
+            Latitude
+            <input type="number" step="any" className="input-glido mt-1" value={restaurant.lat ?? ""} onChange={(e) => setRestaurant({ ...restaurant, lat: e.target.value ? Number(e.target.value) : null })} />
+          </label>
+          <label className="text-xs">
+            Longitude
+            <input type="number" step="any" className="input-glido mt-1" value={restaurant.lng ?? ""} onChange={(e) => setRestaurant({ ...restaurant, lng: e.target.value ? Number(e.target.value) : null })} />
+          </label>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="text-xs">
+            Opening time
+            <input type="time" className="input-glido mt-1" value={restaurant.openingTime} onChange={(e) => setRestaurant({ ...restaurant, openingTime: e.target.value })} />
+          </label>
+          <label className="text-xs">
+            Closing time
+            <input type="time" className="input-glido mt-1" value={restaurant.closingTime} onChange={(e) => setRestaurant({ ...restaurant, closingTime: e.target.value })} />
+          </label>
+        </div>
         <div className="grid grid-cols-3 gap-2">
           <label className="text-xs">
             Delivery fee
@@ -156,6 +215,10 @@ function RestaurantDetailContent() {
             <input type="number" className="input-glido mt-1" value={restaurant.minOrderAmount} onChange={(e) => setRestaurant({ ...restaurant, minOrderAmount: Number(e.target.value) })} />
           </label>
         </div>
+        <label className="text-xs block">
+          Commission % (Glido's cut per order)
+          <input type="number" className="input-glido mt-1" value={restaurant.commissionPercent} onChange={(e) => setRestaurant({ ...restaurant, commissionPercent: Number(e.target.value) })} />
+        </label>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={restaurant.isOpen} onChange={(e) => setRestaurant({ ...restaurant, isOpen: e.target.checked })} />
           Currently open for orders

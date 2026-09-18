@@ -10,6 +10,20 @@ export interface User {
   permissions?: Permission[];
   referralCode?: string;
   loyaltyPoints?: number;
+  status?: "ACTIVE" | "BLOCKED";
+  createdAt?: string;
+}
+
+export interface UserAdminDetail extends User {
+  status: "ACTIVE" | "BLOCKED";
+  createdAt: string;
+  addresses: Address[];
+  wallet: { balance: number; transactions: WalletTransaction[] } | null;
+  orders: { id: string; orderNumber: string; status: string; totalAmount: number; createdAt: string; restaurant?: { name: string } }[];
+  groceryOrders: { id: string; orderNumber: string; status: string; totalAmount: number; createdAt: string }[];
+  rides: { id: string; rideNumber: string; status: string; estimatedFare: number; finalFare?: number | null; createdAt: string }[];
+  referrals: { id: string; name: string | null; phone: string | null; email: string | null; createdAt: string }[];
+  referredBy?: { id: string; name: string | null } | null;
 }
 
 export interface ReferralSummary {
@@ -77,14 +91,24 @@ export interface Restaurant {
   cuisineTags?: string | null;
   imageUrl?: string | null;
   cityId?: string | null;
+  city?: City;
+  addressLine?: string | null;
+  lat?: number | null;
+  lng?: number | null;
   status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
   isOpen: boolean;
+  openingTime: string;
+  closingTime: string;
   avgDeliveryTimeMin: number;
   deliveryFee: number;
   packagingFee: number;
   minOrderAmount: number;
+  commissionPercent: number;
   ratingAvg: number;
   ratingCount: number;
+  ownerUserId?: string | null;
+  owner?: { id: string; name: string | null; email: string | null; phone: string | null; createdAt: string } | null;
+  createdAt?: string;
   menuCategories?: MenuCategory[];
   menuItems?: MenuItem[];
 }
@@ -301,6 +325,7 @@ export interface Driver {
   currentLng?: number | null;
   ratingAvg: number;
   ratingCount: number;
+  createdAt: string;
 }
 
 export interface DeliveryPartner {
@@ -318,6 +343,7 @@ export interface DeliveryPartner {
   currentLng?: number | null;
   ratingAvg: number;
   ratingCount: number;
+  createdAt: string;
 }
 
 export interface RideStatusHistoryEntry {

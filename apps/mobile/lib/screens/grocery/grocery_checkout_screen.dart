@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../models/user.dart';
+import '../../state/auth_state.dart';
 import '../../state/grocery_cart_state.dart';
+import '../../widgets/phone_required_field.dart';
 import 'grocery_order_detail_screen.dart';
 
 class GroceryCheckoutScreen extends StatefulWidget {
@@ -115,6 +117,7 @@ class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                const PhoneRequiredField(),
                 const Text('Delivery address', style: TextStyle(fontWeight: FontWeight.w700)),
                 ..._addresses!.map((a) => RadioListTile<String>(
                       value: a.id,
@@ -191,7 +194,10 @@ class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
                 ],
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: (_placing || _selectedAddressId == null || (_paymentMethod == 'WALLET' && _walletBalance < total))
+                  onPressed: (_placing ||
+                          context.watch<AuthState>().user?.phone == null ||
+                          _selectedAddressId == null ||
+                          (_paymentMethod == 'WALLET' && _walletBalance < total))
                       ? null
                       : () => _placeOrder(cart),
                   child: Text(_placing ? 'Placing order...' : 'Place order · ₹${total.toStringAsFixed(2)}'),

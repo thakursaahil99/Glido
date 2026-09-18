@@ -39,6 +39,17 @@ class AuthState extends ChangeNotifier {
     return user!;
   }
 
+  Future<GlidoUser> googleLogin(String idToken, {String? referralCode}) async {
+    final res = await ApiClient.instance.post<Map<String, dynamic>>('/auth/google', {
+      'idToken': idToken,
+      if (referralCode != null && referralCode.isNotEmpty) 'referralCode': referralCode,
+    });
+    await ApiClient.instance.setTokens(res['accessToken'], res['refreshToken']);
+    user = GlidoUser.fromJson(res['user']);
+    notifyListeners();
+    return user!;
+  }
+
   Future<GlidoUser> register(String name, String identifier, String password) async {
     final res = await ApiClient.instance.post<Map<String, dynamic>>('/auth/register', {
       'name': name,

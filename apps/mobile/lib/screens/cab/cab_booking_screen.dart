@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../models/cab.dart';
+import '../../state/auth_state.dart';
+import '../../widgets/phone_required_field.dart';
 import '../notifications/notification_bell.dart';
 import 'ride_tracking_screen.dart';
 
@@ -15,6 +19,15 @@ class _Point {
   final double lng;
   final String address;
   _Point(this.lat, this.lng, this.address);
+}
+
+class _SearchResult {
+  final String address;
+  final double lat;
+  final double lng;
+  _SearchResult({required this.address, required this.lat, required this.lng});
+  factory _SearchResult.fromJson(Map<String, dynamic> j) =>
+      _SearchResult(address: j['address'], lat: (j['lat'] as num).toDouble(), lng: (j['lng'] as num).toDouble());
 }
 
 class CabBookingScreen extends StatefulWidget {
@@ -29,6 +42,14 @@ class _CabBookingScreenState extends State<CabBookingScreen> {
   _Point? _drop;
   bool _settingPickup = true;
   bool _locating = true;
+
+  // Search — mirrors the website's pickup/drop address search (Rapido/Uber-style:
+  // tap a field, type, pick a result, the next field auto-activates).
+  bool _searchOpen = false;
+  final _searchCtrl = TextEditingController();
+  List<_SearchResult> _searchResults = [];
+  bool _searching = false;
+  Timer? _debounce;
 
   List<RideType>? _rideTypes;
   String? _selectedRideTypeId;
@@ -52,6 +73,13 @@ class _CabBookingScreenState extends State<CabBookingScreen> {
       if (mounted) setState(() => _rideTypes = []);
     });
     _locate();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _locate() async {
@@ -87,6 +115,63 @@ class _CabBookingScreenState extends State<CabBookingScreen> {
     } catch (_) {
       return '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}';
     }
+  }
+
+  void _openSearch(bool forPickup) {
+    setState(() {
+      _settingPickup = forPickup;
+      _searchOpen = true;
+      _searchCtrl.text = '';
+      _searchResults = [];
+    });
+  }
+
+  void _onSearchChanged(String q) {
+    _debounce?.cancel();
+    if (q.trim().length < 3) {
+      setState(() => _searchResults = []);
+      return;
+    }
+    setState(() => _searching = true);
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      try {
+        final res = await ApiClient.instance.get<List<dynamic>>('/geocode/search', query: {'q': q.trim()});
+        if (!mounted) return;
+        setState(() {
+          _searchResults = res.map((r) => _SearchResult.fromJson(r)).toList();
+          _searching = false;
+        });
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _searchResults = [];
+            _searching = false;
+          });
+        }
+      }
+    });
+  }
+
+  void _selectSearchResult(_SearchResult r) {
+    setState(() {
+      final point = _Point(r.lat, r.lng, r.address);
+      if (_settingPickup) {
+        _pickup = point;
+        _settingPickup = false; // auto-advance to drop, Rapido/Uber-style
+        if (_drop == null) {
+          _searchOpen = true;
+          _searchCtrl.text = '';
+          _searchResults = [];
+          return;
+        }
+      } else {
+        _drop = point;
+      }
+      _searchOpen = false;
+      _searchCtrl.text = '';
+      _searchResults = [];
+    });
+    if (_pickup != null && _drop != null) _estimateAll();
   }
 
   Future<void> _onMapTap(LatLng point) async {
@@ -168,162 +253,237 @@ class _CabBookingScreenState extends State<CabBookingScreen> {
     final selectedEstimate = _selectedRideTypeId != null ? _estimates[_selectedRideTypeId] : null;
 
     return Scaffold(
+      backgroundColor: GlidoColors.bg,
       appBar: AppBar(title: const Text('Book a ride'), actions: const [NotificationBellButton()]),
       body: Column(
         children: [
-          SizedBox(
-            height: 260,
-            child: Stack(
-              children: [
-                FlutterMap(
-                  options: MapOptions(initialCenter: center, initialZoom: 14, onTap: (_, point) => _onMapTap(point)),
-                  children: [
-                    TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'app.glido.customer'),
-                    MarkerLayer(markers: [
-                      if (_pickup != null)
-                        Marker(point: LatLng(_pickup!.lat, _pickup!.lng), width: 28, height: 28, child: const Icon(Icons.circle, color: Color(0xFF0EA36C), size: 18)),
-                      if (_drop != null)
-                        Marker(point: LatLng(_drop!.lat, _drop!.lng), width: 28, height: 28, child: const Icon(Icons.square, color: Color(0xFFE40014), size: 16)),
-                    ]),
-                  ],
-                ),
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  right: 8,
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Text(
-                        _locating ? 'Finding your location...' : 'Tap the map to set your ${_settingPickup ? 'pickup' : 'drop'} point',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          _PlanCard(
+            pickupLabel: _locating ? 'Finding your location...' : (_pickup?.address ?? 'Set pickup'),
+            dropLabel: _drop?.address ?? 'Where to?',
+            settingPickup: _settingPickup,
+            onTapPickup: () => _openSearch(true),
+            onTapDrop: () => _openSearch(false),
           ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _LocationTile(
-                  color: const Color(0xFF0EA36C),
-                  label: 'Pickup',
-                  value: _pickup?.address ?? 'Setting your location...',
-                  selected: _settingPickup,
-                  onTap: () => setState(() => _settingPickup = true),
+          if (_searchOpen) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: TextField(
+                controller: _searchCtrl,
+                autofocus: true,
+                onChanged: _onSearchChanged,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  hintText: 'Search ${_settingPickup ? 'pickup' : 'drop'} location...',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: () => setState(() {
+                      _searchOpen = false;
+                      _searchCtrl.text = '';
+                      _searchResults = [];
+                    }),
+                  ),
                 ),
-                const SizedBox(height: 8),
-                _LocationTile(
-                  color: const Color(0xFFE40014),
-                  label: 'Drop',
-                  value: _drop?.address ?? 'Tap the map to set your destination',
-                  selected: !_settingPickup,
-                  onTap: () => setState(() => _settingPickup = false),
-                ),
-                const SizedBox(height: 16),
-                if (_pickup != null && _drop != null && _zoneError != null)
-                  Card(
-                    color: GlidoColors.dangerLight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Not serviceable yet', style: TextStyle(color: GlidoColors.danger, fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 4),
-                          Text(_zoneError!, style: const TextStyle(fontSize: 12)),
-                        ],
-                      ),
+              ),
+            ),
+            Expanded(
+              child: _searching
+                  ? const Center(child: CircularProgressIndicator())
+                  : _searchResults.isEmpty
+                      ? Center(
+                          child: Text(
+                            _searchCtrl.text.trim().length < 3 ? 'Type at least 3 characters' : 'No results found',
+                            style: TextStyle(color: GlidoColors.muted),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          itemCount: _searchResults.length,
+                          separatorBuilder: (_, _) => const Divider(height: 1),
+                          itemBuilder: (_, i) {
+                            final r = _searchResults[i];
+                            return ListTile(
+                              leading: const Icon(Icons.location_on_outlined),
+                              title: Text(r.address, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
+                              onTap: () => _selectSearchResult(r),
+                            );
+                          },
+                        ),
+            ),
+          ] else
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  SizedBox(
+                    height: 220,
+                    child: FlutterMap(
+                      options: MapOptions(initialCenter: center, initialZoom: 14, onTap: (_, point) => _onMapTap(point)),
+                      children: [
+                        TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'app.glido.customer'),
+                        MarkerLayer(markers: [
+                          if (_pickup != null)
+                            Marker(point: LatLng(_pickup!.lat, _pickup!.lng), width: 28, height: 28, child: const Icon(Icons.circle, color: Color(0xFF00B368), size: 18)),
+                          if (_drop != null)
+                            Marker(point: LatLng(_drop!.lat, _drop!.lng), width: 28, height: 28, child: const Icon(Icons.square, color: Color(0xFFE40014), size: 16)),
+                        ]),
+                      ],
                     ),
                   ),
-                if (_pickup != null && _drop != null && _zoneError == null) ...[
-                  const Text('Choose a ride', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                  const SizedBox(height: 8),
-                  if (_rideTypes == null) const Center(child: CircularProgressIndicator()),
-                  ...?_rideTypes?.map((rt) {
-                    final est = _estimates[rt.id];
-                    final selected = _selectedRideTypeId == rt.id;
-                    return Card(
-                      color: selected ? GlidoColors.primaryLight : null,
-                      child: ListTile(
-                        onTap: est == null ? null : () => setState(() => _selectedRideTypeId = rt.id),
-                        leading: const Icon(Icons.directions_car),
-                        title: Text(rt.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: Text('${rt.capacity} seats${est != null ? ' · ${est['durationMin']} min' : _estimating ? ' · calculating...' : ''}'),
-                        trailing: Text(est != null ? '₹${(est['estimatedFare'] as num).toStringAsFixed(0)}' : '—', style: const TextStyle(fontWeight: FontWeight.w800)),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ChoiceChip(
-                          label: const Text('Cash to driver'),
-                          selected: _paymentMethod == 'COD',
-                          onSelected: (_) => setState(() => _paymentMethod = 'COD'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ChoiceChip(
-                          label: const Text('Wallet'),
-                          selected: _paymentMethod == 'WALLET',
-                          onSelected: (_) => setState(() => _paymentMethod = 'WALLET'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: (_booking || selectedEstimate == null) ? null : _bookRide,
-                    child: Text(_booking ? 'Booking...' : 'Book ride'),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_pickup != null && _drop != null && _zoneError != null)
+                          Card(
+                            color: GlidoColors.dangerLight,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Not serviceable yet', style: TextStyle(color: GlidoColors.danger, fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 4),
+                                  Text(_zoneError!, style: const TextStyle(fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        if (_pickup != null && _drop == null)
+                          Text('Tap "Where to?" above to search a destination, or tap the map.', style: TextStyle(color: GlidoColors.muted, fontSize: 12.5)),
+                        if (_pickup != null && _drop != null && _zoneError == null) ...[
+                          const Text('Choose a ride', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          const SizedBox(height: 8),
+                          if (_rideTypes == null) const Center(child: CircularProgressIndicator()),
+                          ...?_rideTypes?.map((rt) {
+                            final est = _estimates[rt.id];
+                            final selected = _selectedRideTypeId == rt.id;
+                            return Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(color: selected ? GlidoColors.primary : Colors.transparent, width: 1.5),
+                              ),
+                              color: selected ? GlidoColors.primaryLight : Colors.white,
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                onTap: est == null ? null : () => setState(() => _selectedRideTypeId = rt.id),
+                                leading: CircleAvatar(
+                                  backgroundColor: GlidoColors.bg,
+                                  child: const Icon(Icons.directions_car, color: Colors.black87),
+                                ),
+                                title: Text(rt.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                subtitle: Text('${rt.capacity} seats${est != null ? ' · ${est['durationMin']} min' : _estimating ? ' · calculating...' : ''}'),
+                                trailing: Text(est != null ? '₹${(est['estimatedFare'] as num).toStringAsFixed(0)}' : '—', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ChoiceChip(
+                                  label: const Text('Cash to driver'),
+                                  selected: _paymentMethod == 'COD',
+                                  onSelected: (_) => setState(() => _paymentMethod = 'COD'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ChoiceChip(
+                                  label: const Text('Wallet'),
+                                  selected: _paymentMethod == 'WALLET',
+                                  onSelected: (_) => setState(() => _paymentMethod = 'WALLET'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const PhoneRequiredField(),
+                          Builder(builder: (context) {
+                            final hasPhone = context.watch<AuthState>().user?.phone != null;
+                            final label = _booking
+                                ? 'Booking...'
+                                : !hasPhone
+                                    ? 'Add phone number to continue'
+                                    : selectedEstimate == null
+                                        ? 'Calculating fare...'
+                                        : 'Book ride';
+                            return ElevatedButton(
+                              onPressed: (_booking || selectedEstimate == null || !hasPhone) ? null : _bookRide,
+                              child: Text(label),
+                            );
+                          }),
+                        ],
+                      ],
+                    ),
                   ),
                 ],
-              ],
+              ),
             ),
-          ),
         ],
       ),
     );
   }
 }
 
-class _LocationTile extends StatelessWidget {
-  final Color color;
-  final String label;
-  final String value;
-  final bool selected;
-  final VoidCallback onTap;
+/// Rapido/Uber-style pickup+drop plan card — two tappable rows that open a
+/// live address search instead of relying only on tapping the map.
+class _PlanCard extends StatelessWidget {
+  final String pickupLabel;
+  final String dropLabel;
+  final bool settingPickup;
+  final VoidCallback onTapPickup;
+  final VoidCallback onTapDrop;
 
-  const _LocationTile({required this.color, required this.label, required this.value, required this.selected, required this.onTap});
+  const _PlanCard({
+    required this.pickupLabel,
+    required this.dropLabel,
+    required this.settingPickup,
+    required this.onTapPickup,
+    required this.onTapDrop,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          border: Border.all(color: selected ? GlidoColors.primary : GlidoColors.border),
-          borderRadius: BorderRadius.circular(12),
-          color: selected ? GlidoColors.primaryLight : Colors.white,
-        ),
-        child: Row(
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
           children: [
-            Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: TextStyle(fontSize: 11, color: GlidoColors.muted)),
-                  Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                ],
+            InkWell(
+              onTap: onTapPickup,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Row(
+                  children: [
+                    Container(width: 10, height: 10, decoration: const BoxDecoration(color: Color(0xFF00B368), shape: BoxShape.circle)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(pickupLabel, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(left: 19),
+              child: SizedBox(height: 10, child: VerticalDivider(width: 1)),
+            ),
+            InkWell(
+              onTap: onTapDrop,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Row(
+                  children: [
+                    Container(width: 10, height: 10, color: const Color(0xFFE40014)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(dropLabel, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

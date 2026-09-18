@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/socket_client.dart';
@@ -27,6 +28,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   PartnerOrder? _order;
   String? _error;
   bool _updating = false;
+  Timer? _poll;
 
   @override
   void initState() {
@@ -34,11 +36,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     _load();
     SocketClient.instance.socket.emit('order:subscribe', widget.orderId);
     SocketClient.instance.socket.on('order:update', _onUpdate);
+    _poll = Timer.periodic(const Duration(seconds: 6), (_) => _load());
   }
 
   @override
   void dispose() {
     SocketClient.instance.socket.off('order:update', _onUpdate);
+    _poll?.cancel();
     super.dispose();
   }
 

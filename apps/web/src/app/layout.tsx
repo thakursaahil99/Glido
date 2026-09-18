@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { CartProvider } from "@/lib/cart-context";
 import { GroceryCartProvider } from "@/lib/grocery-cart-context";
 import { ToastProvider } from "@/lib/toast-context";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} h-full antialiased`}>
+    <html lang="en" className={`${plusJakartaSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-[var(--glido-bg)]">
         <ToastProvider>
           <AuthProvider>

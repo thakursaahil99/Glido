@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
@@ -19,6 +20,7 @@ class GroceryOrderDetailScreen extends StatefulWidget {
 class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
   GroceryOrder? _order;
   String? _error;
+  Timer? _poll;
 
   @override
   void initState() {
@@ -27,11 +29,13 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
     final socket = SocketClient.instance.socket;
     socket.emit('order:subscribe', widget.orderId);
     socket.on('order:update', _onUpdate);
+    _poll = Timer.periodic(const Duration(seconds: 6), (_) => _load());
   }
 
   @override
   void dispose() {
     SocketClient.instance.socket.off('order:update', _onUpdate);
+    _poll?.cancel();
     super.dispose();
   }
 

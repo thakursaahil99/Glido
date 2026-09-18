@@ -77,6 +77,11 @@ export class RidesService {
   }
 
   async create(userId: string, dto: CreateRideDto) {
+    const bookingUser = await this.prisma.user.findUnique({ where: { id: userId }, select: { phone: true } });
+    if (!bookingUser?.phone) {
+      throw new BadRequestException("Please add a phone number to your profile before booking a ride.");
+    }
+
     await this.assertPickupServiceable(dto.pickupLat, dto.pickupLng);
 
     const rideType = await this.prisma.rideType.findFirst({ where: { id: dto.rideTypeId, isActive: true } });

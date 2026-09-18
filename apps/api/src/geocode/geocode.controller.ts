@@ -1,11 +1,15 @@
-import { BadRequestException, Controller, Get, Query, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { BadRequestException, Controller, Get, Query } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
 import { GeocodeService } from "./geocode.service";
 
+// Public (no login needed) — like Uber/Zomato, guests can search an address before signing in.
+// Throttled tighter than the global default since we're proxying the free Nominatim API,
+// which caps anonymous usage at ~1 req/sec under one shared User-Agent.
+const GEOCODE_THROTTLE = { default: { ttl: 60_000, limit: 30 } };
+
 @ApiTags("geocode")
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@Throttle(GEOCODE_THROTTLE)
 @Controller("geocode")
 export class GeocodeController {
   constructor(private geocode: GeocodeService) {}

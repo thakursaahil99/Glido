@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Users } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/lib/toast-context";
@@ -84,7 +85,11 @@ function UsersContent() {
             <tbody>
               {(users as Array<User & { status?: string }>).map((u) => (
                 <tr key={u.id} className="border-b border-[var(--glido-border)] last:border-0">
-                  <td className="py-2.5 px-4">{u.name ?? "—"}</td>
+                  <td className="py-2.5 px-4">
+                    <Link href={`/admin/users/${u.id}`} className="font-medium hover:underline hover:text-[var(--glido-primary)]">
+                      {u.name ?? "—"}
+                    </Link>
+                  </td>
                   <td className="py-2.5 px-4">{u.email ?? u.phone}</td>
                   <td className="py-2.5 px-4">{u.role}</td>
                   <td className="py-2.5 px-4">

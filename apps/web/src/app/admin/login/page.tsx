@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
-import { GlidoLogo } from "@/components/logo";
+import { GlidoLogoFull } from "@/components/logo";
 
 function AdminLoginForm() {
   const { passwordLogin } = useAuth();
@@ -32,10 +32,17 @@ function AdminLoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--glido-bg)]">
-      <div className="card-glido p-8 w-full max-w-sm">
-        <GlidoLogo className="text-xl mb-1" />
-        <p className="text-sm text-[var(--glido-muted)] mb-6">Admin Panel</p>
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: "radial-gradient(120% 100% at 15% 0%, var(--glido-food) 0%, var(--glido-cab) 55%, var(--glido-ink) 90%)" }}
+    >
+      <div
+        className="absolute inset-0 opacity-[0.08] pointer-events-none"
+        style={{ backgroundImage: "radial-gradient(circle, white 1.5px, transparent 1.5px)", backgroundSize: "22px 22px" }}
+      />
+      <div className="card-glido p-8 w-full max-w-sm relative z-10 !bg-white/95 backdrop-blur">
+        <GlidoLogoFull className="mb-1" />
+        <p className="text-sm text-[var(--glido-muted)] mt-4 mb-6">Sign in to the admin panel</p>
 
         <form onSubmit={onSubmit} className="space-y-3">
           <label className="block text-sm font-medium">

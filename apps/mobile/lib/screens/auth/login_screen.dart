@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/google_config.dart';
 import '../../core/theme.dart';
 import '../../state/auth_state.dart';
 import '../home/home_shell.dart';
@@ -18,6 +20,45 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordCtrl = TextEditingController(text: 'Customer@123');
   bool _loading = false;
   String? _error;
+
+  Future<void> _submitGoogle() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final googleSignIn = GoogleSignIn(
+        scopes: ['email'],
+        serverClientId: kGoogleServerClientId.isNotEmpty ? kGoogleServerClientId : null,
+      );
+      final account = await googleSignIn.signIn();
+      if (account == null) {
+        setState(() => _loading = false);
+        return; // user cancelled
+      }
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null) {
+        setState(() {
+          _error = 'Could not get a Google sign-in token.';
+          _loading = false;
+        });
+        return;
+      }
+      await context.read<AuthState>().googleLogin(idToken);
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeShell()),
+        (route) => false,
+      );
+    } on ApiException catch (e) {
+      setState(() => _error = e.message);
+    } catch (_) {
+      setState(() => _error = 'Google sign-in failed.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   Future<void> _submit() async {
     setState(() {
@@ -57,8 +98,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     text: TextSpan(
                       style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
                       children: [
-                        TextSpan(text: 'G', style: TextStyle(color: GlidoColors.primary)),
-                        TextSpan(text: 'lido', style: TextStyle(color: GlidoColors.ink)),
+                        TextSpan(text: 'glid', style: TextStyle(color: GlidoColors.ink)),
+                        TextSpan(text: 'o', style: TextStyle(color: GlidoColors.primary)),
                       ],
                     ),
                   ),
@@ -91,6 +132,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       MaterialPageRoute(builder: (_) => const RegisterScreen()),
                     ),
                     child: const Text("Don't have an account? Sign up"),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: GlidoColors.border)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text('or', style: TextStyle(color: GlidoColors.muted, fontSize: 12)),
+                      ),
+                      Expanded(child: Divider(color: GlidoColors.border)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _loading ? null : _submitGoogle,
+                    icon: const Icon(Icons.g_mobiledata, size: 24),
+                    label: const Text('Continue with Google'),
                   ),
                 ],
               ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/api_client.dart';
@@ -20,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<AssignedOrder>? _orders;
   String? _error;
   bool _togglingOnline = false;
+  Timer? _poll;
 
   @override
   void initState() {
@@ -27,11 +29,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _load();
     SocketClient.instance.socket.on('order:update', _onUpdate);
     SocketClient.instance.socket.emit('admin:subscribe');
+    // Polling fallback — the live serverless API doesn't hold a persistent socket connection,
+    // so a newly-assigned order needs an active refresh loop instead of a push event.
+    _poll = Timer.periodic(const Duration(seconds: 8), (_) => _load());
   }
 
   @override
   void dispose() {
     SocketClient.instance.socket.off('order:update', _onUpdate);
+    _poll?.cancel();
     super.dispose();
   }
 

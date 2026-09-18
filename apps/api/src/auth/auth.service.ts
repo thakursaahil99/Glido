@@ -7,6 +7,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
+import { OAuth2Client } from "google-auth-library";
 import { NotificationsService } from "../notifications/notifications.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { WalletService } from "../wallet/wallet.service";
@@ -30,6 +31,8 @@ function isEmail(identifier: string) {
 
 @Injectable()
 export class AuthService {
+  private googleClient: OAuth2Client;
+
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
@@ -37,7 +40,9 @@ export class AuthService {
     private otpSender: OtpSenderService,
     private wallet: WalletService,
     private notifications: NotificationsService,
-  ) {}
+  ) {
+    this.googleClient = new OAuth2Client(this.config.get("GOOGLE_CLIENT_ID"));
+  }
 
   async requestOtp(identifier: string) {
     const normalized = identifier.trim().toLowerCase();
@@ -138,6 +143,61 @@ export class AuthService {
         `₹${REFERRAL_REFERRER_BONUS.toFixed(2)} added to your wallet — your friend just joined Glido.`,
         "SYSTEM",
       );
+    }
+
+    return this.issueTokens(user.id, user.role);
+  }
+
+  async googleLogin(idToken: string, referralCode?: string) {
+    const clientId = this.config.get("GOOGLE_CLIENT_ID");
+    if (!clientId) {
+      throw new BadRequestException("Google sign-in isn't configured yet.");
+    }
+
+    let payload: { email?: string; email_verified?: boolean; name?: string };
+    try {
+      const ticket = await this.googleClient.verifyIdToken({ idToken, audience: clientId });
+      payload = ticket.getPayload() ?? {};
+    } catch {
+      throw new UnauthorizedException("Invalid Google sign-in token.");
+    }
+
+    if (!payload.email || !payload.email_verified) {
+      throw new UnauthorizedException("Could not verify your Google account email.");
+    }
+
+    const normalized = payload.email.trim().toLowerCase();
+    let user = await this.prisma.user.findFirst({ where: { email: normalized } });
+
+    if (!user) {
+      let referrer: { id: string } | null = null;
+      if (referralCode) {
+        referrer = await this.prisma.user.findUnique({ where: { referralCode: referralCode.trim() } });
+      }
+
+      user = await this.prisma.user.create({
+        data: {
+          email: normalized,
+          name: payload.name ?? null,
+          referredById: referrer?.id,
+          wallet: { create: { balance: 0 } },
+        },
+      });
+
+      if (referrer) {
+        await this.wallet.credit(user.id, REFERRAL_REFEREE_BONUS, "Referral welcome bonus");
+        await this.wallet.credit(referrer.id, REFERRAL_REFERRER_BONUS, "Referral bonus", user.id);
+        this.notifications.notify(
+          referrer.id,
+          "You earned a referral bonus!",
+          `₹${REFERRAL_REFERRER_BONUS.toFixed(2)} added to your wallet — your friend just joined Glido.`,
+          "SYSTEM",
+        );
+      }
+    }
+
+    if (user.status !== "ACTIVE") {
+      throw new ForbiddenException("This account has been blocked. Contact Glido support.");
     }
 
     return this.issueTokens(user.id, user.role);

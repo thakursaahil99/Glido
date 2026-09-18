@@ -90,6 +90,13 @@ export class UsersController {
     });
   }
 
+  @Get("admin/users/:id")
+  @Roles("ADMIN")
+  @RequirePermissions("manage_users")
+  adminDetail(@Param("id") id: string) {
+    return this.usersService.adminDetail(id);
+  }
+
   @Patch("admin/users/:id/status")
   @Roles("ADMIN")
   @RequirePermissions("manage_users")

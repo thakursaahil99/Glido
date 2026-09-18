@@ -55,8 +55,10 @@ function RideDetailContent() {
       if (payload.rideId === id || payload.orderId === id) load();
     };
     socket.on("order:update", handler);
+    const poll = setInterval(load, 6000);
     return () => {
       socket.off("order:update", handler);
+      clearInterval(poll);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);

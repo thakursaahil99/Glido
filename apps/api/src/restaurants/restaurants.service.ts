@@ -75,6 +75,8 @@ export class RestaurantsService {
       include: {
         menuCategories: { orderBy: { sortOrder: "asc" } },
         menuItems: { include: { addons: true }, orderBy: { sortOrder: "asc" } },
+        city: true,
+        owner: { select: { id: true, name: true, email: true, phone: true, createdAt: true } },
       },
     });
     if (!restaurant) throw new NotFoundException("Restaurant not found.");

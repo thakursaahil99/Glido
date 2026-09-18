@@ -61,6 +61,11 @@ export class OrdersService {
   ) {}
 
   async create(userId: string, dto: CreateOrderDto) {
+    const orderingUser = await this.prisma.user.findUnique({ where: { id: userId }, select: { phone: true } });
+    if (!orderingUser?.phone) {
+      throw new BadRequestException("Please add a phone number to your profile before placing an order.");
+    }
+
     const restaurant = await this.prisma.restaurant.findUnique({ where: { id: dto.restaurantId } });
     if (!restaurant || restaurant.status !== "APPROVED") {
       throw new NotFoundException("Restaurant not found.");

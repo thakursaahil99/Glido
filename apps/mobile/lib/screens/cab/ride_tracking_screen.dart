@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -24,6 +25,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   int _reviewRating = 5;
   final _reviewCommentCtrl = TextEditingController();
   bool _submittingReview = false;
+  Timer? _poll;
 
   @override
   void initState() {
@@ -32,11 +34,14 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     final socket = SocketClient.instance.socket;
     socket.emit('order:subscribe', widget.rideId);
     socket.on('order:update', _onUpdate);
+    // Polling fallback — the live serverless API doesn't hold a persistent socket connection.
+    _poll = Timer.periodic(const Duration(seconds: 6), (_) => _load());
   }
 
   @override
   void dispose() {
     SocketClient.instance.socket.off('order:update', _onUpdate);
+    _poll?.cancel();
     _reviewCommentCtrl.dispose();
     super.dispose();
   }
@@ -117,7 +122,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                   Polyline(points: [LatLng(ride.pickupLat, ride.pickupLng), LatLng(ride.dropLat, ride.dropLng)], color: GlidoColors.primary, strokeWidth: 3),
                 ]),
                 MarkerLayer(markers: [
-                  Marker(point: LatLng(ride.pickupLat, ride.pickupLng), width: 26, height: 26, child: const Icon(Icons.circle, color: Color(0xFF0EA36C), size: 16)),
+                  Marker(point: LatLng(ride.pickupLat, ride.pickupLng), width: 26, height: 26, child: const Icon(Icons.circle, color: Color(0xFF00B368), size: 16)),
                   Marker(point: LatLng(ride.dropLat, ride.dropLng), width: 26, height: 26, child: const Icon(Icons.square, color: Color(0xFFE40014), size: 14)),
                   if (ride.driver?.currentLat != null && ride.driver?.currentLng != null)
                     Marker(point: LatLng(ride.driver!.currentLat!, ride.driver!.currentLng!), width: 30, height: 30, child: const Icon(Icons.local_taxi, color: Colors.black)),

@@ -42,6 +42,10 @@ export function SupportChatWidget() {
   useEffect(() => {
     if (open && messages === null) load();
     if (open) setHasUnseen(false);
+    if (!open) return;
+    // Polling fallback since the live serverless API can't push over a socket.
+    const poll = setInterval(load, 5000);
+    return () => clearInterval(poll);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 

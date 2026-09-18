@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
 import { useToast } from "@/lib/toast-context";
+import { GoogleSignInButton } from "@/components/google-signin-button";
 
 function LoginForm() {
-  const { register, login } = useAuth();
+  const { register, login, googleLogin } = useAuth();
   const { show } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,6 +22,20 @@ function LoginForm() {
   const [referralCode, setReferralCode] = useState(refFromUrl);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function onGoogleToken(idToken: string) {
+    setError(null);
+    setLoading(true);
+    try {
+      await googleLogin(idToken, referralCode);
+      show("Welcome to Glido!", "success");
+      router.push(redirect);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Google sign-in failed.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -110,6 +125,13 @@ function LoginForm() {
       >
         {mode === "login" ? "New here? Create an account" : "Already have an account? Log in"}
       </button>
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="h-px flex-1 bg-[var(--glido-border)]" />
+        <span className="text-xs text-[var(--glido-muted)]">or</span>
+        <div className="h-px flex-1 bg-[var(--glido-border)]" />
+      </div>
+      <GoogleSignInButton onToken={onGoogleToken} />
 
       <p className="text-xs text-[var(--glido-muted)] mt-6">
         Demo customer account: <code>customer@glido.app</code> / <code>Customer@123</code>. Looking

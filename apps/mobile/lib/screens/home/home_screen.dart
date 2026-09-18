@@ -113,9 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: _QuickTile(
                             icon: Icons.restaurant_menu,
                             label: 'Food',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF7F1F), GlidoColors.primary],
-                            ),
+                            gradient: GlidoGradients.foodTile,
                             onTap: () => widget.onNavigateToTab(1),
                           ),
                         ),
@@ -124,9 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: _QuickTile(
                             icon: Icons.shopping_cart,
                             label: 'Grocery',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF34C285), GlidoColors.success],
-                            ),
+                            gradient: GlidoGradients.groceryTile,
                             onTap: () => widget.onNavigateToTab(2),
                           ),
                         ),
@@ -135,9 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: _QuickTile(
                             icon: Icons.local_taxi,
                             label: 'Cab',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF2F80ED), Color(0xFF1B4FA0)],
-                            ),
+                            gradient: GlidoGradients.cabTile,
                             onTap: () => widget.onNavigateToTab(3),
                           ),
                         ),
@@ -299,23 +293,24 @@ class _Hero extends StatelessWidget {
             text: TextSpan(
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
               children: [
-                TextSpan(text: 'Glido', style: TextStyle(color: GlidoColors.primary)),
+                TextSpan(text: 'glid', style: TextStyle(color: Colors.white)),
+                TextSpan(text: 'o', style: TextStyle(color: GlidoColors.accent)),
               ],
             ),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.location_on, size: 17, color: GlidoColors.primaryDark),
+              const Icon(Icons.location_on, size: 17, color: Colors.white),
               const SizedBox(width: 4),
               const Text(
                 'Mumbai',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Colors.white),
               ),
               const SizedBox(width: 4),
-              Icon(Icons.expand_more, size: 16, color: GlidoColors.muted),
+              const Icon(Icons.expand_more, size: 16, color: Colors.white70),
               const Spacer(),
-              const NotificationBellButton(color: GlidoColors.ink),
+              const NotificationBellButton(color: Colors.white),
             ],
           ),
           const SizedBox(height: 14),
@@ -326,14 +321,15 @@ class _Hero extends StatelessWidget {
               fontWeight: FontWeight.w800,
               height: 1.15,
               letterSpacing: -0.5,
+              color: Colors.white,
             ),
           ),
-          const Text(
+          Text(
             'One app. Everything local.',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: GlidoColors.primaryDark,
+              color: Colors.white.withValues(alpha: 0.9),
             ),
           ),
           const SizedBox(height: 16),

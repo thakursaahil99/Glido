@@ -8,6 +8,7 @@ import { useGroceryCart } from "@/lib/grocery-cart-context";
 import type { GroceryCategory, GroceryProduct, Paginated } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/components/empty-state";
 import { ProductDetailModal } from "@/components/product-gallery-modal";
+import { TriServiceSwitcher } from "@/components/tri-service-switcher";
 
 export default function GroceryPage() {
   const { items, addItem, updateQuantity, itemCount, subtotal } = useGroceryCart();
@@ -55,33 +56,46 @@ export default function GroceryPage() {
 
   return (
     <div className="pb-28">
-      <section className="bg-gradient-to-b from-[var(--glido-primary-light)] to-transparent">
-        <div className="container-glido py-8">
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Groceries, delivered fast</h1>
-          <p className="text-sm text-[var(--glido-muted)] mt-1">Fruits, dairy, snacks and household essentials.</p>
+      <section className="relative overflow-hidden bg-[var(--glido-ink)]">
+        <div
+          className="absolute inset-0 opacity-90"
+          style={{ background: "radial-gradient(120% 100% at 15% 0%, #29d98c 0%, var(--glido-grocery) 45%, #14121a 85%)" }}
+        />
+        <div className="container-glido relative z-10 py-8">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Groceries, delivered fast</h1>
+          <p className="text-sm text-white/80 mt-1">Fruits, dairy, snacks and household essentials.</p>
           <form onSubmit={onSearchSubmit} className="mt-4 flex gap-2 max-w-lg">
             <input
-              className="input-glido"
+              className="input-glido !border-none shadow-xl"
               placeholder="Search for atta, milk, chips..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <button className="btn-primary shrink-0">Search</button>
+            <button
+              className="shrink-0 rounded-2xl px-5 font-bold text-white shadow-xl transition-transform hover:-translate-y-0.5"
+              style={{ background: "linear-gradient(120deg, #29d98c, var(--glido-grocery) 60%, var(--glido-grocery-dark))" }}
+            >
+              Search
+            </button>
           </form>
         </div>
       </section>
+
+      <div className="container-glido -mt-3 mb-5">
+        <TriServiceSwitcher className="shadow-lg" />
+      </div>
 
       <div className="container-glido py-6">
         <div className="flex gap-4 overflow-x-auto pb-2 mb-6">
           <button onClick={() => setActiveCategory(null)} className="flex flex-col items-center gap-1.5 shrink-0 w-16">
             <span
               className={`h-14 w-14 rounded-full flex items-center justify-center text-xl border-2 ${
-                activeCategory === null ? "border-[var(--glido-primary)] bg-[var(--glido-primary-light)]" : "border-[var(--glido-border)] bg-white"
+                activeCategory === null ? "border-[var(--glido-grocery)] bg-[var(--glido-grocery-light)]" : "border-[var(--glido-border)] bg-white"
               }`}
             >
-              <LayoutGrid size={20} className="text-[var(--glido-muted)]" />
+              <LayoutGrid size={20} className={activeCategory === null ? "text-[var(--glido-grocery-dark)]" : "text-[var(--glido-muted)]"} />
             </span>
-            <span className={`text-xs font-medium text-center leading-tight ${activeCategory === null ? "text-[var(--glido-primary-dark)]" : "text-[var(--glido-muted)]"}`}>
+            <span className={`text-xs font-medium text-center leading-tight ${activeCategory === null ? "text-[var(--glido-grocery-dark)]" : "text-[var(--glido-muted)]"}`}>
               All
             </span>
           </button>
@@ -92,8 +106,8 @@ export default function GroceryPage() {
               <button key={c.id} onClick={() => setActiveCategory(c.id)} className="flex flex-col items-center gap-1.5 shrink-0 w-16">
                 <span
                   className={`h-14 w-14 rounded-full overflow-hidden flex items-center justify-center text-xl border-2 ${
-                    active ? "border-[var(--glido-primary)]" : "border-[var(--glido-border)]"
-                  } ${active ? "bg-[var(--glido-primary-light)]" : "bg-white"}`}
+                    active ? "border-[var(--glido-grocery)]" : "border-[var(--glido-border)]"
+                  } ${active ? "bg-[var(--glido-grocery-light)]" : "bg-white"}`}
                 >
                   {catImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -102,7 +116,7 @@ export default function GroceryPage() {
                     <ShoppingBasket size={20} className="text-[var(--glido-muted)]" />
                   )}
                 </span>
-                <span className={`text-xs font-medium text-center leading-tight ${active ? "text-[var(--glido-primary-dark)]" : "text-[var(--glido-muted)]"}`}>
+                <span className={`text-xs font-medium text-center leading-tight ${active ? "text-[var(--glido-grocery-dark)]" : "text-[var(--glido-muted)]"}`}>
                   {c.name}
                 </span>
               </button>
@@ -183,12 +197,13 @@ export default function GroceryPage() {
                             maxStock: p.stockQty,
                           })
                         }
-                        className="btn-secondary w-full mt-2 text-sm !py-1.5"
+                        className="w-full mt-2 text-sm py-1.5 rounded-lg font-bold border-2 transition-colors"
+                        style={{ borderColor: "var(--glido-grocery)", color: "var(--glido-grocery-dark)" }}
                       >
                         Add
                       </button>
                     ) : (
-                      <div className="flex items-center justify-between mt-2 bg-[var(--glido-primary)] rounded-lg text-white">
+                      <div className="flex items-center justify-between mt-2 rounded-lg text-white" style={{ background: "var(--glido-grocery)" }}>
                         <button onClick={() => updateQuantity(p.id, qty - 1)} className="px-3 py-1.5 font-bold">
                           −
                         </button>
@@ -213,7 +228,8 @@ export default function GroceryPage() {
       {itemCount > 0 && (
         <Link
           href="/grocery/cart"
-          className="fixed bottom-16 md:bottom-6 left-1/2 -translate-x-1/2 btn-primary shadow-lg px-6 z-30"
+          className="fixed bottom-16 md:bottom-6 left-1/2 -translate-x-1/2 rounded-full shadow-xl px-6 py-3 z-30 font-bold text-white transition-transform hover:-translate-y-0.5"
+          style={{ background: "var(--glido-grocery)", boxShadow: "0 8px 20px -4px rgba(0,184,115,0.4)" }}
         >
           View cart · {itemCount} items · ₹{subtotal.toFixed(0)}
         </Link>

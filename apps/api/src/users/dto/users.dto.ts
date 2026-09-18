@@ -4,6 +4,10 @@ export class UpdateMeDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 }
 
 export class UpsertAddressDto {

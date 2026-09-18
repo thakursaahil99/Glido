@@ -53,8 +53,10 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
       if (open) loadList();
     };
     socket.on("notification:new", handler);
+    const poll = setInterval(handler, 20000);
     return () => {
       socket.off("notification:new", handler);
+      clearInterval(poll);
     };
   }, [user, open]);
 

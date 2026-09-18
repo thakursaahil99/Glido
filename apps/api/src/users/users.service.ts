@@ -7,6 +7,13 @@ import { RedeemLoyaltyPointsDto, UpdateMeDto, UpdateUserStatusDto, UpsertAddress
 // 1 loyalty point redeems for ₹1 of wallet credit.
 const LOYALTY_POINT_VALUE_RUPEES = 1;
 
+// Never send the bcrypt hash to a client — every method below that returns a
+// raw User row (or a list of them) must pass its result(s) through this first.
+function omitPasswordHash<T extends { passwordHash?: string | null }>(user: T): Omit<T, "passwordHash"> {
+  const { passwordHash, ...safe } = user;
+  return safe;
+}
+
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService, private auditLog: AuditLogService, private wallet: WalletService) {}
@@ -17,11 +24,16 @@ export class UsersService {
       include: { addresses: true, wallet: true },
     });
     if (!user) throw new NotFoundException("User not found.");
-    return user;
+    return omitPasswordHash(user);
   }
 
-  updateMe(userId: string, dto: UpdateMeDto) {
-    return this.prisma.user.update({ where: { id: userId }, data: dto });
+  async updateMe(userId: string, dto: UpdateMeDto) {
+    if (dto.phone) {
+      const existing = await this.prisma.user.findFirst({ where: { phone: dto.phone, id: { not: userId } } });
+      if (existing) throw new BadRequestException("This phone number is already linked to another account.");
+    }
+    const updated = await this.prisma.user.update({ where: { id: userId }, data: dto });
+    return omitPasswordHash(updated);
   }
 
   listAddresses(userId: string) {
@@ -98,7 +110,36 @@ export class UsersService {
       }),
       this.prisma.user.count({ where }),
     ]);
-    return { items, total, page, pageSize };
+    return { items: items.map(omitPasswordHash), total, page, pageSize };
+  }
+
+  async adminDetail(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        addresses: { orderBy: { createdAt: "desc" } },
+        wallet: { include: { transactions: { orderBy: { createdAt: "desc" }, take: 20 } } },
+        orders: {
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          select: { id: true, orderNumber: true, status: true, totalAmount: true, createdAt: true, restaurant: { select: { name: true } } },
+        },
+        groceryOrders: {
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          select: { id: true, orderNumber: true, status: true, totalAmount: true, createdAt: true },
+        },
+        rides: {
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          select: { id: true, rideNumber: true, status: true, estimatedFare: true, finalFare: true, createdAt: true },
+        },
+        referrals: { select: { id: true, name: true, phone: true, email: true, createdAt: true } },
+        referredBy: { select: { id: true, name: true } },
+      },
+    });
+    if (!user) throw new NotFoundException("User not found.");
+    return omitPasswordHash(user);
   }
 
   async adminUpdateStatus(userId: string, dto: UpdateUserStatusDto, actorId: string) {
@@ -116,6 +157,6 @@ export class UsersService {
       before: { status: user.status },
       after: { status: updated.status },
     });
-    return updated;
+    return omitPasswordHash(updated);
   }
 }

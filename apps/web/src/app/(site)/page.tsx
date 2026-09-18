@@ -25,6 +25,7 @@ import { APP_DOWNLOADS } from "@/lib/app-downloads";
 import type { Banner, Paginated, Restaurant } from "@/lib/types";
 import { RestaurantCard, RestaurantCardSkeleton } from "@/components/restaurant-card";
 import { ErrorState } from "@/components/empty-state";
+import { TriServiceSwitcher } from "@/components/tri-service-switcher";
 
 const HOW_IT_WORKS: { icon: LucideIcon; title: string; desc: string }[] = [
   { icon: MapPin, title: "Set your location", desc: "Tell us where you are so we can show what's nearby." },
@@ -88,54 +89,83 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-gradient-to-b from-[var(--glido-primary-light)] to-transparent">
-        <div className="container-glido py-12 md:py-16">
-          <div className="flex items-center gap-1.5 text-sm text-[var(--glido-muted)] mb-3">
-            <MapPin size={15} />
-            <span className="font-medium text-[var(--glido-ink)]">Mumbai</span>
-            <span className="text-xs">(tap to change — coming soon)</span>
+      {/* Hero — bold gradient backdrop */}
+      <section className="relative overflow-hidden bg-[var(--glido-ink)]">
+        <div
+          className="absolute inset-0 opacity-90"
+          style={{ background: "radial-gradient(120% 100% at 15% 0%, var(--glido-food) 0%, var(--glido-food-dark) 45%, var(--glido-ink) 85%)" }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.08] pointer-events-none"
+          style={{ backgroundImage: "radial-gradient(circle, white 1.5px, transparent 1.5px)", backgroundSize: "22px 22px" }}
+        />
+        <div className="container-glido relative z-10 py-14 md:py-20">
+          <div className="inline-flex items-center gap-1.5 text-sm text-white/85 mb-3 bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm">
+            <MapPin size={14} />
+            <span className="font-medium text-white">Mumbai</span>
+            <span className="text-xs text-white/70">(tap to change — coming soon)</span>
           </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[var(--glido-ink)] max-w-2xl">
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white max-w-2xl leading-[1.05]">
             Food, groceries and rides.
             <br />
-            <span className="text-[var(--glido-primary)]">One app. Everything local.</span>
+            <span className="text-white/90">One app. Everything local.</span>
           </h1>
-          <form onSubmit={onSearchSubmit} className="mt-6 max-w-xl flex gap-2">
+          <form onSubmit={onSearchSubmit} className="mt-7 max-w-xl flex gap-2">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search restaurants or dishes..."
-              className="input-glido"
+              className="input-glido !border-none shadow-xl"
             />
-            <button type="submit" className="btn-primary shrink-0">
+            <button
+              type="submit"
+              className="btn-primary shrink-0 !text-[var(--glido-ink)] !shadow-xl"
+              style={{ background: "white" }}
+            >
               Search
             </button>
           </form>
 
-          <div className="mt-8 grid grid-cols-3 gap-3 max-w-xl">
-            <Link href="/food" className="card-glido p-4 text-center hover:border-[var(--glido-primary)]">
-              <UtensilsCrossed size={26} className="mx-auto mb-1.5 text-[var(--glido-primary)]" />
-              <div className="text-sm font-semibold">Food</div>
+          <div className="mt-9 grid grid-cols-3 gap-3 max-w-xl">
+            <Link
+              href="/food"
+              className="rounded-2xl p-4 text-center text-white shadow-xl transition-transform hover:-translate-y-1"
+              style={{ background: "linear-gradient(155deg, #ff8a00, var(--glido-food) 60%, var(--glido-food-dark))" }}
+            >
+              <UtensilsCrossed size={26} className="mx-auto mb-1.5" />
+              <div className="text-sm font-bold">Food</div>
             </Link>
-            <Link href="/grocery" className="card-glido p-4 text-center hover:border-[var(--glido-primary)]">
-              <ShoppingCart size={26} className="mx-auto mb-1.5 text-[var(--glido-primary)]" />
-              <div className="text-sm font-semibold">Grocery</div>
+            <Link
+              href="/grocery"
+              className="rounded-2xl p-4 text-center text-white shadow-xl transition-transform hover:-translate-y-1"
+              style={{ background: "linear-gradient(155deg, #29d98c, var(--glido-grocery) 60%, var(--glido-grocery-dark))" }}
+            >
+              <ShoppingCart size={26} className="mx-auto mb-1.5" />
+              <div className="text-sm font-bold">Grocery</div>
             </Link>
-            <Link href="/cab" className="card-glido p-4 text-center hover:border-[var(--glido-primary)]">
-              <Car size={26} className="mx-auto mb-1.5 text-[var(--glido-primary)]" />
-              <div className="text-sm font-semibold">Cab</div>
+            <Link
+              href="/cab"
+              className="rounded-2xl p-4 text-center text-white shadow-xl transition-transform hover:-translate-y-1"
+              style={{ background: "linear-gradient(155deg, #7b8cff, var(--glido-cab) 60%, var(--glido-cab-dark))" }}
+            >
+              <Car size={26} className="mx-auto mb-1.5" />
+              <div className="text-sm font-bold">Cab</div>
             </Link>
           </div>
         </div>
       </section>
 
+      {/* Tri-service switcher — signature component, floating just below the hero */}
+      <div className="container-glido -mt-6 relative z-10">
+        <TriServiceSwitcher className="shadow-xl" />
+      </div>
+
       {/* Stats / briefing bar */}
-      <section className="border-y border-[var(--glido-border)] bg-white">
+      <section className="border-b border-[var(--glido-border)] bg-white">
         <div className="container-glido py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
           {STATS.map((s) => (
             <div key={s.label} className="text-center md:text-left">
-              <p className="text-2xl font-extrabold text-[var(--glido-primary)]">{s.value}</p>
+              <p className="text-2xl font-extrabold text-gradient-glido">{s.value}</p>
               <p className="text-xs text-[var(--glido-muted)] mt-0.5">{s.label}</p>
             </div>
           ))}
@@ -214,40 +244,43 @@ export default function HomePage() {
 
       {/* Get the app */}
       <section className="container-glido py-10">
-        <div className="card-glido p-6 md:p-10 bg-gradient-to-br from-[var(--glido-primary-light)] to-white text-[var(--glido-ink)] overflow-hidden relative">
+        <div
+          className="rounded-[1.5rem] p-6 md:p-10 text-white overflow-hidden relative shadow-2xl"
+          style={{ background: "linear-gradient(120deg, var(--glido-food), var(--glido-grocery) 55%, var(--glido-cab))" }}
+        >
           <div
-            className="absolute inset-0 opacity-[0.05] pointer-events-none"
+            className="absolute inset-0 opacity-[0.09] pointer-events-none"
             style={{
-              backgroundImage: "radial-gradient(circle, var(--glido-ink) 1.5px, transparent 1.5px)",
+              backgroundImage: "radial-gradient(circle, white 1.5px, transparent 1.5px)",
               backgroundSize: "20px 20px",
             }}
           />
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
             <div className="flex items-start gap-4">
               <div className="flex -space-x-2 shrink-0">
-                <div className="h-12 w-12 rounded-2xl bg-[var(--glido-primary)] flex items-center justify-center ring-4 ring-white">
+                <div className="h-12 w-12 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/30">
                   <UtensilsCrossed size={20} className="text-white" />
                 </div>
-                <div className="h-12 w-12 rounded-2xl bg-[var(--glido-success)] flex items-center justify-center ring-4 ring-white">
+                <div className="h-12 w-12 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/30">
                   <ShoppingCart size={20} className="text-white" />
                 </div>
-                <div className="h-12 w-12 rounded-2xl bg-[#2563EB] flex items-center justify-center ring-4 ring-white">
+                <div className="h-12 w-12 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/30">
                   <Car size={20} className="text-white" />
                 </div>
               </div>
               <div>
-                <div className="flex items-center gap-2 text-[var(--glido-muted)] text-xs font-semibold uppercase tracking-wide mb-1">
+                <div className="flex items-center gap-2 text-white/80 text-xs font-semibold uppercase tracking-wide mb-1">
                   <Smartphone size={14} /> Glido for Android
                 </div>
-                <h3 className="font-bold text-xl text-[var(--glido-ink)]">Food, grocery and rides — in one app</h3>
-                <p className="text-sm text-[var(--glido-muted)] mt-1.5 max-w-md">
+                <h3 className="font-bold text-xl text-white">Food, grocery and rides — in one app</h3>
+                <p className="text-sm text-white/85 mt-1.5 max-w-md">
                   Everything on this site, faster on your phone. Direct APK download — no Play
                   Store needed.
                 </p>
                 <ul className="mt-4 space-y-1.5">
                   {APP_FEATURES.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-[var(--glido-ink)]">
-                      <Check size={15} className="text-[var(--glido-success)] shrink-0" />
+                    <li key={f} className="flex items-center gap-2 text-sm text-white">
+                      <Check size={15} className="text-white shrink-0" />
                       {f}
                     </li>
                   ))}
@@ -256,7 +289,7 @@ export default function HomePage() {
             </div>
             <a
               href={APP_DOWNLOADS.customer}
-              className="btn-primary inline-flex items-center gap-2 px-6 py-3.5 shrink-0 w-full md:w-auto justify-center"
+              className="inline-flex items-center gap-2 px-6 py-3.5 shrink-0 w-full md:w-auto justify-center rounded-2xl bg-white text-[var(--glido-ink)] font-bold shadow-xl transition-transform hover:-translate-y-1"
             >
               <Download size={18} /> Download for Android
             </a>
@@ -287,21 +320,33 @@ export default function HomePage() {
 
       {/* Partner / driver CTA */}
       <section className="container-glido py-12 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="card-glido p-6 bg-[var(--glido-primary-light)] border-none">
+        <div
+          className="rounded-2xl p-6 text-white shadow-xl"
+          style={{ background: "linear-gradient(140deg, #ff8a00, var(--glido-food) 70%, var(--glido-food-dark))" }}
+        >
           <h3 className="font-bold text-lg">Partner with Glido</h3>
-          <p className="text-sm text-[var(--glido-muted)] mt-1">
+          <p className="text-sm text-white/85 mt-1">
             List your restaurant or store and reach thousands of local customers.
           </p>
-          <Link href="/partner-with-us" className="btn-primary inline-block mt-4">
+          <Link
+            href="/partner-with-us"
+            className="inline-block mt-4 rounded-xl bg-white text-[var(--glido-ink)] font-bold px-5 py-2.5 shadow-lg transition-transform hover:-translate-y-0.5"
+          >
             Become a partner
           </Link>
         </div>
-        <div className="card-glido p-6 bg-[var(--glido-accent-light)] border-none">
+        <div
+          className="rounded-2xl p-6 text-white shadow-xl"
+          style={{ background: "linear-gradient(140deg, #7b8cff, var(--glido-cab) 70%, var(--glido-cab-dark))" }}
+        >
           <h3 className="font-bold text-lg">Deliver with Glido</h3>
-          <p className="text-sm text-[var(--glido-muted)] mt-1">
+          <p className="text-sm text-white/85 mt-1">
             Flexible hours, weekly payouts. Be your own boss.
           </p>
-          <Link href="/become-a-delivery-partner" className="btn-secondary inline-block mt-4">
+          <Link
+            href="/become-a-delivery-partner"
+            className="inline-block mt-4 rounded-xl bg-white text-[var(--glido-ink)] font-bold px-5 py-2.5 shadow-lg transition-transform hover:-translate-y-0.5"
+          >
             Become a delivery partner
           </Link>
         </div>

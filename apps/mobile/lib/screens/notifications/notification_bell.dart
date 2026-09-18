@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
@@ -17,6 +18,7 @@ class NotificationBellButton extends StatefulWidget {
 
 class _NotificationBellButtonState extends State<NotificationBellButton> {
   int _unread = 0;
+  Timer? _poll;
 
   @override
   void initState() {
@@ -26,11 +28,14 @@ class _NotificationBellButtonState extends State<NotificationBellButton> {
     final socket = SocketClient.instance.socket;
     if (userId != null) socket.emit('user:subscribe', userId);
     socket.on('notification:new', _onNotification);
+    // Polling fallback — the live serverless API doesn't hold a persistent socket connection.
+    _poll = Timer.periodic(const Duration(seconds: 20), (_) => _loadUnread());
   }
 
   @override
   void dispose() {
     SocketClient.instance.socket.off('notification:new', _onNotification);
+    _poll?.cancel();
     super.dispose();
   }
 

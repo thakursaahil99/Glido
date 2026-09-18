@@ -4,6 +4,7 @@ import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import {
   AdminLoginDto,
+  GoogleLoginDto,
   LoginDto,
   RefreshTokenDto,
   RegisterDto,
@@ -36,6 +37,12 @@ export class AuthController {
   @Post("admin/login")
   adminLogin(@Body() dto: AdminLoginDto) {
     return this.authService.adminLogin(dto.email, dto.password);
+  }
+
+  @Throttle(AUTH_THROTTLE)
+  @Post("google")
+  googleLogin(@Body() dto: GoogleLoginDto) {
+    return this.authService.googleLogin(dto.idToken, dto.referralCode);
   }
 
   // --- OTP endpoints kept for future phone-verification use; the web app's

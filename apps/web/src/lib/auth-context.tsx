@@ -9,6 +9,7 @@ interface AuthContextValue {
   loading: boolean;
   register: (name: string, identifier: string, password: string, referralCode?: string) => Promise<User>;
   login: (identifier: string, password: string) => Promise<User>;
+  googleLogin: (idToken: string, referralCode?: string) => Promise<User>;
   passwordLogin: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -61,6 +62,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data.user;
   }, []);
 
+  const googleLogin = useCallback(async (idToken: string, referralCode?: string) => {
+    const data = await api.post<{ accessToken: string; refreshToken: string; user: User }>(
+      "/auth/google",
+      { idToken, referralCode: referralCode || undefined },
+    );
+    setTokens(data.accessToken, data.refreshToken);
+    setUser(data.user);
+    return data.user;
+  }, []);
+
   // Admin panel login — same shape, dedicated endpoint that also checks role === ADMIN.
   const passwordLogin = useCallback(async (email: string, password: string) => {
     const data = await api.post<{ accessToken: string; refreshToken: string; user: User }>(
@@ -84,8 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, register, login, passwordLogin, logout, refreshUser }),
-    [user, loading, register, login, passwordLogin, logout, refreshUser],
+    () => ({ user, loading, register, login, googleLogin, passwordLogin, logout, refreshUser }),
+    [user, loading, register, login, googleLogin, passwordLogin, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
