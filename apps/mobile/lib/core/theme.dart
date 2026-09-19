@@ -2,32 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Mirrors the web app's brand tokens in apps/web/src/app/globals.css —
-/// the "Kinetic Glass-Modernism" tri-service palette.
+/// warm, saturated, candy-bright tri-service palette.
 class GlidoColors {
   static const primary = Color(0xFFFF4B26);
-  static const primaryDark = Color(0xFFB32100);
-  static const primaryLight = Color(0xFFFFDAD3);
-  static const accent = Color(0xFFF59E0B);
-  static const accentLight = Color(0xFFFEF3E2);
-  static const success = Color(0xFF00B873);
-  static const successLight = Color(0xFFE3FDF0);
-  static const danger = Color(0xFFBA1A1A);
-  static const dangerLight = Color(0xFFFFDAD6);
-  static const ink = Color(0xFF11141D);
-  static const muted = Color(0xFF5B6472);
+  static const primaryDark = Color(0xFFC92A0A);
+  static const primaryLight = Color(0xFFFFE3D6);
+  static const accent = Color(0xFFFFB020);
+  static const accentLight = Color(0xFFFFF1D6);
+  static const success = Color(0xFF00C37D);
+  static const successLight = Color(0xFFD7FBE9);
+  static const danger = Color(0xFFE0311E);
+  static const dangerLight = Color(0xFFFFE0DA);
+  static const ink = Color(0xFF241712);
+  static const muted = Color(0xFF7A6A62);
   static const surface = Color(0xFFFFFFFF);
-  static const border = Color(0xFFE8ECF2);
-  static const bg = Color(0xFFF8F9FC);
+  static const border = Color(0xFFF3E4D9);
+  static const bg = Color(0xFFFFF8F1);
 
   // Module identity colors — food/grocery/cab each read as their own vivid color.
   static const food = primary;
   static const foodDark = primaryDark;
-  static const grocery = Color(0xFF00B873);
-  static const groceryDark = Color(0xFF006D42);
-  static const groceryLight = Color(0xFFE3FDF0);
-  static const cab = Color(0xFF3E52FF);
-  static const cabDark = Color(0xFF2C41F1);
-  static const cabLight = Color(0xFFE6E9FF);
+  static const grocery = Color(0xFF00C37D);
+  static const groceryDark = Color(0xFF00874F);
+  static const groceryLight = Color(0xFFD7FBE9);
+  static const cab = Color(0xFF4A5CFF);
+  static const cabDark = Color(0xFF2C3CE0);
+  static const cabLight = Color(0xFFE2E6FF);
 }
 
 /// Reusable gradients — this is where the "3D"/premium feel comes from:

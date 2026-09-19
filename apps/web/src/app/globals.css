@@ -1,44 +1,44 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand — "Kinetic Glass-Modernism" tri-service palette. Food is the primary brand hue. */
+  /* Brand — warm, saturated, candy-bright. Food is the primary brand hue. */
   --glido-primary: #ff4b26;
-  --glido-primary-dark: #b32100;
-  --glido-primary-light: #ffdad3;
+  --glido-primary-dark: #c92a0a;
+  --glido-primary-light: #ffe3d6;
 
   /* Amber/gold — ratings, highlights, "needs attention" */
-  --glido-accent: #f59e0b;
-  --glido-accent-light: #fef3e2;
+  --glido-accent: #ffb020;
+  --glido-accent-light: #fff1d6;
 
   /* Module colors — each vertical gets its own vivid, distinct identity */
   --glido-food: #ff4b26;
-  --glido-food-dark: #b32100;
-  --glido-grocery: #00b873;
-  --glido-grocery-dark: #006d42;
-  --glido-grocery-light: #e3fdf0;
-  --glido-cab: #3e52ff;
-  --glido-cab-dark: #2c41f1;
-  --glido-cab-light: #e6e9ff;
+  --glido-food-dark: #c92a0a;
+  --glido-grocery: #00c37d;
+  --glido-grocery-dark: #00874f;
+  --glido-grocery-light: #d7fbe9;
+  --glido-cab: #4a5cff;
+  --glido-cab-dark: #2c3ce0;
+  --glido-cab-light: #e2e6ff;
 
   /* Semantic status colors */
-  --glido-success: #00b873;
-  --glido-success-light: #e3fdf0;
-  --glido-danger: #ba1a1a;
-  --glido-danger-light: #ffdad6;
-  --glido-warning: #f59e0b;
+  --glido-success: #00c37d;
+  --glido-success-light: #d7fbe9;
+  --glido-danger: #e0311e;
+  --glido-danger-light: #ffe0da;
+  --glido-warning: #ffb020;
 
-  /* Neutrals */
-  --glido-ink: #11141d;
-  --glido-muted: #5b6472;
+  /* Neutrals — warm, not cold/clinical */
+  --glido-ink: #241712;
+  --glido-muted: #7a6a62;
   --glido-surface: #ffffff;
-  --glido-border: #e8ecf2;
-  --glido-bg: #f8f9fc;
+  --glido-border: #f3e4d9;
+  --glido-bg: #fff8f1;
 
-  /* Elevation — calibrated optical layering, not muddy drop shadows */
-  --shadow-sm: 0 2px 8px -2px rgba(17, 20, 29, 0.04), 0 1px 3px -1px rgba(17, 20, 29, 0.02);
-  --shadow-md: 0 10px 25px -5px rgba(17, 20, 29, 0.08), 0 4px 10px -2px rgba(17, 20, 29, 0.03);
-  --shadow-lg: 0 20px 40px -10px rgba(17, 20, 29, 0.12);
-  --shadow-primary: 0 8px 20px -4px rgba(255, 75, 38, 0.4);
+  /* Elevation — warm-tinted shadows instead of flat black, so depth feels part of the brand */
+  --shadow-sm: 0 2px 8px -2px rgba(120, 60, 20, 0.06), 0 1px 3px -1px rgba(120, 60, 20, 0.04);
+  --shadow-md: 0 10px 25px -5px rgba(120, 60, 20, 0.12), 0 4px 10px -2px rgba(120, 60, 20, 0.05);
+  --shadow-lg: 0 20px 40px -10px rgba(120, 60, 20, 0.18);
+  --shadow-primary: 0 10px 24px -4px rgba(255, 75, 38, 0.45);
 
   --background: var(--glido-bg);
   --foreground: var(--glido-ink);
@@ -81,7 +81,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-primary {
   position: relative;
-  background: var(--glido-primary);
+  background: linear-gradient(135deg, #ff8a3d, var(--glido-primary) 55%, var(--glido-primary-dark));
   color: white;
   font-weight: 700;
   border-radius: 9999px;
@@ -90,9 +90,9 @@ h1, h2, h3, h4, h5, h6 {
   transition: box-shadow 0.2s ease, transform 0.15s ease, filter 0.15s ease, background 0.15s ease;
 }
 .btn-primary:hover {
-  background: var(--glido-primary-dark);
-  box-shadow: 0 10px 24px -4px rgba(255, 75, 38, 0.5);
-  transform: translateY(-1px);
+  filter: brightness(1.05) saturate(1.1);
+  box-shadow: 0 14px 28px -4px rgba(255, 75, 38, 0.55);
+  transform: translateY(-2px);
 }
 .btn-primary:active {
   transform: scale(0.98) translateY(0);
@@ -134,7 +134,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .card-glido {
-  background: var(--glido-surface);
+  background: linear-gradient(180deg, #ffffff, #fffaf5);
   border: 1px solid var(--glido-border);
   border-radius: 1rem;
   box-shadow: var(--shadow-sm);
@@ -183,7 +183,7 @@ button.card-glido:hover {
 .badge-cab { background: var(--glido-cab-light); color: var(--glido-cab-dark); }
 
 .skeleton {
-  background: linear-gradient(90deg, #eef0f2 25%, #e2e5e8 37%, #eef0f2 63%);
+  background: linear-gradient(90deg, #f5ece3 25%, #ecdfd2 37%, #f5ece3 63%);
   background-size: 400% 100%;
   animation: skeleton-loading 1.4s ease infinite;
   border-radius: 0.5rem;
@@ -215,7 +215,7 @@ button.card-glido:hover {
 
 /* A soft, layered "raised" surface — used for hero panels and stat tiles */
 .panel-raised {
-  background: linear-gradient(180deg, #ffffff, #fdfbfc);
+  background: linear-gradient(180deg, #ffffff, #fff6ec);
   border: 1.5px solid var(--glido-border);
   border-radius: 1.5rem;
   box-shadow: var(--shadow-lg);
