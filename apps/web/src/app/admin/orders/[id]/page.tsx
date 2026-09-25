@@ -103,9 +103,9 @@ function OrderDetailContent() {
         <h1 className="text-2xl font-bold">Order #{order.orderNumber}</h1>
         <StatusBadge status={order.status} />
       </div>
-      <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-[var(--glido-muted)]">{order.restaurant?.name}</p>
-        <button onClick={downloadInvoice} disabled={downloadingInvoice} className="btn-secondary text-sm !py-1.5 flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+        <p className="text-sm text-[var(--glido-muted)] truncate">{order.restaurant?.name}</p>
+        <button onClick={downloadInvoice} disabled={downloadingInvoice} className="btn-secondary text-sm !py-1.5 flex items-center gap-1.5 shrink-0">
           <Download size={14} /> {downloadingInvoice ? "Preparing..." : "Download invoice"}
         </button>
       </div>

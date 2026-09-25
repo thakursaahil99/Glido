@@ -272,13 +272,25 @@ class _OrderCard extends StatelessWidget {
                 ),
               ],
             )
-          else
+          else if (order.status == 'READY' || order.status == 'OUT_FOR_DELIVERY')
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: onAdvance,
                 icon: Icon(isPickup ? Icons.two_wheeler : Icons.check_circle_outline, size: 18),
                 label: Text(isPickup ? 'Mark picked up' : 'Mark delivered'),
+              ),
+            )
+          else
+            // Accepted, but the restaurant/warehouse hasn't marked it READY yet —
+            // nothing for the partner to do but wait, so no action button here.
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              alignment: Alignment.center,
+              child: Text(
+                'Waiting for it to be ready for pickup',
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: context.colors.muted),
               ),
             ),
         ],
@@ -300,6 +312,15 @@ class _StatusChip extends StatelessWidget {
     late final Color dotColor;
     late final String label;
     switch (status) {
+      case 'PENDING':
+      case 'ACCEPTED':
+        dotColor = c.muted;
+        label = 'Order confirmed';
+        break;
+      case 'PREPARING':
+        dotColor = c.accent;
+        label = 'Being prepared';
+        break;
       case 'READY':
         dotColor = c.accent;
         label = 'Ready for pickup';

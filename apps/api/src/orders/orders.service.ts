@@ -257,10 +257,13 @@ export class OrdersService {
     return { items, total, page, pageSize };
   }
 
-  /** Orders currently assigned to a delivery partner — used by /delivery-partner/me/orders. */
+  /** Orders currently assigned to a delivery partner — used by /delivery-partner/me/orders.
+   *  Includes orders assigned ahead of READY (e.g. an admin assigning a partner while the
+   *  order is still PENDING/ACCEPTED/PREPARING) so the partner sees and can respond to the
+   *  assignment immediately, not only once the order happens to reach READY. */
   async findAssignedToPartner(deliveryPartnerId: string) {
     return this.prisma.order.findMany({
-      where: { deliveryPartnerId, status: { in: ["READY", "OUT_FOR_DELIVERY"] } },
+      where: { deliveryPartnerId, status: { notIn: ["DELIVERED", "CANCELLED", "REFUNDED"] } },
       include: { restaurant: true, address: true, items: true },
       orderBy: { createdAt: "asc" },
     });

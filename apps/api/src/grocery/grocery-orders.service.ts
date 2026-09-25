@@ -206,10 +206,11 @@ export class GroceryOrdersService {
     return { items, total, page, pageSize };
   }
 
-  /** Orders currently assigned to a delivery partner — used by /delivery-partner/me/orders. */
+  /** Orders currently assigned to a delivery partner — used by /delivery-partner/me/orders.
+   *  See orders.service.ts for why this isn't restricted to READY/OUT_FOR_DELIVERY. */
   async findAssignedToPartner(deliveryPartnerId: string) {
     return this.prisma.groceryOrder.findMany({
-      where: { deliveryPartnerId, status: { in: ["READY", "OUT_FOR_DELIVERY"] } },
+      where: { deliveryPartnerId, status: { notIn: ["DELIVERED", "CANCELLED", "REFUNDED"] } },
       include: { address: true, items: true },
       orderBy: { createdAt: "asc" },
     });
