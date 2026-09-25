@@ -313,6 +313,7 @@ export class OrdersService {
     if (order.deliveryPartnerId && order.deliveryPartnerId !== partnerId) {
       await this.deliveryPartners.release(order.deliveryPartnerId);
     }
+    await this.deliveryPartners.markUnavailable(partnerId);
 
     const updated = await this.prisma.order.update({
       where: { id: orderId },
@@ -366,7 +367,7 @@ export class OrdersService {
     // Try to hand it straight to another available partner rather than leaving it stuck unassigned.
     if (order.status === "READY" || order.status === "OUT_FOR_DELIVERY") {
       const restaurant = await this.prisma.restaurant.findUnique({ where: { id: order.restaurantId } });
-      const nextPartner = await this.deliveryPartners.tryAssign(restaurant?.lat, restaurant?.lng);
+      const nextPartner = await this.deliveryPartners.tryAssign(restaurant?.lat, restaurant?.lng, partnerId);
       if (nextPartner) {
         await this.prisma.order.update({
           where: { id: orderId },
@@ -405,7 +406,10 @@ export class OrdersService {
       }
     }
 
-    if (status === "READY") {
+    // Only auto-assign if nobody is already on this order — an admin may already have
+    // manually assigned a partner before the order reached READY, and re-running
+    // tryAssign here would silently swap them out for whoever else is free.
+    if (status === "READY" && !order.deliveryPartnerId) {
       const restaurant = await this.prisma.restaurant.findUnique({ where: { id: order.restaurantId } });
       const partner = await this.deliveryPartners.tryAssign(restaurant?.lat, restaurant?.lng);
       if (partner) {

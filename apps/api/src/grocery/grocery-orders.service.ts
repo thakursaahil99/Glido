@@ -260,6 +260,7 @@ export class GroceryOrdersService {
     if (order.deliveryPartnerId && order.deliveryPartnerId !== partnerId) {
       await this.deliveryPartners.release(order.deliveryPartnerId);
     }
+    await this.deliveryPartners.markUnavailable(partnerId);
 
     const updated = await this.prisma.groceryOrder.update({
       where: { id: orderId },
@@ -310,7 +311,7 @@ export class GroceryOrdersService {
     });
 
     if (order.status === "READY" || order.status === "OUT_FOR_DELIVERY") {
-      const nextPartner = await this.deliveryPartners.tryAssign(null, null);
+      const nextPartner = await this.deliveryPartners.tryAssign(null, null, partnerId);
       if (nextPartner) {
         await this.prisma.groceryOrder.update({
           where: { id: orderId },
@@ -353,7 +354,8 @@ export class GroceryOrdersService {
       await this.wallet.credit(order.userId, order.totalAmount, "Refund for cancelled grocery order", orderId);
     }
 
-    if (status === "READY") {
+    // Only auto-assign if nobody is already on this order — see orders.service.ts for why.
+    if (status === "READY" && !order.deliveryPartnerId) {
       const partner = await this.deliveryPartners.tryAssign(null, null);
       if (partner) {
         await this.prisma.groceryOrder.update({

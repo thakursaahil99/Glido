@@ -41,10 +41,18 @@ export class DeliveryPartnersService {
     return { message: "Delivery partner deleted." };
   }
 
-  /** Assigns the nearest available online partner (or just the first one, if pickup coordinates aren't known). */
-  async tryAssign(pickupLat?: number | null, pickupLng?: number | null) {
+  /** Assigns the nearest available online partner (or just the first one, if pickup coordinates aren't known).
+   *  `excludePartnerId` keeps a partner who just rejected this exact order from being handed
+   *  straight back to it — `release()` makes them available again, so without this exclusion
+   *  they'd often be the only (or nearest) candidate and "reject" would be a no-op. */
+  async tryAssign(pickupLat?: number | null, pickupLng?: number | null, excludePartnerId?: string) {
     const candidates = await this.prisma.deliveryPartner.findMany({
-      where: { status: "APPROVED", isOnline: true, isAvailable: true },
+      where: {
+        status: "APPROVED",
+        isOnline: true,
+        isAvailable: true,
+        ...(excludePartnerId ? { id: { not: excludePartnerId } } : {}),
+      },
     });
     if (candidates.length === 0) return null;
 
@@ -67,6 +75,14 @@ export class DeliveryPartnersService {
 
   async release(id: string) {
     await this.prisma.deliveryPartner.update({ where: { id }, data: { isAvailable: true } }).catch(() => undefined);
+  }
+
+  /** Marks a partner unavailable outside of tryAssign — used after a manual admin
+   *  assignment, which (unlike tryAssign) doesn't touch this flag on its own. Without
+   *  it, a manually-assigned partner would still look free to auto-assign and could
+   *  get handed a second order at the same time. */
+  async markUnavailable(id: string) {
+    await this.prisma.deliveryPartner.update({ where: { id }, data: { isAvailable: false } }).catch(() => undefined);
   }
 
   /** Creates a DELIVERY_PARTNER login for a partner that doesn't have an account yet. */
