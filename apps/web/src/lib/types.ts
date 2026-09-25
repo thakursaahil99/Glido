@@ -177,6 +177,8 @@ export interface Order {
   statusHistory?: OrderStatusHistoryEntry[];
   review?: { id: string; rating: number; comment?: string | null } | null;
   deliveryPartner?: DeliveryPartner | null;
+  /** "NONE" | "PENDING" | "ACCEPTED" | "REJECTED" — whether the assigned partner has responded yet. */
+  deliveryAcceptanceStatus?: string;
   /** Present on admin list/detail responses only (not on the customer's own /orders/me). */
   user?: { name: string | null; email: string | null };
 }
@@ -293,6 +295,8 @@ export interface GroceryOrder {
   items: GroceryOrderItem[];
   statusHistory?: OrderStatusHistoryEntry[];
   deliveryPartner?: DeliveryPartner | null;
+  /** "NONE" | "PENDING" | "ACCEPTED" | "REJECTED" — whether the assigned partner has responded yet. */
+  deliveryAcceptanceStatus?: string;
 }
 
 // --- Cab ---

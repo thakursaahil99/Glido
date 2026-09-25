@@ -69,4 +69,28 @@ export class PartnerDeliveryController {
     if (order.deliveryPartnerId !== partner.id) throw new ForbiddenException("This order isn't assigned to you.");
     return this.groceryOrders.adminUpdateStatus(id, dto.status, dto.note, user.id);
   }
+
+  @Patch("orders/food/:id/accept")
+  async acceptFoodOrder(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    const partner = await this.deliveryPartners.findByUser(user.id);
+    return this.orders.respondToDeliveryAssignment(id, partner.id, true);
+  }
+
+  @Patch("orders/food/:id/reject")
+  async rejectFoodOrder(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    const partner = await this.deliveryPartners.findByUser(user.id);
+    return this.orders.respondToDeliveryAssignment(id, partner.id, false);
+  }
+
+  @Patch("orders/grocery/:id/accept")
+  async acceptGroceryOrder(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    const partner = await this.deliveryPartners.findByUser(user.id);
+    return this.groceryOrders.respondToDeliveryAssignment(id, partner.id, true);
+  }
+
+  @Patch("orders/grocery/:id/reject")
+  async rejectGroceryOrder(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    const partner = await this.deliveryPartners.findByUser(user.id);
+    return this.groceryOrders.respondToDeliveryAssignment(id, partner.id, false);
+  }
 }

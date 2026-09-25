@@ -261,7 +261,10 @@ export class GroceryOrdersService {
       await this.deliveryPartners.release(order.deliveryPartnerId);
     }
 
-    const updated = await this.prisma.groceryOrder.update({ where: { id: orderId }, data: { deliveryPartnerId: partnerId } });
+    const updated = await this.prisma.groceryOrder.update({
+      where: { id: orderId },
+      data: { deliveryPartnerId: partnerId, deliveryAcceptanceStatus: "PENDING" },
+    });
 
     if (actorId) {
       await this.auditLog.record({
@@ -275,7 +278,49 @@ export class GroceryOrdersService {
     }
 
     this.realtime.emitOrderUpdate(orderId, { orderId, status: updated.status, deliveryPartnerId: partnerId });
-    return { message: `Order assigned to ${partner.name}.` };
+    return { message: `Order assigned to ${partner.name} — waiting for them to accept.` };
+  }
+
+  /** Called by the delivery partner from their app to accept or reject a pending
+   *  assignment. Rejecting releases the partner and clears the assignment so the
+   *  order goes back to being unassigned. */
+  async respondToDeliveryAssignment(orderId: string, partnerId: string, accept: boolean) {
+    const order = await this.prisma.groceryOrder.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException("Order not found.");
+    if (order.deliveryPartnerId !== partnerId) {
+      throw new ForbiddenException("This order isn't assigned to you.");
+    }
+    if (order.deliveryAcceptanceStatus !== "PENDING") {
+      throw new BadRequestException("This assignment is no longer waiting for a response.");
+    }
+
+    if (accept) {
+      const updated = await this.prisma.groceryOrder.update({
+        where: { id: orderId },
+        data: { deliveryAcceptanceStatus: "ACCEPTED" },
+      });
+      this.realtime.emitOrderUpdate(orderId, { orderId, status: updated.status, deliveryPartnerId: partnerId });
+      return { message: "Delivery accepted." };
+    }
+
+    await this.deliveryPartners.release(partnerId);
+    const updated = await this.prisma.groceryOrder.update({
+      where: { id: orderId },
+      data: { deliveryPartnerId: null, deliveryAcceptanceStatus: "NONE" },
+    });
+
+    if (order.status === "READY" || order.status === "OUT_FOR_DELIVERY") {
+      const nextPartner = await this.deliveryPartners.tryAssign(null, null);
+      if (nextPartner) {
+        await this.prisma.groceryOrder.update({
+          where: { id: orderId },
+          data: { deliveryPartnerId: nextPartner.id, deliveryAcceptanceStatus: "PENDING" },
+        });
+      }
+    }
+
+    this.realtime.emitOrderUpdate(orderId, { orderId, status: updated.status, deliveryPartnerId: null });
+    return { message: "Delivery rejected." };
   }
 
   private async restockItems(orderId: string) {
@@ -311,7 +356,10 @@ export class GroceryOrdersService {
     if (status === "READY") {
       const partner = await this.deliveryPartners.tryAssign(null, null);
       if (partner) {
-        await this.prisma.groceryOrder.update({ where: { id: orderId }, data: { deliveryPartnerId: partner.id } });
+        await this.prisma.groceryOrder.update({
+          where: { id: orderId },
+          data: { deliveryPartnerId: partner.id, deliveryAcceptanceStatus: "PENDING" },
+        });
         updated.deliveryPartnerId = partner.id;
       }
     }

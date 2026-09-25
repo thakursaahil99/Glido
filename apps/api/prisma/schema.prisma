@@ -87,6 +87,18 @@ enum PaymentMethod {
   WALLET
 }
 
+/// Whether the currently-assigned delivery partner has accepted this specific
+/// assignment yet. Set to PENDING every time a partner is (re)assigned — auto-assign
+/// or a manual admin override — and reset to NONE once no partner is assigned.
+/// A partner who REJECTS is released and the order goes back to being unassigned;
+/// admin/auto-assign then picks the next one.
+enum DeliveryAcceptanceStatus {
+  NONE
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 enum PaymentStatus {
   PENDING
   PAID
@@ -370,6 +382,7 @@ model Order {
   deliveryInstructions  String?
   cancelReason          String?
   deliveryPartnerId     String?
+  deliveryAcceptanceStatus DeliveryAcceptanceStatus @default(NONE)
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
@@ -577,6 +590,7 @@ model GroceryOrder {
   deliveryInstructions String?
   cancelReason         String?
   deliveryPartnerId    String?
+  deliveryAcceptanceStatus DeliveryAcceptanceStatus @default(NONE)
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 

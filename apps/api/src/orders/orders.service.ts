@@ -314,7 +314,10 @@ export class OrdersService {
       await this.deliveryPartners.release(order.deliveryPartnerId);
     }
 
-    const updated = await this.prisma.order.update({ where: { id: orderId }, data: { deliveryPartnerId: partnerId } });
+    const updated = await this.prisma.order.update({
+      where: { id: orderId },
+      data: { deliveryPartnerId: partnerId, deliveryAcceptanceStatus: "PENDING" },
+    });
 
     if (actorId) {
       await this.auditLog.record({
@@ -328,7 +331,52 @@ export class OrdersService {
     }
 
     this.realtime.emitOrderUpdate(orderId, { orderId, status: updated.status, deliveryPartnerId: partnerId });
-    return { message: `Order assigned to ${partner.name}.` };
+    return { message: `Order assigned to ${partner.name} — waiting for them to accept.` };
+  }
+
+  /** Called by the delivery partner from their app to accept or reject a pending
+   *  assignment. Rejecting releases the partner and clears the assignment so the
+   *  order goes back to being unassigned — admin sees it and can pick someone else,
+   *  and auto-assign will also pick it up next time this order hits READY again. */
+  async respondToDeliveryAssignment(orderId: string, partnerId: string, accept: boolean) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException("Order not found.");
+    if (order.deliveryPartnerId !== partnerId) {
+      throw new ForbiddenException("This order isn't assigned to you.");
+    }
+    if (order.deliveryAcceptanceStatus !== "PENDING") {
+      throw new BadRequestException("This assignment is no longer waiting for a response.");
+    }
+
+    if (accept) {
+      const updated = await this.prisma.order.update({
+        where: { id: orderId },
+        data: { deliveryAcceptanceStatus: "ACCEPTED" },
+      });
+      this.realtime.emitOrderUpdate(orderId, { orderId, status: updated.status, deliveryPartnerId: partnerId });
+      return { message: "Delivery accepted." };
+    }
+
+    await this.deliveryPartners.release(partnerId);
+    const updated = await this.prisma.order.update({
+      where: { id: orderId },
+      data: { deliveryPartnerId: null, deliveryAcceptanceStatus: "NONE" },
+    });
+
+    // Try to hand it straight to another available partner rather than leaving it stuck unassigned.
+    if (order.status === "READY" || order.status === "OUT_FOR_DELIVERY") {
+      const restaurant = await this.prisma.restaurant.findUnique({ where: { id: order.restaurantId } });
+      const nextPartner = await this.deliveryPartners.tryAssign(restaurant?.lat, restaurant?.lng);
+      if (nextPartner) {
+        await this.prisma.order.update({
+          where: { id: orderId },
+          data: { deliveryPartnerId: nextPartner.id, deliveryAcceptanceStatus: "PENDING" },
+        });
+      }
+    }
+
+    this.realtime.emitOrderUpdate(orderId, { orderId, status: updated.status, deliveryPartnerId: null });
+    return { message: "Delivery rejected." };
   }
 
   private async applyStatusChange(orderId: string, status: OrderStatus, note?: string, actorId?: string) {
@@ -361,7 +409,10 @@ export class OrdersService {
       const restaurant = await this.prisma.restaurant.findUnique({ where: { id: order.restaurantId } });
       const partner = await this.deliveryPartners.tryAssign(restaurant?.lat, restaurant?.lng);
       if (partner) {
-        await this.prisma.order.update({ where: { id: orderId }, data: { deliveryPartnerId: partner.id } });
+        await this.prisma.order.update({
+          where: { id: orderId },
+          data: { deliveryPartnerId: partner.id, deliveryAcceptanceStatus: "PENDING" },
+        });
         updated.deliveryPartnerId = partner.id;
       }
     }

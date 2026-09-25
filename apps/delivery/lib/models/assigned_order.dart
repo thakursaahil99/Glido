@@ -41,6 +41,9 @@ class AssignedOrder {
   final String? restaurantName;
   final AssignedAddress? address;
   final List<AssignedOrderItem> items;
+  /// "NONE" | "PENDING" | "ACCEPTED" | "REJECTED" — PENDING means this partner
+  /// needs to Accept/Reject before the normal pickup/delivered actions apply.
+  final String deliveryAcceptanceStatus;
 
   AssignedOrder({
     required this.id,
@@ -54,7 +57,10 @@ class AssignedOrder {
     this.restaurantName,
     this.address,
     required this.items,
+    required this.deliveryAcceptanceStatus,
   });
+
+  bool get needsResponse => deliveryAcceptanceStatus == 'PENDING';
 
   factory AssignedOrder.fromJson(Map<String, dynamic> json) => AssignedOrder(
         id: json['id'],
@@ -68,5 +74,6 @@ class AssignedOrder {
         restaurantName: json['restaurant']?['name'],
         address: json['address'] != null ? AssignedAddress.fromJson(json['address']) : null,
         items: (json['items'] as List<dynamic>? ?? []).map((i) => AssignedOrderItem.fromJson(i)).toList(),
+        deliveryAcceptanceStatus: json['deliveryAcceptanceStatus'] ?? 'NONE',
       );
 }

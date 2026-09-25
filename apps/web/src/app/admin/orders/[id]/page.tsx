@@ -137,6 +137,7 @@ function OrderDetailContent() {
         assignPath={`/admin/orders/${id}/assign-partner`}
         onAssigned={load}
         readOnly={order.status === "DELIVERED" || order.status === "CANCELLED" || order.status === "REFUNDED"}
+        acceptanceStatus={order.deliveryAcceptanceStatus}
       />
 
       <div className="card-glido p-4 mb-4 text-sm">

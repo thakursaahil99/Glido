@@ -102,6 +102,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _respondToAssignment(AssignedOrder order, bool accept) async {
+    try {
+      await ApiClient.instance.patch('/delivery-partner/me/orders/${order.kind}/${order.id}/${accept ? 'accept' : 'reject'}', {});
+      _load();
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,7 +185,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Center(child: Text('No deliveries assigned right now.', style: TextStyle(color: context.colors.muted))),
                         )
                       else
-                        ..._orders!.map((o) => _OrderCard(order: o, onAdvance: () => _advanceStatus(o))),
+                        ..._orders!.map((o) => _OrderCard(
+                              order: o,
+                              onAdvance: () => _advanceStatus(o),
+                              onAccept: () => _respondToAssignment(o, true),
+                              onReject: () => _respondToAssignment(o, false),
+                            )),
                     ],
                   ),
                 ),
@@ -187,15 +201,23 @@ class _HomeScreenState extends State<HomeScreen> {
 class _OrderCard extends StatelessWidget {
   final AssignedOrder order;
   final VoidCallback onAdvance;
-  const _OrderCard({required this.order, required this.onAdvance});
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+  const _OrderCard({required this.order, required this.onAdvance, required this.onAccept, required this.onReject});
 
   @override
   Widget build(BuildContext context) {
     final isPickup = order.status == 'READY';
+    final needsResponse = order.needsResponse;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: context.colors.surface, borderRadius: BorderRadius.circular(18), boxShadow: glidoCardShadow()),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: glidoCardShadow(),
+        border: needsResponse ? Border.all(color: context.colors.accent, width: 1.5) : null,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -215,20 +237,50 @@ class _OrderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          _StatusChip(status: order.status),
+          needsResponse
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(width: 7, height: 7, decoration: BoxDecoration(color: context.colors.accent, shape: BoxShape.circle)),
+                    const SizedBox(width: 6),
+                    Text('New delivery request', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: context.colors.accent)),
+                  ],
+                )
+              : _StatusChip(status: order.status),
           const SizedBox(height: 8),
           if (order.restaurantName != null) Text('Pickup: ${order.restaurantName}', style: TextStyle(fontSize: 12.5, color: context.colors.muted)),
           if (order.address != null) Text('Drop: ${order.address!.full}', style: TextStyle(fontSize: 12.5, color: context.colors.muted)),
           Text('${order.items.length} item(s) · ${order.paymentMethod} · ${order.paymentStatus}', style: TextStyle(fontSize: 11.5, color: context.colors.muted)),
           const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onAdvance,
-              icon: Icon(isPickup ? Icons.two_wheeler : Icons.check_circle_outline, size: 18),
-              label: Text(isPickup ? 'Mark picked up' : 'Mark delivered'),
+          if (needsResponse)
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onReject,
+                    icon: const Icon(Icons.close, size: 18),
+                    label: const Text('Reject'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: onAccept,
+                    icon: const Icon(Icons.check, size: 18),
+                    label: const Text('Accept'),
+                  ),
+                ),
+              ],
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onAdvance,
+                icon: Icon(isPickup ? Icons.two_wheeler : Icons.check_circle_outline, size: 18),
+                label: Text(isPickup ? 'Mark picked up' : 'Mark delivered'),
+              ),
             ),
-          ),
         ],
       ),
     );

@@ -7,16 +7,25 @@ import type { DeliveryPartner } from "@/lib/types";
 
 /** Manual delivery-partner assign/reassign panel for an admin order-detail page.
  *  `assignPath` is the order-specific PATCH endpoint (food vs grocery differ). */
+const ACCEPTANCE_LABEL: Record<string, { text: string; className: string }> = {
+  PENDING: { text: "Waiting for partner to accept", className: "badge-nonveg" },
+  ACCEPTED: { text: "Accepted by partner", className: "badge-veg" },
+  REJECTED: { text: "Rejected by partner", className: "badge-nonveg" },
+};
+
 export function AssignPartnerPanel({
   currentPartner,
   assignPath,
   onAssigned,
   readOnly = false,
+  acceptanceStatus,
 }: {
   currentPartner: DeliveryPartner | null | undefined;
   assignPath: string;
   onAssigned: () => void;
   readOnly?: boolean;
+  /** "NONE" | "PENDING" | "ACCEPTED" | "REJECTED" — whether the assigned partner has responded yet. */
+  acceptanceStatus?: string;
 }) {
   const { show } = useToast();
   const [partners, setPartners] = useState<DeliveryPartner[] | null>(null);
@@ -63,6 +72,11 @@ export function AssignPartnerPanel({
         <>
           <p>{currentPartner.name} · {currentPartner.phone}</p>
           <p className="text-[var(--glido-muted)]">{currentPartner.vehicleType}</p>
+          {acceptanceStatus && ACCEPTANCE_LABEL[acceptanceStatus] && (
+            <span className={`badge ${ACCEPTANCE_LABEL[acceptanceStatus].className} mt-2 inline-block`}>
+              {ACCEPTANCE_LABEL[acceptanceStatus].text}
+            </span>
+          )}
         </>
       ) : (
         <p className="text-[var(--glido-muted)]">No delivery partner assigned{readOnly ? "." : " yet."}</p>
