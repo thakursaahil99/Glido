@@ -56,21 +56,27 @@ export class DeliveryPartnersService {
     });
     if (candidates.length === 0) return null;
 
-    let nearest = candidates[0];
+    const ranked = [...candidates];
     if (pickupLat != null && pickupLng != null) {
-      let nearestDist = Infinity;
-      for (const candidate of candidates) {
-        if (candidate.currentLat == null || candidate.currentLng == null) continue;
-        const dist = haversineDistanceKm(pickupLat, pickupLng, candidate.currentLat, candidate.currentLng);
-        if (dist < nearestDist) {
-          nearestDist = dist;
-          nearest = candidate;
-        }
-      }
+      ranked.sort((a, b) => {
+        const distA = a.currentLat != null && a.currentLng != null ? haversineDistanceKm(pickupLat, pickupLng, a.currentLat, a.currentLng) : Infinity;
+        const distB = b.currentLat != null && b.currentLng != null ? haversineDistanceKm(pickupLat, pickupLng, b.currentLat, b.currentLng) : Infinity;
+        return distA - distB;
+      });
     }
 
-    await this.prisma.deliveryPartner.update({ where: { id: nearest.id }, data: { isAvailable: false } });
-    return nearest;
+    // Claim atomically with a conditional update rather than trusting the isAvailable
+    // read above — two orders reaching READY in the same instant could otherwise both
+    // read the same partner as available and both "assign" them. updateMany's count
+    // tells us whether we actually won the claim; if not, try the next-nearest candidate.
+    for (const candidate of ranked) {
+      const result = await this.prisma.deliveryPartner.updateMany({
+        where: { id: candidate.id, isAvailable: true },
+        data: { isAvailable: false },
+      });
+      if (result.count > 0) return candidate;
+    }
+    return null;
   }
 
   async release(id: string) {
