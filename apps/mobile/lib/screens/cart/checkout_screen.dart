@@ -185,6 +185,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 if (_paymentMethod == 'WALLET' && _walletBalance < estimatedTotal)
                   Text('Insufficient wallet balance — add money from your profile.', style: TextStyle(color: context.colors.danger, fontSize: 12.5)),
+                // The web app also offers "Pay online" via Razorpay — that flow isn't
+                // built into the mobile app yet, so this is here rather than silently
+                // missing (matches the same disclosure on grocery checkout on web).
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text('Online (card/UPI) payment is coming soon to the app.', style: TextStyle(color: context.colors.muted, fontSize: 12.5)),
+                ),
                 const SizedBox(height: 16),
                 const Text('Coupon', style: TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),

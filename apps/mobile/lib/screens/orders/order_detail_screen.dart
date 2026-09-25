@@ -25,6 +25,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   int _reviewRating = 5;
   final _reviewCommentCtrl = TextEditingController();
   bool _submittingReview = false;
+  bool _cancelling = false;
   Timer? _poll;
 
   @override
@@ -61,6 +62,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _cancel() async {
+    if (_cancelling) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -73,11 +75,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       ),
     );
     if (confirmed != true) return;
+    setState(() => _cancelling = true);
     try {
       await ApiClient.instance.post('/orders/${widget.orderId}/cancel', {});
       _load();
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _cancelling = false);
     }
   }
 
@@ -165,9 +170,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           if (canCancel) ...[
             const SizedBox(height: 12),
             OutlinedButton(
-              onPressed: _cancel,
+              onPressed: _cancelling ? null : _cancel,
               style: OutlinedButton.styleFrom(foregroundColor: context.colors.danger, side: BorderSide(color: context.colors.danger)),
-              child: const Text('Cancel order'),
+              child: Text(_cancelling ? 'Cancelling...' : 'Cancel order'),
             ),
           ],
           if (order.status == 'DELIVERED' && order.review == null) ...[

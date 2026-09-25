@@ -24,6 +24,7 @@ function CategoriesContent() {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: "", imageUrl: "" });
+  const [creating, setCreating] = useState(false);
 
   async function load() {
     setError(null);
@@ -60,6 +61,7 @@ function CategoriesContent() {
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
+    setCreating(true);
     try {
       await api.post("/admin/grocery/categories", form);
       show("Category created", "success");
@@ -68,6 +70,8 @@ function CategoriesContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not create category.", "error");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -120,7 +124,7 @@ function CategoriesContent() {
         <form onSubmit={create} className="space-y-2">
           <input className="input-glido" placeholder="Category name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <ImageUploadField value={form.imageUrl} onChange={(imageUrl) => setForm({ ...form, imageUrl })} />
-          <button className="btn-primary w-full">Create category</button>
+          <button className="btn-primary w-full" disabled={creating}>{creating ? "Creating..." : "Create category"}</button>
         </form>
       </Modal>
     </div>

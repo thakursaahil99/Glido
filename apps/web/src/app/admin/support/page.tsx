@@ -53,8 +53,16 @@ function SupportInbox() {
     setMessages(null);
     try {
       const res = await api.get<{ user: ConversationUser; messages: SupportMessage[] }>(`/admin/support/${userId}/messages`);
-      setSelectedUser(res.user);
-      setMessages(res.messages);
+      // Guard against the admin clicking a different conversation before this
+      // request resolves — an in-flight response for a conversation the admin
+      // has since navigated away from must not overwrite what's on screen now.
+      setSelectedUserId((current) => {
+        if (current === userId) {
+          setSelectedUser(res.user);
+          setMessages(res.messages);
+        }
+        return current;
+      });
       setConversations((prev) => prev?.map((c) => (c.user.id === userId ? { ...c, unreadCount: 0 } : c)) ?? null);
     } catch (e) {
       alert(e instanceof ApiError ? e.message : "Could not load this conversation.");
@@ -104,13 +112,21 @@ function SupportInbox() {
 
   async function send() {
     if (!selectedUserId) return;
+    const targetUserId = selectedUserId;
     const text = draft.trim();
     if (!text) return;
     setSending(true);
     setDraft("");
     try {
-      const created = await api.post<SupportMessage>(`/admin/support/${selectedUserId}/messages`, { message: text });
-      setMessages((prev) => (prev ? [...prev, created] : [created]));
+      const created = await api.post<SupportMessage>(`/admin/support/${targetUserId}/messages`, { message: text });
+      // Only append to the visible thread if the admin is still looking at the
+      // conversation this reply was actually sent to.
+      setSelectedUserId((current) => {
+        if (current === targetUserId) {
+          setMessages((prev) => (prev ? [...prev, created] : [created]));
+        }
+        return current;
+      });
     } catch (e) {
       setDraft(text);
       alert(e instanceof ApiError ? e.message : "Could not send message.");

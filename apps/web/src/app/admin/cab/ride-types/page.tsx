@@ -36,6 +36,8 @@ function RideTypesContent() {
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<RideType | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   async function load() {
     setError(null);
@@ -61,6 +63,7 @@ function RideTypesContent() {
 
   async function createRideType(e: React.FormEvent) {
     e.preventDefault();
+    setCreating(true);
     try {
       await api.post("/admin/cab/ride-types", form);
       show("Ride type created", "success");
@@ -69,12 +72,15 @@ function RideTypesContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not create ride type.", "error");
+    } finally {
+      setCreating(false);
     }
   }
 
   async function saveEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!editing) return;
+    setSaving(true);
     try {
       await api.patch(`/admin/cab/ride-types/${editing.id}`, editing);
       show("Ride type updated", "success");
@@ -82,6 +88,8 @@ function RideTypesContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not update ride type.", "error");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -168,7 +176,7 @@ function RideTypesContent() {
               <input type="number" className="input-glido mt-1" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })} />
             </label>
           </div>
-          <button className="btn-primary w-full mt-2">Create ride type</button>
+          <button className="btn-primary w-full mt-2" disabled={creating}>{creating ? "Creating..." : "Create ride type"}</button>
         </form>
       </Modal>
 
@@ -203,7 +211,7 @@ function RideTypesContent() {
                 <input type="number" className="input-glido mt-1" value={editing.capacity} onChange={(e) => setEditing({ ...editing, capacity: Number(e.target.value) })} />
               </label>
             </div>
-            <button className="btn-primary w-full mt-2">Save changes</button>
+            <button className="btn-primary w-full mt-2" disabled={saving}>{saving ? "Saving..." : "Save changes"}</button>
           </form>
         </Modal>
       )}

@@ -22,6 +22,7 @@ class GroceryOrderDetailScreen extends StatefulWidget {
 class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
   GroceryOrder? _order;
   String? _error;
+  bool _cancelling = false;
   Timer? _poll;
 
   @override
@@ -56,6 +57,7 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
   }
 
   Future<void> _cancel() async {
+    if (_cancelling) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -67,11 +69,14 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
       ),
     );
     if (confirmed != true) return;
+    setState(() => _cancelling = true);
     try {
       await ApiClient.instance.post('/grocery/orders/${widget.orderId}/cancel', {});
       _load();
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _cancelling = false);
     }
   }
 
@@ -152,9 +157,9 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
           if (canCancel) ...[
             const SizedBox(height: 12),
             OutlinedButton(
-              onPressed: _cancel,
+              onPressed: _cancelling ? null : _cancel,
               style: OutlinedButton.styleFrom(foregroundColor: context.colors.danger, side: BorderSide(color: context.colors.danger)),
-              child: const Text('Cancel order'),
+              child: Text(_cancelling ? 'Cancelling...' : 'Cancel order'),
             ),
           ],
           const SizedBox(height: 16),

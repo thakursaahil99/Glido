@@ -28,6 +28,7 @@ function DeliveryPartnersContent() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [viewing, setViewing] = useState<DeliveryPartner | null>(null);
+  const [creating, setCreating] = useState(false);
 
   async function load() {
     setError(null);
@@ -67,6 +68,7 @@ function DeliveryPartnersContent() {
 
   async function createPartner(e: React.FormEvent) {
     e.preventDefault();
+    setCreating(true);
     try {
       await api.post("/admin/delivery-partners", form);
       show("Delivery partner added (pending approval)", "success");
@@ -75,6 +77,8 @@ function DeliveryPartnersContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not add delivery partner.", "error");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -192,7 +196,7 @@ function DeliveryPartnersContent() {
             <option value="On foot">On foot</option>
           </select>
           <input className="input-glido" placeholder="Vehicle number (optional)" value={form.vehicleNumber} onChange={(e) => setForm({ ...form, vehicleNumber: e.target.value })} />
-          <button className="btn-primary w-full mt-2">Add partner</button>
+          <button className="btn-primary w-full mt-2" disabled={creating}>{creating ? "Adding..." : "Add partner"}</button>
         </form>
       </Modal>
 

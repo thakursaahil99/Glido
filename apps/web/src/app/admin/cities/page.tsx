@@ -38,6 +38,8 @@ function CitiesContent() {
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<City | null>(null);
   const [form, setForm] = useState<ZoneForm>(emptyForm);
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   async function load() {
     setError(null);
@@ -64,6 +66,7 @@ function CitiesContent() {
 
   async function createZone(e: React.FormEvent) {
     e.preventDefault();
+    setCreating(true);
     try {
       await api.post("/admin/cities", form);
       show("Service zone created", "success");
@@ -72,12 +75,15 @@ function CitiesContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not create zone.", "error");
+    } finally {
+      setCreating(false);
     }
   }
 
   async function saveEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!editing) return;
+    setSaving(true);
     try {
       await api.patch(`/admin/cities/${editing.id}`, {
         name: editing.name,
@@ -91,6 +97,8 @@ function CitiesContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not update zone.", "error");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -177,7 +185,7 @@ function CitiesContent() {
               className="w-full mt-1"
             />
           </label>
-          <button className="btn-primary w-full mt-2">Create zone</button>
+          <button className="btn-primary w-full mt-2" disabled={creating}>{creating ? "Creating..." : "Create zone"}</button>
         </form>
       </Modal>
 
@@ -202,7 +210,7 @@ function CitiesContent() {
                 className="w-full mt-1"
               />
             </label>
-            <button className="btn-primary w-full mt-2">Save zone</button>
+            <button className="btn-primary w-full mt-2" disabled={saving}>{saving ? "Saving..." : "Save zone"}</button>
           </form>
         </Modal>
       )}

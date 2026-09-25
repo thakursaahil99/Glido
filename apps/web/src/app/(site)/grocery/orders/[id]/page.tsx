@@ -22,6 +22,7 @@ export default function GroceryOrderDetailPage() {
   const [order, setOrder] = useState<GroceryOrder | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   async function load() {
     setError(null);
@@ -59,6 +60,7 @@ export default function GroceryOrderDetailPage() {
   }, [id]);
 
   async function cancelOrder() {
+    setCancelling(true);
     try {
       await api.post(`/grocery/orders/${id}/cancel`, {});
       show("Order cancelled.", "success");
@@ -66,6 +68,8 @@ export default function GroceryOrderDetailPage() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not cancel order.", "error");
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -205,6 +209,7 @@ export default function GroceryOrderDetailPage() {
         danger
         onCancel={() => setCancelOpen(false)}
         onConfirm={cancelOrder}
+        confirming={cancelling}
       />
     </div>
   );

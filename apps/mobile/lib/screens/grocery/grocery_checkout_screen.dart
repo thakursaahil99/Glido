@@ -179,6 +179,10 @@ class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
                 ),
                 if (_paymentMethod == 'WALLET' && _walletBalance < total)
                   Text('Insufficient wallet balance.', style: TextStyle(color: context.colors.danger, fontSize: 12.5)),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text('Online (card/UPI) payment for Grocery is coming soon.', style: TextStyle(color: context.colors.muted, fontSize: 12.5)),
+                ),
                 const SizedBox(height: 16),
                 const Text('Coupon', style: TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),

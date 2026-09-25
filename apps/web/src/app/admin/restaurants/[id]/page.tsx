@@ -30,6 +30,8 @@ function RestaurantDetailContent() {
   const [categoryName, setCategoryName] = useState("");
   const [showAddItem, setShowAddItem] = useState(false);
   const [itemForm, setItemForm] = useState({ name: "", price: 0, categoryId: "", description: "", imageUrl: "", isVeg: true });
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [addingItem, setAddingItem] = useState(false);
 
   async function load() {
     setError(null);
@@ -79,6 +81,7 @@ function RestaurantDetailContent() {
 
   async function addCategory(e: React.FormEvent) {
     e.preventDefault();
+    setAddingCategory(true);
     try {
       await api.post(`/admin/restaurants/${id}/categories`, { name: categoryName });
       setShowAddCategory(false);
@@ -87,6 +90,8 @@ function RestaurantDetailContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not add category.", "error");
+    } finally {
+      setAddingCategory(false);
     }
   }
 
@@ -102,6 +107,7 @@ function RestaurantDetailContent() {
 
   async function addItem(e: React.FormEvent) {
     e.preventDefault();
+    setAddingItem(true);
     try {
       await api.post(`/admin/restaurants/${id}/items`, {
         ...itemForm,
@@ -113,6 +119,8 @@ function RestaurantDetailContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not add item.", "error");
+    } finally {
+      setAddingItem(false);
     }
   }
 
@@ -300,7 +308,7 @@ function RestaurantDetailContent() {
       <Modal open={showAddCategory} title="Add category" onClose={() => setShowAddCategory(false)}>
         <form onSubmit={addCategory} className="space-y-2">
           <input className="input-glido" placeholder="Category name" required value={categoryName} onChange={(e) => setCategoryName(e.target.value)} />
-          <button className="btn-primary w-full">Add category</button>
+          <button className="btn-primary w-full" disabled={addingCategory}>{addingCategory ? "Adding..." : "Add category"}</button>
         </form>
       </Modal>
 
@@ -330,7 +338,7 @@ function RestaurantDetailContent() {
             <input type="checkbox" checked={itemForm.isVeg} onChange={(e) => setItemForm({ ...itemForm, isVeg: e.target.checked })} />
             Vegetarian
           </label>
-          <button className="btn-primary w-full">Add item</button>
+          <button className="btn-primary w-full" disabled={addingItem}>{addingItem ? "Adding..." : "Add item"}</button>
         </form>
       </Modal>
     </div>

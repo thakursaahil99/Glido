@@ -39,6 +39,8 @@ function ProductsContent() {
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<GroceryProduct | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   async function loadCategories() {
     setCategories(await api.get<GroceryCategory[]>("/admin/grocery/categories"));
@@ -85,6 +87,7 @@ function ProductsContent() {
 
   async function createProduct(e: React.FormEvent) {
     e.preventDefault();
+    setCreating(true);
     try {
       await api.post("/admin/grocery/products", {
         ...form,
@@ -97,12 +100,15 @@ function ProductsContent() {
       loadProducts();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not add product.", "error");
+    } finally {
+      setCreating(false);
     }
   }
 
   async function saveEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!editing) return;
+    setSaving(true);
     try {
       const images = editing.images ?? [];
       await api.patch(`/admin/grocery/products/${editing.id}`, {
@@ -121,6 +127,8 @@ function ProductsContent() {
       loadProducts();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not update product.", "error");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -234,7 +242,7 @@ function ProductsContent() {
               <input type="number" className="input-glido mt-1" value={form.stockQty} onChange={(e) => setForm({ ...form, stockQty: Number(e.target.value) })} />
             </label>
           </div>
-          <button className="btn-primary w-full mt-2">Add product</button>
+          <button className="btn-primary w-full mt-2" disabled={creating}>{creating ? "Adding..." : "Add product"}</button>
         </form>
       </Modal>
 
@@ -275,7 +283,7 @@ function ProductsContent() {
                 <input type="number" className="input-glido mt-1" value={editing.stockQty} onChange={(e) => setEditing({ ...editing, stockQty: Number(e.target.value) })} />
               </label>
             </div>
-            <button className="btn-primary w-full mt-2">Save changes</button>
+            <button className="btn-primary w-full mt-2" disabled={saving}>{saving ? "Saving..." : "Save changes"}</button>
           </form>
         </Modal>
       )}

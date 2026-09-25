@@ -24,6 +24,7 @@ function BannersContent() {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ title: "", imageUrl: "", link: "" });
+  const [creating, setCreating] = useState(false);
 
   async function load() {
     setError(null);
@@ -60,6 +61,7 @@ function BannersContent() {
 
   async function createBanner(e: React.FormEvent) {
     e.preventDefault();
+    setCreating(true);
     try {
       await api.post("/admin/banners", form);
       show("Banner created", "success");
@@ -68,6 +70,8 @@ function BannersContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not create banner.", "error");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -114,7 +118,7 @@ function BannersContent() {
           <input className="input-glido" placeholder="Title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           <ImageUploadField value={form.imageUrl} onChange={(imageUrl) => setForm({ ...form, imageUrl })} />
           <input className="input-glido" placeholder="Link (e.g. /food)" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} />
-          <button className="btn-primary w-full">Add banner</button>
+          <button className="btn-primary w-full" disabled={creating}>{creating ? "Adding..." : "Add banner"}</button>
         </form>
       </Modal>
     </div>

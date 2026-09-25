@@ -46,6 +46,7 @@ export function ConfirmDialog({
   danger,
   onConfirm,
   onCancel,
+  confirming = false,
 }: {
   open: boolean;
   title: string;
@@ -54,16 +55,19 @@ export function ConfirmDialog({
   danger?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  /** True while onConfirm's async work is in flight — disables both buttons so a
+   *  double-click/tap on a slow network can't fire the confirm action twice. */
+  confirming?: boolean;
 }) {
   return (
     <Modal open={open} title={title} onClose={onCancel}>
       {description && <p className="text-sm text-[var(--glido-muted)] mb-4">{description}</p>}
       <div className="flex justify-end gap-2">
-        <button onClick={onCancel} className="btn-secondary">
+        <button onClick={onCancel} disabled={confirming} className="btn-secondary">
           Cancel
         </button>
-        <button onClick={onConfirm} className={danger ? "btn-danger-outline" : "btn-primary"}>
-          {confirmLabel}
+        <button onClick={onConfirm} disabled={confirming} className={danger ? "btn-danger-outline" : "btn-primary"}>
+          {confirming ? "Please wait..." : confirmLabel}
         </button>
       </div>
     </Modal>

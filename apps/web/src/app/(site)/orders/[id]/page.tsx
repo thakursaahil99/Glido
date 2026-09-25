@@ -22,6 +22,7 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -63,6 +64,7 @@ export default function OrderDetailPage() {
   }, [id]);
 
   async function cancelOrder() {
+    setCancelling(true);
     try {
       await api.post(`/orders/${id}/cancel`, {});
       show("Order cancelled.", "success");
@@ -70,6 +72,8 @@ export default function OrderDetailPage() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not cancel order.", "error");
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -266,6 +270,7 @@ export default function OrderDetailPage() {
         danger
         onCancel={() => setCancelOpen(false)}
         onConfirm={cancelOrder}
+        confirming={cancelling}
       />
     </div>
   );

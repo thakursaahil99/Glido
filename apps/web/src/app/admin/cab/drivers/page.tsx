@@ -29,6 +29,7 @@ function DriversContent() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [viewing, setViewing] = useState<Driver | null>(null);
+  const [creating, setCreating] = useState(false);
 
   async function load() {
     setError(null);
@@ -72,6 +73,7 @@ function DriversContent() {
 
   async function createDriver(e: React.FormEvent) {
     e.preventDefault();
+    setCreating(true);
     try {
       await api.post("/admin/cab/drivers", form);
       show("Driver added (pending approval)", "success");
@@ -80,6 +82,8 @@ function DriversContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not add driver.", "error");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -193,7 +197,7 @@ function DriversContent() {
           </select>
           <input className="input-glido" placeholder="Vehicle model (e.g. Maruti Swift)" value={form.vehicleModel} onChange={(e) => setForm({ ...form, vehicleModel: e.target.value })} />
           <input className="input-glido" placeholder="Vehicle number" required value={form.vehicleNumber} onChange={(e) => setForm({ ...form, vehicleNumber: e.target.value })} />
-          <button className="btn-primary w-full mt-2">Add driver</button>
+          <button className="btn-primary w-full mt-2" disabled={creating}>{creating ? "Adding..." : "Add driver"}</button>
         </form>
       </Modal>
 

@@ -23,6 +23,7 @@ function CouponsContent() {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ code: "", type: "PERCENT" as "PERCENT" | "FLAT", value: 10, maxDiscount: 100, minOrderAmount: 0, usageLimit: 100, perUserLimit: 1 });
+  const [creating, setCreating] = useState(false);
 
   async function load() {
     setError(null);
@@ -49,6 +50,7 @@ function CouponsContent() {
 
   async function createCoupon(e: React.FormEvent) {
     e.preventDefault();
+    setCreating(true);
     try {
       await api.post("/admin/coupons", { ...form, code: form.code.toUpperCase() });
       show("Coupon created", "success");
@@ -56,6 +58,8 @@ function CouponsContent() {
       load();
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Could not create coupon.", "error");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -143,7 +147,7 @@ function CouponsContent() {
               <input type="number" className="input-glido mt-1" value={form.perUserLimit} onChange={(e) => setForm({ ...form, perUserLimit: Number(e.target.value) })} />
             </label>
           </div>
-          <button className="btn-primary w-full">Create coupon</button>
+          <button className="btn-primary w-full" disabled={creating}>{creating ? "Creating..." : "Create coupon"}</button>
         </form>
       </Modal>
     </div>
