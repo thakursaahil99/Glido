@@ -34,15 +34,13 @@ import { GlidoLogo } from "./logo";
 import { NotificationBell } from "./notification-bell";
 import { ThemeToggle } from "./theme-toggle";
 
-const NAV: { href: string; label: string; icon: LucideIcon; permission: Permission }[] = [
+const NAV: { href: string; label: string; icon: LucideIcon; permission: Permission; anyPermissions?: Permission[] }[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, permission: "view_dashboard" },
   { href: "/admin/reports", label: "Reports", icon: BarChart3, permission: "view_reports" },
   { href: "/admin/restaurants", label: "Restaurants", icon: UtensilsCrossed, permission: "manage_restaurants" },
-  { href: "/admin/orders/all", label: "All Orders", icon: Package, permission: "manage_orders" },
-  { href: "/admin/orders", label: "Food Orders", icon: Package, permission: "manage_orders" },
+  { href: "/admin/orders/all", label: "All Orders", icon: Package, permission: "manage_orders", anyPermissions: ["manage_orders", "manage_grocery"] },
   { href: "/admin/grocery/categories", label: "Grocery Categories", icon: ShoppingCart, permission: "manage_grocery" },
   { href: "/admin/grocery/products", label: "Grocery Products", icon: ShoppingCart, permission: "manage_grocery" },
-  { href: "/admin/grocery/orders", label: "Grocery Orders", icon: Package, permission: "manage_grocery" },
   { href: "/admin/delivery-partners", label: "Delivery Partners", icon: Truck, permission: "manage_drivers" },
   { href: "/admin/cab/ride-types", label: "Cab Ride Types", icon: Car, permission: "manage_rides" },
   { href: "/admin/cab/drivers", label: "Cab Drivers", icon: Bike, permission: "manage_drivers" },
@@ -124,7 +122,9 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const visibleNav = NAV.filter((item) => hasPermission(user, item.permission));
+  const visibleNav = NAV.filter((item) =>
+    item.anyPermissions ? item.anyPermissions.some((p) => hasPermission(user, p)) : hasPermission(user, item.permission),
+  );
 
   async function onLogout() {
     await logout();
