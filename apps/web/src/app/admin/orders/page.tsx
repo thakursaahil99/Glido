@@ -51,7 +51,7 @@ function OrdersContent() {
             key={tab}
             onClick={() => setStatus(tab)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium shrink-0 ${
-              status === tab ? "bg-[var(--glido-primary)] text-white" : "bg-white border border-[var(--glido-border)] text-[var(--glido-muted)]"
+              status === tab ? "bg-[var(--glido-primary)] text-white" : "bg-white dark:bg-[var(--glido-surface)] border border-[var(--glido-border)] text-[var(--glido-muted)]"
             }`}
           >
             {tab.replace(/_/g, " ")}
@@ -75,7 +75,7 @@ function OrdersContent() {
         <div className="card-glido overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50">
+              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50 dark:bg-[var(--glido-surface-alt)]">
                 <th className="py-2.5 px-4">Order</th>
                 <th className="py-2.5 px-4">Restaurant</th>
                 <th className="py-2.5 px-4">Status</th>

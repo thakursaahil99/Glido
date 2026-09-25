@@ -25,7 +25,6 @@ import { APP_DOWNLOADS } from "@/lib/app-downloads";
 import type { Banner, Paginated, Restaurant } from "@/lib/types";
 import { RestaurantCard, RestaurantCardSkeleton } from "@/components/restaurant-card";
 import { ErrorState } from "@/components/empty-state";
-import { TriServiceSwitcher } from "@/components/tri-service-switcher";
 
 const HOW_IT_WORKS: { icon: LucideIcon; title: string; desc: string }[] = [
   { icon: MapPin, title: "Set your location", desc: "Tell us where you are so we can show what's nearby." },
@@ -89,14 +88,13 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* Hero — bold gradient backdrop */}
-      <section className="relative overflow-hidden bg-[var(--glido-ink)]">
+      {/* Hero — dark, calm base with soft color glows instead of a flat saturated wash */}
+      <section className="relative overflow-hidden bg-[var(--glido-hero-bg)]">
+        <div className="absolute -right-16 -top-24 w-96 h-96 rounded-full opacity-30 blur-3xl pointer-events-none" style={{ background: "var(--glido-food)" }} />
+        <div className="absolute -left-10 top-1/3 w-72 h-72 rounded-full opacity-20 blur-3xl pointer-events-none" style={{ background: "var(--glido-cab)" }} />
+        <div className="absolute right-1/4 -bottom-24 w-80 h-80 rounded-full opacity-20 blur-3xl pointer-events-none" style={{ background: "var(--glido-grocery)" }} />
         <div
-          className="absolute inset-0 opacity-90"
-          style={{ background: "radial-gradient(120% 100% at 15% 0%, var(--glido-food) 0%, var(--glido-food-dark) 45%, var(--glido-ink) 85%)" }}
-        />
-        <div
-          className="absolute inset-0 opacity-[0.08] pointer-events-none"
+          className="absolute inset-0 opacity-[0.05] pointer-events-none"
           style={{ backgroundImage: "radial-gradient(circle, white 1.5px, transparent 1.5px)", backgroundSize: "22px 22px" }}
         />
         <div className="container-glido relative z-10 py-14 md:py-20">
@@ -119,7 +117,7 @@ export default function HomePage() {
             />
             <button
               type="submit"
-              className="btn-primary shrink-0 !text-[var(--glido-ink)] !shadow-xl"
+              className="btn-primary shrink-0 !text-[var(--glido-hero-bg)] !shadow-xl"
               style={{ background: "white" }}
             >
               Search
@@ -155,13 +153,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Tri-service switcher — signature component, floating just below the hero */}
-      <div className="container-glido -mt-6 relative z-10">
-        <TriServiceSwitcher className="shadow-xl" />
-      </div>
-
       {/* Stats / briefing bar */}
-      <section className="border-b border-[var(--glido-border)] bg-white">
+      <section className="border-b border-[var(--glido-border)] bg-white dark:bg-[var(--glido-surface)]">
         <div className="container-glido py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
           {STATS.map((s) => (
             <div key={s.label} className="text-center md:text-left">
@@ -289,7 +282,7 @@ export default function HomePage() {
             </div>
             <a
               href={APP_DOWNLOADS.customer}
-              className="inline-flex items-center gap-2 px-6 py-3.5 shrink-0 w-full md:w-auto justify-center rounded-2xl bg-white text-[var(--glido-ink)] font-bold shadow-xl transition-transform hover:-translate-y-1"
+              className="inline-flex items-center gap-2 px-6 py-3.5 shrink-0 w-full md:w-auto justify-center rounded-2xl bg-white text-[var(--glido-hero-bg)] font-bold shadow-xl transition-transform hover:-translate-y-1"
             >
               <Download size={18} /> Download for Android
             </a>
@@ -298,7 +291,7 @@ export default function HomePage() {
       </section>
 
       {/* How Glido works */}
-      <section className="bg-white border-y border-[var(--glido-border)]">
+      <section className="bg-white dark:bg-[var(--glido-surface)] border-y border-[var(--glido-border)]">
         <div className="container-glido py-12">
           <h2 className="text-xl font-bold text-center mb-8">How Glido works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -330,7 +323,7 @@ export default function HomePage() {
           </p>
           <Link
             href="/partner-with-us"
-            className="inline-block mt-4 rounded-xl bg-white text-[var(--glido-ink)] font-bold px-5 py-2.5 shadow-lg transition-transform hover:-translate-y-0.5"
+            className="inline-block mt-4 rounded-xl bg-white text-[var(--glido-hero-bg)] font-bold px-5 py-2.5 shadow-lg transition-transform hover:-translate-y-0.5"
           >
             Become a partner
           </Link>
@@ -345,7 +338,7 @@ export default function HomePage() {
           </p>
           <Link
             href="/become-a-delivery-partner"
-            className="inline-block mt-4 rounded-xl bg-white text-[var(--glido-ink)] font-bold px-5 py-2.5 shadow-lg transition-transform hover:-translate-y-0.5"
+            className="inline-block mt-4 rounded-xl bg-white text-[var(--glido-hero-bg)] font-bold px-5 py-2.5 shadow-lg transition-transform hover:-translate-y-0.5"
           >
             Become a delivery partner
           </Link>

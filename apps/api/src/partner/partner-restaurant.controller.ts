@@ -20,6 +20,12 @@ export class PartnerRestaurantController {
     return this.restaurants.findByOwner(user.id);
   }
 
+  @Get("stats")
+  async myStats(@CurrentUser() user: AuthUser) {
+    const restaurant = await this.restaurants.findByOwner(user.id);
+    return this.restaurants.getStats(restaurant.id);
+  }
+
   @Patch()
   async update(@CurrentUser() user: AuthUser, @Body() dto: UpdatePartnerRestaurantDto) {
     const restaurant = await this.restaurants.findByOwner(user.id);

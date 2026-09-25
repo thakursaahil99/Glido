@@ -98,7 +98,7 @@ function DriversContent() {
             key={tab}
             onClick={() => setStatus(tab)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium shrink-0 ${
-              status === tab ? "bg-[var(--glido-primary)] text-white" : "bg-white border border-[var(--glido-border)] text-[var(--glido-muted)]"
+              status === tab ? "bg-[var(--glido-primary)] text-white" : "bg-white dark:bg-[var(--glido-surface)] border border-[var(--glido-border)] text-[var(--glido-muted)]"
             }`}
           >
             {tab}
@@ -114,7 +114,7 @@ function DriversContent() {
         <div className="card-glido overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50">
+              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50 dark:bg-[var(--glido-surface-alt)]">
                 <th className="py-2.5 px-4">Driver</th>
                 <th className="py-2.5 px-4">Vehicle</th>
                 <th className="py-2.5 px-4">Type</th>
@@ -205,8 +205,8 @@ function DriversContent() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={resolveMediaUrl(viewing.photoUrl)!} alt={viewing.name} className="h-14 w-14 rounded-full object-cover" />
               ) : (
-                <div className="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Bike size={22} className="text-gray-400" />
+                <div className="h-14 w-14 rounded-full bg-gray-100 dark:bg-[var(--glido-surface-alt)] flex items-center justify-center">
+                  <Bike size={22} className="text-gray-400 dark:text-[var(--glido-muted)]" />
                 </div>
               )}
               <div>

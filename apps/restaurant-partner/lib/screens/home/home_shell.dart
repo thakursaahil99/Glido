@@ -13,16 +13,18 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  static const _screens = [
-    DashboardScreen(),
-    MenuScreen(),
-    OrdersScreen(),
-  ];
+  void _goToOrders() => setState(() => _index = 2);
 
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      DashboardScreen(onViewOrders: _goToOrders),
+      const MenuScreen(),
+      const OrdersScreen(),
+    ];
+
     return Scaffold(
-      body: IndexedStack(index: _index, children: _screens),
+      body: IndexedStack(index: _index, children: screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),

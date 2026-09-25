@@ -10,7 +10,7 @@ export class CreateStaffDto {
   email: string;
 
   @IsString()
-  @Length(6, 100)
+  @Length(8, 100)
   password: string;
 
   @IsIn(ADMIN_ROLES)
@@ -43,6 +43,6 @@ export class UpdateStaffDto {
 
   @IsOptional()
   @IsString()
-  @Length(6, 100)
+  @Length(8, 100)
   newPassword?: string;
 }

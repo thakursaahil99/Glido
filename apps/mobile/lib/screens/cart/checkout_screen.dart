@@ -15,6 +15,9 @@ class CheckoutScreen extends StatefulWidget {
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
+const _kPresetInstructions = ['Avoid calling', 'Leave at door', "Don't ring bell", 'Leave with guard'];
+const _kTipPresets = [20.0, 30.0, 50.0];
+
 class _CheckoutScreenState extends State<CheckoutScreen> {
   List<Address>? _addresses;
   String? _selectedAddressId;
@@ -28,11 +31,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   double? _couponDiscount;
   String? _couponError;
   bool _applyingCoupon = false;
+  bool _noCutlery = false;
+  final Set<String> _presetInstructions = {};
+  double _tip = 0;
+  bool _customTipOpen = false;
+  final _customTipCtrl = TextEditingController();
+
+  // Composes preset chips + cutlery opt-out + free text into the single
+  // deliveryInstructions field already sent to POST /orders — mirrors the
+  // web checkout's composedInstructions(). No structured field exists.
+  String? get _composedInstructions {
+    final parts = <String>[..._presetInstructions];
+    if (_noCutlery) parts.add('No plastic cutlery, please');
+    if (_instructionsCtrl.text.trim().isNotEmpty) parts.add(_instructionsCtrl.text.trim());
+    return parts.isEmpty ? null : parts.join(', ');
+  }
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _instructionsCtrl.dispose();
+    _couponCtrl.dispose();
+    _customTipCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -95,8 +121,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 })
             .toList(),
         'paymentMethod': _paymentMethod,
-        if (_instructionsCtrl.text.trim().isNotEmpty) 'deliveryInstructions': _instructionsCtrl.text.trim(),
+        if (_composedInstructions != null) 'deliveryInstructions': _composedInstructions,
         if (_couponDiscount != null) 'couponCode': _couponCtrl.text.trim().toUpperCase(),
+        if (_tip > 0) 'tipAmount': _tip,
       });
       final orderId = res['order']['id'] as String;
       cart.clear();
@@ -117,7 +144,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final taxAmount = cart.subtotal * (_taxRatePercent / 100);
     // Restaurant delivery/packaging fee aren't stored on the cart; estimate as
     // zero here and let the server compute the authoritative total.
-    final estimatedTotal = (cart.subtotal + taxAmount - (_couponDiscount ?? 0)).clamp(0, double.infinity).toDouble();
+    final estimatedTotal = (cart.subtotal + taxAmount + _tip - (_couponDiscount ?? 0)).clamp(0, double.infinity).toDouble();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Checkout')),
@@ -157,7 +184,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   contentPadding: EdgeInsets.zero,
                 ),
                 if (_paymentMethod == 'WALLET' && _walletBalance < estimatedTotal)
-                  Text('Insufficient wallet balance — add money from your profile.', style: TextStyle(color: GlidoColors.danger, fontSize: 12.5)),
+                  Text('Insufficient wallet balance — add money from your profile.', style: TextStyle(color: context.colors.danger, fontSize: 12.5)),
                 const SizedBox(height: 16),
                 const Text('Coupon', style: TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
@@ -179,13 +206,130 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ],
                 ),
                 if (_couponError != null)
-                  Padding(padding: const EdgeInsets.only(top: 6), child: Text(_couponError!, style: TextStyle(color: GlidoColors.danger, fontSize: 12.5))),
+                  Padding(padding: const EdgeInsets.only(top: 6), child: Text(_couponError!, style: TextStyle(color: context.colors.danger, fontSize: 12.5))),
                 if (_couponDiscount != null)
-                  Padding(padding: const EdgeInsets.only(top: 6), child: Text('₹${_couponDiscount!.toStringAsFixed(2)} discount applied', style: TextStyle(color: GlidoColors.success, fontSize: 12.5, fontWeight: FontWeight.w600))),
+                  Padding(padding: const EdgeInsets.only(top: 6), child: Text('₹${_couponDiscount!.toStringAsFixed(2)} discount applied', style: TextStyle(color: context.colors.success, fontSize: 12.5, fontWeight: FontWeight.w600))),
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Opt out of plastic cutlery', style: TextStyle(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 2),
+                              Text('Thank you for caring about the planet', style: TextStyle(fontSize: 11.5, color: context.colors.muted)),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _noCutlery,
+                          onChanged: (v) => setState(() => _noCutlery = v),
+                          activeThumbColor: context.colors.success,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 const Text('Delivery instructions (optional)', style: TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
-                TextField(controller: _instructionsCtrl, maxLines: 2, decoration: const InputDecoration(hintText: 'E.g. Leave at the door')),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _kPresetInstructions.map((label) {
+                    final active = _presetInstructions.contains(label);
+                    return ChoiceChip(
+                      label: Text(label),
+                      selected: active,
+                      onSelected: (v) => setState(() {
+                        if (v) {
+                          _presetInstructions.add(label);
+                        } else {
+                          _presetInstructions.remove(label);
+                        }
+                      }),
+                      selectedColor: context.colors.primaryLight,
+                      labelStyle: TextStyle(
+                        color: active ? context.colors.primaryDark : context.colors.muted,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+                      ),
+                      backgroundColor: context.colors.surface,
+                      side: BorderSide(color: active ? context.colors.primary : context.colors.border),
+                      showCheckmark: false,
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 10),
+                TextField(controller: _instructionsCtrl, maxLines: 2, decoration: const InputDecoration(hintText: 'Anything else? (optional)')),
+                const SizedBox(height: 16),
+                const Text('Tip your delivery partner', style: TextStyle(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                Text('100% goes to your rider. Totally optional.', style: TextStyle(fontSize: 11.5, color: context.colors.muted)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    ..._kTipPresets.map((amount) {
+                      final active = _tip == amount;
+                      return ChoiceChip(
+                        label: Text('+₹${amount.toStringAsFixed(0)}'),
+                        selected: active,
+                        onSelected: (_) => setState(() {
+                          _tip = active ? 0 : amount;
+                          _customTipOpen = false;
+                          _customTipCtrl.clear();
+                        }),
+                        selectedColor: context.colors.primary,
+                        labelStyle: TextStyle(color: active ? Colors.white : context.colors.ink, fontWeight: FontWeight.w700, fontSize: 13),
+                        backgroundColor: context.colors.surface,
+                        side: BorderSide(color: active ? context.colors.primary : context.colors.border, width: 1.4),
+                        showCheckmark: false,
+                      );
+                    }),
+                    ChoiceChip(
+                      label: const Text('Custom'),
+                      selected: _customTipOpen || (_tip > 0 && !_kTipPresets.contains(_tip)),
+                      onSelected: (_) => setState(() => _customTipOpen = !_customTipOpen),
+                      selectedColor: context.colors.primary,
+                      labelStyle: TextStyle(
+                        color: (_customTipOpen || (_tip > 0 && !_kTipPresets.contains(_tip))) ? Colors.white : context.colors.ink,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                      backgroundColor: context.colors.surface,
+                      side: BorderSide(color: (_customTipOpen || (_tip > 0 && !_kTipPresets.contains(_tip))) ? context.colors.primary : context.colors.border, width: 1.4),
+                      showCheckmark: false,
+                    ),
+                    if (_tip > 0)
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _tip = 0;
+                          _customTipOpen = false;
+                          _customTipCtrl.clear();
+                        }),
+                        child: Text('Remove', style: TextStyle(color: context.colors.danger, fontWeight: FontWeight.w600, fontSize: 12.5)),
+                      ),
+                  ],
+                ),
+                if (_customTipOpen) ...[
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _customTipCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(hintText: 'Enter amount'),
+                    onChanged: (v) {
+                      final n = double.tryParse(v);
+                      setState(() => _tip = (n != null && n > 0) ? n : 0);
+                    },
+                  ),
+                ],
                 const SizedBox(height: 16),
                 Card(
                   child: Padding(
@@ -197,18 +341,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         const SizedBox(height: 8),
                         _SummaryRow(label: 'Subtotal', value: cart.subtotal),
                         _SummaryRow(label: 'Tax (est.)', value: taxAmount),
+                        if (_tip > 0) _SummaryRow(label: 'Delivery tip', value: _tip),
                         if (_couponDiscount != null) _SummaryRow(label: 'Coupon discount', value: -_couponDiscount!),
                         const Divider(),
                         _SummaryRow(label: 'Total (est.)', value: estimatedTotal, bold: true),
                         Text('Delivery & packaging fees are added by the restaurant at checkout.',
-                            style: TextStyle(fontSize: 11, color: GlidoColors.muted)),
+                            style: TextStyle(fontSize: 11, color: context.colors.muted)),
                       ],
                     ),
                   ),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
-                  Text(_error!, style: TextStyle(color: GlidoColors.danger)),
+                  Text(_error!, style: TextStyle(color: context.colors.danger)),
                 ],
                 const SizedBox(height: 16),
                 ElevatedButton(

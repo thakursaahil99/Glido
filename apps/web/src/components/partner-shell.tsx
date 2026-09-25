@@ -8,6 +8,7 @@ import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { GlidoLogo } from "./logo";
 import { NotificationBell } from "./notification-bell";
+import { ThemeToggle } from "./theme-toggle";
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/partner", label: "Restaurant", icon: LayoutDashboard },
@@ -29,7 +30,7 @@ function NavLinks({ pathname, onNavigate }: { pathname: string | null; onNavigat
             className={`flex items-center gap-3 mx-3 my-0.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               active
                 ? "bg-[var(--glido-primary-light)] text-[var(--glido-primary-dark)]"
-                : "text-[var(--glido-muted)] hover:bg-gray-50 hover:text-[var(--glido-ink)]"
+                : "text-[var(--glido-muted)] hover:bg-gray-50 dark:hover:bg-[var(--glido-surface-alt)] hover:text-[var(--glido-ink)]"
             }`}
           >
             <Icon size={18} strokeWidth={2} className="shrink-0" />
@@ -79,7 +80,7 @@ function PartnerGuard({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex">
-      <aside className="w-64 shrink-0 border-r border-[var(--glido-border)] bg-white hidden md:flex flex-col">
+      <aside className="w-64 shrink-0 border-r border-[var(--glido-border)] bg-white dark:bg-[var(--glido-surface)] hidden md:flex flex-col">
         <div className="h-16 flex items-center px-5 border-b border-[var(--glido-border)]">
           <Link href="/partner">
             <GlidoLogo className="text-lg" />
@@ -104,16 +105,18 @@ function PartnerGuard({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex-1 min-w-0">
-        <header className="hidden md:flex h-14 items-center justify-end px-6 border-b border-[var(--glido-border)] bg-white sticky top-0 z-30">
+        <header className="hidden md:flex h-14 items-center justify-end gap-2 px-6 border-b border-[var(--glido-border)] bg-white dark:bg-[var(--glido-surface)] sticky top-0 z-30">
+          <ThemeToggle />
           <NotificationBell />
         </header>
 
-        <header className="md:hidden h-14 flex items-center justify-between px-4 border-b border-[var(--glido-border)] bg-white sticky top-0 z-40">
+        <header className="md:hidden h-14 flex items-center justify-between px-4 border-b border-[var(--glido-border)] bg-white dark:bg-[var(--glido-surface)] sticky top-0 z-40">
           <button onClick={() => setMobileNavOpen(true)} aria-label="Open menu" className="text-[var(--glido-ink)]">
             <Menu size={22} />
           </button>
           <GlidoLogo />
           <div className="flex items-center gap-1">
+            <ThemeToggle />
             <NotificationBell />
             <button onClick={onLogout} className="text-xs text-[var(--glido-danger)] font-medium">
               Log out
@@ -123,7 +126,7 @@ function PartnerGuard({ children }: { children: React.ReactNode }) {
 
         {mobileNavOpen && (
           <div className="md:hidden fixed inset-0 z-50 flex">
-            <div className="w-72 bg-white h-full flex flex-col shadow-xl">
+            <div className="w-72 bg-white dark:bg-[var(--glido-surface)] h-full flex flex-col shadow-xl">
               <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--glido-border)]">
                 <GlidoLogo />
                 <button onClick={() => setMobileNavOpen(false)} aria-label="Close menu">

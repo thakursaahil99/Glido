@@ -188,6 +188,51 @@ docker compose up --build
 - Realtime uses Socket.IO's default in-memory adapter — fine for a single API instance; add the
   Redis adapter before scaling the API horizontally.
 
+### This project's actual Vercel deployment — a migration gotcha
+
+The live API (`apps/api`) deploys to Vercel as a serverless function via `apps/api/api/index.ts`,
+not through the `npm run build` script in `apps/api/package.json` — Vercel's zero-config Node.js
+function detection bundles `api/index.ts` directly and does **not** invoke that script. The
+project's Vercel dashboard has its own **Install Command** (Project Settings → Build & Development
+Settings), which is what actually runs on every deploy and takes priority over `vercel.json`'s
+`installCommand`/`buildCommand` (both were tried and silently ignored):
+
+```
+cd ../.. && npm install && npm run build --workspace=packages/shared && npm run prisma:generate --workspace=apps/api
+```
+
+That last step is why `apps/api/package.json`'s `prisma:generate` script is
+`"prisma migrate deploy && prisma generate"` rather than just `"prisma generate"` — it's the one
+script this pipeline is guaranteed to run, so it's where pending migrations actually get applied
+to the production database. **If you ever rename or remove that script, migrations will silently
+stop reaching production** (the API will keep serving from whatever schema it last had — it won't
+error until code that touches a missing column/table actually runs, which may not be immediately
+obvious). `npm install`'s own `postinstall` hook (`prisma generate`) is *not* reliable for this:
+Vercel's build-cache can restore `node_modules` and report "up to date," which skips lifecycle
+hooks entirely, silently skipping migrations too.
+
+If you ever move this API off the current Vercel project/pipeline, re-verify this behavior — don't
+assume a fresh `prisma migrate deploy` step in a build script will actually run without checking
+the deployment's build log for its output first.
+
+### Building the Flutter apps' release APKs — always pass API_BASE_URL
+
+`apps/mobile`, `apps/delivery`, and `apps/restaurant-partner` all resolve the backend origin via
+`String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:4000/api')` in each app's
+`lib/core/api_client.dart`. That default is meant only for local dev against an emulator/device on
+the same machine — it is **not** a placeholder that gets swapped for something sensible in release
+mode. A plain `flutter build apk --release` with no `--dart-define` silently ships an APK that
+tries to reach `localhost` on the installed phone, which doesn't exist there — every request fails
+immediately with a generic "could not reach the server" error, indistinguishable at a glance from
+an actual backend outage. Always build with:
+
+```
+flutter build apk --release --dart-define=API_BASE_URL=https://glido-api.vercel.app/api
+```
+
+for all three apps before shipping/uploading an APK anywhere. There is no CI or script that does
+this automatically yet — it must be passed by hand on every release build.
+
 ### CI
 
 `.github/workflows/ci.yml` runs on every push/PR to `main`: installs dependencies, generates the

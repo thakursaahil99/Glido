@@ -155,7 +155,7 @@ export default function WalletPage() {
         {referral ? (
           <>
             <div className="flex gap-2 mb-3">
-              <code className="flex-1 input-glido flex items-center font-mono text-sm tracking-wide bg-gray-50">
+              <code className="flex-1 input-glido flex items-center font-mono text-sm tracking-wide bg-gray-50 dark:bg-[var(--glido-surface-alt)]">
                 {referral.referralCode}
               </code>
               <button onClick={copyReferralCode} className="btn-secondary shrink-0 flex items-center gap-1.5 text-sm">

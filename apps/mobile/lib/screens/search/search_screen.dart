@@ -81,7 +81,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
       body: !hasQuery
-          ? Center(child: Text('Search for anything on Glido', style: TextStyle(color: GlidoColors.muted)))
+          ? Center(child: Text('Search for anything on Glido', style: TextStyle(color: context.colors.muted)))
           : _loading && _restaurants.isEmpty && _products.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : (_restaurants.isEmpty && _products.isEmpty)

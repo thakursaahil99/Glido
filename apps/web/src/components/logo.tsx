@@ -21,7 +21,7 @@ export function GlidoLogo({ className = "" }: { className?: string }) {
 export function GlidoLogoFull({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-3 ${className}`}>
-      <span className="flex flex-col gap-1 rounded-2xl bg-white border border-[var(--glido-border)] p-1.5 shadow-sm shrink-0">
+      <span className="flex flex-col gap-1 rounded-2xl bg-white dark:bg-[var(--glido-surface)] border border-[var(--glido-border)] p-1.5 shadow-sm shrink-0">
         <span className="flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-1" style={{ background: "var(--glido-primary-light)" }}>
           <span className="h-4 w-4 rounded-full shrink-0" style={{ background: "var(--glido-food)" }} />
           <span className="text-[9px] font-extrabold tracking-wide" style={{ color: "var(--glido-food-dark)" }}>FOOD</span>

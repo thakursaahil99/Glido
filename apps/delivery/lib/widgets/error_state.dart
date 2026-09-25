@@ -15,11 +15,11 @@ class ErrorStateView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 40, color: GlidoColors.danger),
+            Icon(Icons.error_outline, size: 40, color: context.colors.danger),
             const SizedBox(height: 12),
             const Text('Something went wrong', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
-            Text(message, textAlign: TextAlign.center, style: TextStyle(color: GlidoColors.muted, fontSize: 13)),
+            Text(message, textAlign: TextAlign.center, style: TextStyle(color: context.colors.muted, fontSize: 13)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               OutlinedButton(onPressed: onRetry, child: const Text('Try again')),

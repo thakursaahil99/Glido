@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as crypto from "crypto";
 import Razorpay from "razorpay";
@@ -7,7 +7,6 @@ import { RealtimeGateway } from "../realtime/realtime.gateway";
 
 @Injectable()
 export class PaymentsService {
-  private readonly logger = new Logger("Payments");
   private razorpay: Razorpay | null = null;
 
   constructor(
@@ -71,12 +70,17 @@ export class PaymentsService {
     };
   }
 
-  async verifySignature(params: {
-    orderId: string;
-    razorpayOrderId: string;
-    razorpayPaymentId: string;
-    razorpaySignature: string;
-  }) {
+  async verifySignature(
+    userId: string,
+    params: {
+      orderId: string;
+      razorpayOrderId: string;
+      razorpayPaymentId: string;
+      razorpaySignature: string;
+    },
+  ) {
+    await this.assertOwnedByUser(params.orderId, userId);
+
     const secret = this.config.get("RAZORPAY_KEY_SECRET");
     if (!secret) throw new BadRequestException("Payment gateway not configured.");
 
@@ -85,7 +89,12 @@ export class PaymentsService {
       .update(`${params.razorpayOrderId}|${params.razorpayPaymentId}`)
       .digest("hex");
 
-    if (expected !== params.razorpaySignature) {
+    const expectedBuf = Buffer.from(expected, "hex");
+    const actualBuf = Buffer.from(params.razorpaySignature, "hex");
+    const signatureMatches =
+      expectedBuf.length === actualBuf.length && crypto.timingSafeEqual(expectedBuf, actualBuf);
+
+    if (!signatureMatches) {
       await this.markFailed(params.orderId, "Signature mismatch");
       throw new BadRequestException("Payment verification failed.");
     }
@@ -94,8 +103,15 @@ export class PaymentsService {
   }
 
   /** Demo-mode "payment" when no Razorpay keys are configured — skips signature check. */
-  async mockPay(orderId: string) {
+  async mockPay(userId: string, orderId: string) {
+    await this.assertOwnedByUser(orderId, userId);
     return this.markPaid(orderId, `mock_${Date.now()}`);
+  }
+
+  private async assertOwnedByUser(orderId: string, userId: string) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, select: { userId: true } });
+    if (!order) throw new NotFoundException("Order not found.");
+    if (order.userId !== userId) throw new ForbiddenException("This order does not belong to you.");
   }
 
   private async markPaid(orderId: string, providerPaymentId: string) {

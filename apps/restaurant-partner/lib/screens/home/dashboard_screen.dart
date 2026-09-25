@@ -3,12 +3,19 @@ import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../models/restaurant.dart';
+import '../../models/restaurant_stats.dart';
 import '../../state/auth_state.dart';
+import '../../state/theme_state.dart';
 import '../../widgets/error_state.dart';
 import '../auth/login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  /// Optional hook so the bottom-nav shell can jump the user to the Orders
+  /// tab when they tap the active-orders stat. Kept optional so this screen
+  /// still works standalone (e.g. in tests) without a shell wired up.
+  final VoidCallback? onViewOrders;
+
+  const DashboardScreen({super.key, this.onViewOrders});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -19,6 +26,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _error;
   bool _saving = false;
   bool _togglingOpen = false;
+
+  RestaurantStats? _stats;
+  bool _statsLoading = true;
+  String? _statsError;
 
   final _nameCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
@@ -32,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _load();
+    _loadStats();
   }
 
   Future<void> _load() async {
@@ -51,6 +63,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
     } on ApiException catch (e) {
       setState(() => _error = e.message);
+    }
+  }
+
+  // Stats are fetched separately from the restaurant profile so a stats
+  // failure never blocks the settings form from loading/working.
+  Future<void> _loadStats() async {
+    setState(() {
+      _statsLoading = true;
+      _statsError = null;
+    });
+    try {
+      final res = await ApiClient.instance.get<Map<String, dynamic>>('/partner/restaurant/stats');
+      final s = RestaurantStats.fromJson(res);
+      if (mounted) setState(() => _stats = s);
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _statsError = e.message);
+    } finally {
+      if (mounted) setState(() => _statsLoading = false);
     }
   }
 
@@ -98,6 +128,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text('Your restaurant'),
         actions: [
           IconButton(
+            tooltip: context.watch<ThemeState>().isDark ? 'Switch to light mode' : 'Switch to dark mode',
+            icon: Icon(context.watch<ThemeState>().isDark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined),
+            onPressed: () => context.read<ThemeState>().toggle(),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await context.read<AuthState>().logout();
@@ -113,15 +148,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           : _restaurant == null
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
-                  onRefresh: _load,
+                  onRefresh: () => Future.wait([_load(), _loadStats()]),
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
                       Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          gradient: _restaurant!.isOpen ? GlidoGradients.primaryButton : null,
-                          color: _restaurant!.isOpen ? null : Colors.white,
+                          gradient: _restaurant!.isOpen ? GlidoGradients.primaryButton(context.colors) : null,
+                          color: _restaurant!.isOpen ? null : context.colors.surface,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: glidoCardShadow(),
                         ),
@@ -131,10 +166,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(_restaurant!.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _restaurant!.isOpen ? Colors.white : GlidoColors.ink)),
+                                  Text(_restaurant!.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _restaurant!.isOpen ? Colors.white : context.colors.ink)),
                                   Text(
                                     _restaurant!.isOpen ? 'Open for orders' : 'Closed',
-                                    style: TextStyle(fontSize: 12, color: _restaurant!.isOpen ? Colors.white70 : GlidoColors.muted),
+                                    style: TextStyle(fontSize: 12, color: _restaurant!.isOpen ? Colors.white70 : context.colors.muted),
                                   ),
                                 ],
                               ),
@@ -157,16 +192,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(color: GlidoColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-                              child: Text(_restaurant!.status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GlidoColors.primaryDark)),
+                              decoration: BoxDecoration(color: context.colors.primaryLight, borderRadius: BorderRadius.circular(8)),
+                              child: Text(_restaurant!.status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.colors.primaryDark)),
                             ),
                             const SizedBox(width: 8),
-                            Text('★ ${_restaurant!.ratingAvg.toStringAsFixed(1)} (${_restaurant!.ratingCount})', style: TextStyle(color: GlidoColors.muted, fontSize: 12.5)),
+                            Text('★ ${_restaurant!.ratingAvg.toStringAsFixed(1)} (${_restaurant!.ratingCount})', style: TextStyle(color: context.colors.muted, fontSize: 12.5)),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Text('Restaurant profile', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      const SizedBox(height: 20),
+                      _StatsSection(
+                        stats: _stats,
+                        loading: _statsLoading,
+                        error: _statsError,
+                        onRetry: _loadStats,
+                        onTapActiveOrders: widget.onViewOrders,
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Text('Restaurant profile', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          const SizedBox(width: 10),
+                          Expanded(child: Divider(color: context.colors.border, thickness: 1)),
+                        ],
+                      ),
                       const SizedBox(height: 10),
                       TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
                       const SizedBox(height: 10),
@@ -194,6 +243,213 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
+    );
+  }
+}
+
+/// Stats overview: today / this week + a tappable active-orders count.
+/// Kept as its own widget so a stats-fetch failure only degrades this
+/// section (inline retry) instead of the whole dashboard.
+class _StatsSection extends StatelessWidget {
+  final RestaurantStats? stats;
+  final bool loading;
+  final String? error;
+  final VoidCallback onRetry;
+  final VoidCallback? onTapActiveOrders;
+
+  const _StatsSection({
+    required this.stats,
+    required this.loading,
+    required this.error,
+    required this.onRetry,
+    required this.onTapActiveOrders,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Overview', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        const SizedBox(height: 10),
+        if (error != null)
+          _StatsMessageCard(
+            icon: Icons.error_outline,
+            message: error!,
+            actionLabel: 'Retry',
+            onAction: onRetry,
+          )
+        else if (loading && stats == null)
+          const _StatsSkeleton()
+        else if (stats != null) ...[
+          Row(
+            children: [
+              Expanded(
+                child: _StatTile(
+                  label: 'Today',
+                  orders: stats!.today.orders,
+                  revenue: stats!.today.revenue,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatTile(
+                  label: 'This week',
+                  orders: stats!.last7Days.orders,
+                  revenue: stats!.last7Days.revenue,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _ActiveOrdersTile(count: stats!.activeOrders, onTap: onTapActiveOrders),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  final String label;
+  final int orders;
+  final double revenue;
+
+  const _StatTile({required this.label, required this.orders, required this.revenue});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: glidoCardShadow(),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: context.colors.muted)),
+          const SizedBox(height: 10),
+          Text('₹${revenue.toStringAsFixed(0)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text('$orders order${orders == 1 ? '' : 's'}', style: TextStyle(fontSize: 12, color: context.colors.muted)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveOrdersTile extends StatelessWidget {
+  final int count;
+  final VoidCallback? onTap;
+
+  const _ActiveOrdersTile({required this.count, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasActive = count > 0;
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: hasActive ? context.colors.primaryLight : context.colors.surface,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: glidoCardShadow(),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: hasActive ? context.colors.primary : context.colors.surfaceAlt,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.receipt_long, size: 20, color: hasActive ? Colors.white : context.colors.muted),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$count active order${count == 1 ? '' : 's'}',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: hasActive ? context.colors.primaryDark : context.colors.ink),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasActive ? 'Needs attention in the kitchen' : 'All caught up',
+                    style: TextStyle(fontSize: 12, color: context.colors.muted),
+                  ),
+                ],
+              ),
+            ),
+            if (onTap != null) Icon(Icons.chevron_right, color: context.colors.muted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatsMessageCard extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  const _StatsMessageCard({required this.icon, required this.message, required this.actionLabel, required this.onAction});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: glidoCardShadow(),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: context.colors.muted, size: 20),
+          const SizedBox(width: 10),
+          Expanded(child: Text(message, style: TextStyle(fontSize: 12.5, color: context.colors.muted))),
+          TextButton(onPressed: onAction, child: Text(actionLabel)),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatsSkeleton extends StatelessWidget {
+  const _StatsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget block(double height) => Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: glidoCardShadow(),
+          ),
+        );
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: block(92)),
+            const SizedBox(width: 12),
+            Expanded(child: block(92)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        block(68),
+      ],
     );
   }
 }

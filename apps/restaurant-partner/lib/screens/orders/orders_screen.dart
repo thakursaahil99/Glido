@@ -82,10 +82,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   label: Text(tab.replaceAll('_', ' ')),
                   selected: selected,
                   onSelected: (_) => _selectStatus(tab),
-                  selectedColor: GlidoColors.primary,
-                  labelStyle: TextStyle(color: selected ? Colors.white : GlidoColors.ink, fontSize: 12.5, fontWeight: FontWeight.w600),
-                  backgroundColor: Colors.white,
-                  side: BorderSide(color: GlidoColors.border),
+                  selectedColor: context.colors.primary,
+                  labelStyle: TextStyle(color: selected ? Colors.white : context.colors.ink, fontSize: 12.5, fontWeight: FontWeight.w600),
+                  backgroundColor: context.colors.surface,
+                  side: BorderSide(color: context.colors.border),
                 );
               },
             ),
@@ -96,7 +96,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 : _orders == null
                     ? const Center(child: CircularProgressIndicator())
                     : _orders!.isEmpty
-                        ? Center(child: Text('No orders in this status', style: TextStyle(color: GlidoColors.muted)))
+                        ? Center(child: Text('No orders in this status', style: TextStyle(color: context.colors.muted)))
                         : RefreshIndicator(
                             onRefresh: _load,
                             child: ListView.separated(
@@ -114,7 +114,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: context.colors.surface,
                                       borderRadius: BorderRadius.circular(14),
                                       boxShadow: glidoCardShadow(),
                                     ),
@@ -126,7 +126,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                             children: [
                                               Text('#${o.orderNumber}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
                                               const SizedBox(height: 4),
-                                              Text('${o.paymentMethod} · ${o.paymentStatus}', style: TextStyle(color: GlidoColors.muted, fontSize: 12)),
+                                              Text('${o.paymentMethod} · ${o.paymentStatus}', style: TextStyle(color: context.colors.muted, fontSize: 12)),
                                             ],
                                           ),
                                         ),
@@ -135,8 +135,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                           children: [
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                              decoration: BoxDecoration(color: GlidoColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-                                              child: Text(o.status.replaceAll('_', ' '), style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: GlidoColors.primaryDark)),
+                                              decoration: BoxDecoration(color: context.colors.primaryLight, borderRadius: BorderRadius.circular(8)),
+                                              child: Text(o.status.replaceAll('_', ' '), style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: context.colors.primaryDark)),
                                             ),
                                             const SizedBox(height: 6),
                                             Text('₹${o.totalAmount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),

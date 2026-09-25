@@ -28,6 +28,12 @@ export class PartnerDeliveryController {
     return this.deliveryPartners.findByUser(user.id);
   }
 
+  @Get("stats")
+  async myStats(@CurrentUser() user: AuthUser) {
+    const partner = await this.deliveryPartners.findByUser(user.id);
+    return this.deliveryPartners.getStats(partner.id);
+  }
+
   @Patch()
   async update(@CurrentUser() user: AuthUser, @Body() dto: UpdatePartnerProfileDto) {
     const partner = await this.deliveryPartners.findByUser(user.id);

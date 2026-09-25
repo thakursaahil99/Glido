@@ -29,7 +29,6 @@ export default function AdminStaffPage() {
 
 function StaffContent() {
   const { user: currentUser } = useAuth();
-  const { show } = useToast();
   const [staff, setStaff] = useState<StaffMember[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -69,7 +68,7 @@ function StaffContent() {
         <div className="card-glido overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50">
+              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50 dark:bg-[var(--glido-surface-alt)]">
                 <th className="py-2.5 px-4">Name</th>
                 <th className="py-2.5 px-4">Email</th>
                 <th className="py-2.5 px-4">Role</th>

@@ -102,7 +102,7 @@ function RideTypesContent() {
         <div className="card-glido overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50">
+              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50 dark:bg-[var(--glido-surface-alt)]">
                 <th className="py-2.5 px-4">Type</th>
                 <th className="py-2.5 px-4">Base fare</th>
                 <th className="py-2.5 px-4">Per km</th>

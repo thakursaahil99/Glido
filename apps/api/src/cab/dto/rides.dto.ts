@@ -73,3 +73,9 @@ export class CreateRideReviewDto {
   @IsString()
   comment?: string;
 }
+
+export class TipRideDto {
+  @IsNumber()
+  @Min(1)
+  amount: number;
+}

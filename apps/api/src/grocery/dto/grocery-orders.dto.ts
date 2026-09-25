@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, Min, ValidateNested } from "class-validator";
+import { ArrayMinSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Min, ValidateNested } from "class-validator";
 
 export class GroceryOrderItemInputDto {
   @IsString()
@@ -27,6 +27,11 @@ export class CreateGroceryOrderDto {
   @IsOptional()
   @IsString()
   deliveryInstructions?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  tipAmount?: number;
 
   @IsOptional()
   @IsIn(["COD", "WALLET"])
@@ -57,6 +62,11 @@ export class UpdateGroceryOrderStatusDto {
   @IsOptional()
   @IsString()
   note?: string;
+}
+
+export class AssignGroceryDeliveryPartnerDto {
+  @IsString()
+  deliveryPartnerId: string;
 }
 
 export class CancelGroceryOrderDto {

@@ -50,9 +50,9 @@ export function OrderTimeline({ status }: { status: OrderStatus }) {
           <div key={s} className="flex gap-3">
             <div className="flex flex-col items-center">
               <div
-                className={`h-3 w-3 rounded-full shrink-0 ${done ? "bg-[var(--glido-primary)]" : "bg-gray-200"}`}
+                className={`h-3 w-3 rounded-full shrink-0 ${done ? "bg-[var(--glido-primary)]" : "bg-gray-200 dark:bg-[var(--glido-border)]"}`}
               />
-              {!isLast && <div className={`w-0.5 flex-1 min-h-6 ${done ? "bg-[var(--glido-primary)]" : "bg-gray-200"}`} />}
+              {!isLast && <div className={`w-0.5 flex-1 min-h-6 ${done ? "bg-[var(--glido-primary)]" : "bg-gray-200 dark:bg-[var(--glido-border)]"}`} />}
             </div>
             <p className={`text-sm pb-6 ${done ? "font-medium text-[var(--glido-ink)]" : "text-[var(--glido-muted)]"}`}>
               {ORDER_STATUS_LABEL[s]}

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Ride" ADD COLUMN     "tipAmount" DOUBLE PRECISION NOT NULL DEFAULT 0;

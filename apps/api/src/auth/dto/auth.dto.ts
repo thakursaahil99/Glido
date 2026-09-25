@@ -43,13 +43,64 @@ export class RegisterDto {
   identifier: string; // email or phone
 
   @IsString()
-  @Length(6, 100)
+  @Length(8, 100)
   password: string;
 
   @IsOptional()
   @IsString()
   @Length(1, 50)
   referralCode?: string;
+}
+
+export class RequestRegistrationOtpDto {
+  @IsString()
+  @Length(2, 100)
+  name: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @Length(6, 20)
+  phone: string;
+
+  @IsString()
+  @Length(8, 100)
+  password: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 50)
+  referralCode?: string;
+}
+
+export class VerifyRegistrationDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @Length(4, 8)
+  code: string;
+}
+
+export class RequestPasswordResetDto {
+  @IsString()
+  @Length(3, 100)
+  identifier: string; // email or phone
+}
+
+export class ResetPasswordDto {
+  @IsString()
+  @Length(3, 100)
+  identifier: string;
+
+  @IsString()
+  @Length(4, 8)
+  code: string;
+
+  @IsString()
+  @Length(8, 100)
+  newPassword: string;
 }
 
 export class LoginDto {

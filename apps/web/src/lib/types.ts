@@ -165,6 +165,7 @@ export interface Order {
   taxAmount: number;
   discountAmount: number;
   totalAmount: number;
+  tipAmount: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   deliveryInstructions?: string | null;
@@ -176,6 +177,8 @@ export interface Order {
   statusHistory?: OrderStatusHistoryEntry[];
   review?: { id: string; rating: number; comment?: string | null } | null;
   deliveryPartner?: DeliveryPartner | null;
+  /** Present on admin list/detail responses only (not on the customer's own /orders/me). */
+  user?: { name: string | null; email: string | null };
 }
 
 export interface PlatformSettings {
@@ -280,6 +283,7 @@ export interface GroceryOrder {
   taxAmount: number;
   discountAmount: number;
   totalAmount: number;
+  tipAmount: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   deliveryInstructions?: string | null;
@@ -366,6 +370,7 @@ export interface Ride {
   distanceKm: number;
   estimatedFare: number;
   finalFare?: number | null;
+  tipAmount: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   createdAt: string;

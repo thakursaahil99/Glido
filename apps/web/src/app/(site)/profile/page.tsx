@@ -18,6 +18,7 @@ export default function ProfilePage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [wallet, setWallet] = useState<{ balance: number } | null>(null);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [logoutAllOpen, setLogoutAllOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,6 +48,17 @@ export default function ProfilePage() {
   async function doLogout() {
     await logout();
     setLogoutOpen(false);
+    router.push("/");
+  }
+
+  async function doLogoutAll() {
+    try {
+      await api.post("/auth/logout-all", {});
+    } catch {
+      // best-effort — sign out locally either way
+    }
+    await logout();
+    setLogoutAllOpen(false);
     router.push("/");
   }
 
@@ -111,9 +123,14 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <button onClick={() => setLogoutOpen(true)} className="btn-danger-outline w-full">
-        Log out
-      </button>
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={() => setLogoutOpen(true)} className="btn-danger-outline w-full">
+          Log out
+        </button>
+        <button onClick={() => setLogoutAllOpen(true)} className="btn-danger-outline w-full">
+          Log out everywhere
+        </button>
+      </div>
 
       <ConfirmDialog
         open={logoutOpen}
@@ -122,6 +139,15 @@ export default function ProfilePage() {
         danger
         onCancel={() => setLogoutOpen(false)}
         onConfirm={doLogout}
+      />
+      <ConfirmDialog
+        open={logoutAllOpen}
+        title="Log out of Glido on every device?"
+        description="This signs you out of every phone, tablet and browser where you're logged in — useful if you think an old session may not be yours anymore."
+        confirmLabel="Log out everywhere"
+        danger
+        onCancel={() => setLogoutAllOpen(false)}
+        onConfirm={doLogoutAll}
       />
       <ConfirmDialog
         open={!!deleteId}

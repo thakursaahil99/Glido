@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
 import '../../core/socket_client.dart';
@@ -87,6 +89,35 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (order.status == 'OUT_FOR_DELIVERY' &&
+              order.deliveryPartner?.currentLat != null &&
+              order.deliveryPartner?.currentLng != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  height: 180,
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(order.deliveryPartner!.currentLat!, order.deliveryPartner!.currentLng!),
+                      initialZoom: 15,
+                    ),
+                    children: [
+                      TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'app.glido.customer'),
+                      MarkerLayer(markers: [
+                        Marker(
+                          point: LatLng(order.deliveryPartner!.currentLat!, order.deliveryPartner!.currentLng!),
+                          width: 32,
+                          height: 32,
+                          child: Icon(Icons.delivery_dining, color: context.colors.grocery, size: 30),
+                        ),
+                      ]),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           if (order.deliveryPartner != null && ['READY', 'OUT_FOR_DELIVERY', 'DELIVERED'].contains(order.status))
             Card(
               child: ListTile(
@@ -100,7 +131,7 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: order.status == 'CANCELLED'
-                  ? Row(children: [Icon(Icons.cancel, color: GlidoColors.danger), const SizedBox(width: 8), Text('Order cancelled', style: TextStyle(color: GlidoColors.danger, fontWeight: FontWeight.w700))])
+                  ? Row(children: [Icon(Icons.cancel, color: context.colors.danger), const SizedBox(width: 8), Text('Order cancelled', style: TextStyle(color: context.colors.danger, fontWeight: FontWeight.w700))])
                   : Column(
                       children: [
                         for (var i = 0; i < _statusSteps.length; i++)
@@ -108,7 +139,7 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 2),
                             child: Row(
                               children: [
-                                Icon(i <= currentIndex ? Icons.check_circle : Icons.radio_button_unchecked, size: 18, color: i <= currentIndex ? GlidoColors.primary : GlidoColors.border),
+                                Icon(i <= currentIndex ? Icons.check_circle : Icons.radio_button_unchecked, size: 18, color: i <= currentIndex ? context.colors.primary : context.colors.border),
                                 const SizedBox(width: 10),
                                 Text(_statusSteps[i].replaceAll('_', ' '), style: TextStyle(fontWeight: i == currentIndex ? FontWeight.w800 : FontWeight.w500)),
                               ],
@@ -122,7 +153,7 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: _cancel,
-              style: OutlinedButton.styleFrom(foregroundColor: GlidoColors.danger, side: BorderSide(color: GlidoColors.danger)),
+              style: OutlinedButton.styleFrom(foregroundColor: context.colors.danger, side: BorderSide(color: context.colors.danger)),
               child: const Text('Cancel order'),
             ),
           ],
@@ -139,6 +170,17 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 3),
                         child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('${i.quantity} × ${i.nameSnapshot}'), Text('₹${i.subtotal.toStringAsFixed(2)}')]),
                       )),
+                  if (order.tipAmount > 0)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Delivery tip', style: TextStyle(color: context.colors.muted)),
+                          Text('₹${order.tipAmount.toStringAsFixed(2)}'),
+                        ],
+                      ),
+                    ),
                   const Divider(),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total', style: TextStyle(fontWeight: FontWeight.w800)), Text('₹${order.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w800))]),
                 ],
@@ -156,7 +198,7 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
                   const SizedBox(height: 6),
                   Text(order.address?.full ?? ''),
                   const SizedBox(height: 6),
-                  Text('Payment: ${order.paymentMethod == 'WALLET' ? 'Glido Wallet' : 'Cash on delivery'} · ${order.paymentStatus}', style: TextStyle(color: GlidoColors.muted)),
+                  Text('Payment: ${order.paymentMethod == 'WALLET' ? 'Glido Wallet' : 'Cash on delivery'} · ${order.paymentStatus}', style: TextStyle(color: context.colors.muted)),
                 ],
               ),
             ),

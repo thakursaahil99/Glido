@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Lets `dark:` utilities respond to our toggle (data-theme="dark" on <html>)
+   instead of the OS `prefers-color-scheme`, so the in-app switch actually works. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   /* Brand — warm, saturated, candy-bright. Food is the primary brand hue. */
   --glido-primary: #ff4b26;
@@ -31,8 +35,16 @@
   --glido-ink: #241712;
   --glido-muted: #7a6a62;
   --glido-surface: #ffffff;
+  --glido-surface-alt: #fffaf5;
   --glido-border: #f3e4d9;
   --glido-bg: #fff8f1;
+  --glido-skeleton-1: #f5ece3;
+  --glido-skeleton-2: #ecdfd2;
+
+  /* Fixed dark surface for hero/banner sections with glow-orb decoration — unlike
+     --glido-ink (which flips to near-white in dark mode since it doubles as body
+     text color there), this stays dark in both themes so white hero text stays readable. */
+  --glido-hero-bg: #241712;
 
   /* Elevation — warm-tinted shadows instead of flat black, so depth feels part of the brand */
   --shadow-sm: 0 2px 8px -2px rgba(120, 60, 20, 0.06), 0 1px 3px -1px rgba(120, 60, 20, 0.04);
@@ -42,6 +54,53 @@
 
   --background: var(--glido-bg);
   --foreground: var(--glido-ink);
+
+  color-scheme: light;
+}
+
+/* Dark mode — same brand hues, remapped neutrals/surfaces/shadows so every module
+   (food/grocery/cab/admin) gets dark mode for free since they all read these tokens. */
+:root[data-theme="dark"] {
+  --glido-primary: #ff6a41;
+  --glido-primary-dark: #ffb49a;
+  --glido-primary-light: rgba(255, 106, 65, 0.16);
+
+  --glido-accent: #ffc247;
+  --glido-accent-light: rgba(255, 194, 71, 0.16);
+
+  --glido-food: #ff6a41;
+  --glido-food-dark: #ffb49a;
+  --glido-grocery: #2fe0a0;
+  --glido-grocery-dark: #8ff5ce;
+  --glido-grocery-light: rgba(47, 224, 160, 0.14);
+  --glido-cab: #6f80ff;
+  --glido-cab-dark: #b7c0ff;
+  --glido-cab-light: rgba(111, 128, 255, 0.16);
+
+  --glido-success: #2fe0a0;
+  --glido-success-light: rgba(47, 224, 160, 0.14);
+  --glido-danger: #ff6259;
+  --glido-danger-light: rgba(255, 98, 89, 0.14);
+  --glido-warning: #ffc247;
+
+  --glido-ink: #f3efeb;
+  --glido-muted: #a39a92;
+  --glido-surface: #1c1c22;
+  --glido-surface-alt: #232329;
+  --glido-border: #333138;
+  --glido-bg: #121214;
+  --glido-skeleton-1: #232329;
+  --glido-skeleton-2: #2c2b32;
+
+  --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.35), 0 1px 3px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.45), 0 4px 10px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.55);
+  --shadow-primary: 0 10px 24px -4px rgba(255, 106, 65, 0.35);
+
+  --background: var(--glido-bg);
+  --foreground: var(--glido-ink);
+
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -51,6 +110,19 @@
   --color-primary-dark: var(--glido-primary-dark);
   --color-accent: var(--glido-accent);
   --font-sans: var(--font-jakarta);
+
+  /* Used by the animated sign-in shell (orbiting icons + ripple background) */
+  --animate-ripple: ripple 2s ease calc(var(--i, 0) * 0.2s) infinite;
+  --animate-orbit: orbit calc(var(--duration) * 1s) linear infinite;
+
+  @keyframes ripple {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(0.9); }
+  }
+  @keyframes orbit {
+    0% { transform: rotate(0deg) translateY(calc(var(--radius) * 1px)) rotate(0deg); }
+    100% { transform: rotate(360deg) translateY(calc(var(--radius) * 1px)) rotate(-360deg); }
+  }
 }
 
 body {
@@ -105,7 +177,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-secondary {
-  background: white;
+  background: var(--glido-surface);
   color: var(--glido-ink);
   font-weight: 700;
   border: 1.5px solid var(--glido-border);
@@ -122,7 +194,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-danger-outline {
-  background: white;
+  background: var(--glido-surface);
   color: var(--glido-danger);
   font-weight: 700;
   border: 1.5px solid #f6c6cc;
@@ -134,7 +206,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .card-glido {
-  background: linear-gradient(180deg, #ffffff, #fffaf5);
+  background: linear-gradient(180deg, var(--glido-surface), var(--glido-surface-alt));
   border: 1px solid var(--glido-border);
   border-radius: 1rem;
   box-shadow: var(--shadow-sm);
@@ -169,7 +241,7 @@ button.card-glido:hover {
   color: var(--glido-primary-dark);
 }
 .badge-muted {
-  background: #f1edf5;
+  background: var(--glido-border);
   color: var(--glido-muted);
 }
 .badge-accent {
@@ -183,7 +255,7 @@ button.card-glido:hover {
 .badge-cab { background: var(--glido-cab-light); color: var(--glido-cab-dark); }
 
 .skeleton {
-  background: linear-gradient(90deg, #f5ece3 25%, #ecdfd2 37%, #f5ece3 63%);
+  background: linear-gradient(90deg, var(--glido-skeleton-1) 25%, var(--glido-skeleton-2) 37%, var(--glido-skeleton-1) 63%);
   background-size: 400% 100%;
   animation: skeleton-loading 1.4s ease infinite;
   border-radius: 0.5rem;
@@ -203,7 +275,8 @@ button.card-glido:hover {
   border-radius: 0.75rem;
   padding: 0.65rem 0.9rem;
   font-size: 0.95rem;
-  background: white;
+  background: var(--glido-surface);
+  color: var(--glido-ink);
   box-shadow: inset 0 1px 2px rgba(20, 18, 26, 0.04);
   transition: outline-color 0.15s ease, border-color 0.15s ease;
 }
@@ -215,7 +288,7 @@ button.card-glido:hover {
 
 /* A soft, layered "raised" surface — used for hero panels and stat tiles */
 .panel-raised {
-  background: linear-gradient(180deg, #ffffff, #fff6ec);
+  background: linear-gradient(180deg, var(--glido-surface), var(--glido-surface-alt));
   border: 1.5px solid var(--glido-border);
   border-radius: 1.5rem;
   box-shadow: var(--shadow-lg);

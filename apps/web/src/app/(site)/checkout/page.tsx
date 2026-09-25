@@ -30,7 +30,12 @@ export default function CheckoutPage() {
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState<number | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
+  const [presetInstructions, setPresetInstructions] = useState<string[]>([]);
   const [instructions, setInstructions] = useState("");
+  const [noCutlery, setNoCutlery] = useState(false);
+  const [tip, setTip] = useState(0);
+  const [customTipOpen, setCustomTipOpen] = useState(false);
+  const [customTip, setCustomTip] = useState("");
   const [placing, setPlacing] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -90,9 +95,20 @@ export default function CheckoutPage() {
   const taxRate = (settings?.taxRatePercent ?? 5) / 100;
   const estimatedTax = Math.round(subtotal * taxRate * 100) / 100;
   const estimatedTotal = useMemo(
-    () => Math.max(0, subtotal + deliveryFee + packagingFee + estimatedTax - (couponDiscount ?? 0)),
-    [subtotal, deliveryFee, packagingFee, estimatedTax, couponDiscount],
+    () => Math.max(0, subtotal + deliveryFee + packagingFee + estimatedTax + tip - (couponDiscount ?? 0)),
+    [subtotal, deliveryFee, packagingFee, estimatedTax, tip, couponDiscount],
   );
+
+  const PRESET_INSTRUCTIONS = ["Avoid calling", "Leave at door", "Don't ring bell", "Leave with guard"];
+  function togglePreset(label: string) {
+    setPresetInstructions((prev) => (prev.includes(label) ? prev.filter((p) => p !== label) : [...prev, label]));
+  }
+  function composedInstructions() {
+    const parts = [...presetInstructions];
+    if (noCutlery) parts.push("No plastic cutlery, please");
+    if (instructions.trim()) parts.push(instructions.trim());
+    return parts.join(", ") || undefined;
+  }
 
   async function applyCoupon() {
     if (!cart || !couponCode) return;
@@ -130,7 +146,8 @@ export default function CheckoutPage() {
         })),
         paymentMethod,
         couponCode: couponDiscount ? couponCode : undefined,
-        deliveryInstructions: instructions || undefined,
+        deliveryInstructions: composedInstructions(),
+        tipAmount: tip || undefined,
       });
 
       const { order, payment } = res;
@@ -307,14 +324,114 @@ export default function CheckoutPage() {
       </section>
 
       <section className="card-glido p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="font-semibold">Opt out of plastic cutlery</h2>
+            <p className="text-xs text-[var(--glido-muted)] mt-0.5">Thank you for caring about the planet</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={noCutlery}
+            onClick={() => setNoCutlery((v) => !v)}
+            className="w-11 h-6 rounded-full relative shrink-0 transition-colors"
+            style={{ background: noCutlery ? "var(--glido-primary)" : "var(--glido-border)" }}
+          >
+            <span
+              className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all"
+              style={{ left: noCutlery ? "1.375rem" : "0.125rem" }}
+            />
+          </button>
+        </div>
+      </section>
+
+      <section className="card-glido p-4 mb-4">
         <h2 className="font-semibold mb-3">Delivery instructions (optional)</h2>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {PRESET_INSTRUCTIONS.map((label) => {
+            const active = presetInstructions.includes(label);
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => togglePreset(label)}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
+                style={
+                  active
+                    ? { background: "var(--glido-primary-light)", borderColor: "var(--glido-primary)", color: "var(--glido-primary-dark)" }
+                    : { borderColor: "var(--glido-border)", color: "var(--glido-muted)" }
+                }
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
         <textarea
           className="input-glido"
           rows={2}
-          placeholder="E.g. Leave at the door, call on arrival..."
+          placeholder="Anything else? (optional)"
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
         />
+      </section>
+
+      <section className="card-glido p-4 mb-4">
+        <h2 className="font-semibold mb-3">Tip your delivery partner</h2>
+        <p className="text-xs text-[var(--glido-muted)] mb-3">100% goes to your rider. Totally optional.</p>
+        <div className="flex flex-wrap gap-2">
+          {[20, 30, 50].map((amount) => (
+            <button
+              key={amount}
+              type="button"
+              onClick={() => {
+                setTip(tip === amount ? 0 : amount);
+                setCustomTipOpen(false);
+              }}
+              className="px-4 py-2 rounded-full text-sm font-bold border-2 transition-colors"
+              style={
+                tip === amount
+                  ? { background: "var(--glido-primary)", borderColor: "var(--glido-primary)", color: "white" }
+                  : { borderColor: "var(--glido-border)", color: "var(--glido-ink)" }
+              }
+            >
+              +₹{amount}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setCustomTipOpen((v) => !v)}
+            className="px-4 py-2 rounded-full text-sm font-bold border-2 transition-colors"
+            style={
+              customTipOpen || (tip > 0 && ![20, 30, 50].includes(tip))
+                ? { background: "var(--glido-primary)", borderColor: "var(--glido-primary)", color: "white" }
+                : { borderColor: "var(--glido-border)", color: "var(--glido-ink)" }
+            }
+          >
+            Custom
+          </button>
+          {tip > 0 && (
+            <button type="button" onClick={() => { setTip(0); setCustomTip(""); setCustomTipOpen(false); }} className="px-3 py-2 text-sm font-semibold text-[var(--glido-danger)]">
+              Remove
+            </button>
+          )}
+        </div>
+        {customTipOpen && (
+          <div className="flex gap-2 mt-3">
+            <input
+              className="input-glido"
+              type="number"
+              min={1}
+              placeholder="Enter amount"
+              value={customTip}
+              onChange={(e) => {
+                setCustomTip(e.target.value);
+                const n = Number(e.target.value);
+                setTip(Number.isFinite(n) && n > 0 ? n : 0);
+              }}
+            />
+          </div>
+        )}
       </section>
 
       <section className="card-glido p-4 mb-4 text-sm">
@@ -322,7 +439,7 @@ export default function CheckoutPage() {
         <div className="space-y-3 mb-3 pb-3 border-b border-[var(--glido-border)]">
           {cart?.items.map((item) => (
             <div key={item.menuItemId + item.addonNames.join(",")} className="flex items-center gap-3">
-              <div className="h-11 w-11 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+              <div className="h-11 w-11 rounded-lg bg-gray-100 dark:bg-[var(--glido-surface-alt)] overflow-hidden shrink-0">
                 {resolveMediaUrl(item.imageUrl) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={resolveMediaUrl(item.imageUrl)} alt={item.name} className="h-full w-full object-cover" />
@@ -349,6 +466,9 @@ export default function CheckoutPage() {
           <div className="flex justify-between"><span className="text-[var(--glido-muted)]">Delivery fee</span><span>₹{deliveryFee.toFixed(2)}</span></div>
           <div className="flex justify-between"><span className="text-[var(--glido-muted)]">Packaging fee</span><span>₹{packagingFee.toFixed(2)}</span></div>
           <div className="flex justify-between"><span className="text-[var(--glido-muted)]">Taxes (est.)</span><span>₹{estimatedTax.toFixed(2)}</span></div>
+          {tip > 0 && (
+            <div className="flex justify-between"><span className="text-[var(--glido-muted)]">Delivery tip</span><span>₹{tip.toFixed(2)}</span></div>
+          )}
           {couponDiscount != null && (
             <div className="flex justify-between text-[var(--glido-primary-dark)]"><span>Coupon discount</span><span>−₹{couponDiscount.toFixed(2)}</span></div>
           )}

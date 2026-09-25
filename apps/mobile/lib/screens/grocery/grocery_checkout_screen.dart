@@ -15,6 +15,9 @@ class GroceryCheckoutScreen extends StatefulWidget {
   State<GroceryCheckoutScreen> createState() => _GroceryCheckoutScreenState();
 }
 
+const _kPresetInstructions = ['Avoid calling', 'Leave at door', "Don't ring bell", 'Leave with guard'];
+const _kTipOptions = [20, 30, 50];
+
 class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
   List<Address>? _addresses;
   String? _selectedAddressId;
@@ -30,10 +33,39 @@ class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
   String? _couponError;
   bool _applyingCoupon = false;
 
+  final Set<String> _presetInstructions = {};
+  final _instructionsCtrl = TextEditingController();
+  double _tip = 0;
+  bool _customTipOpen = false;
+  final _customTipCtrl = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _couponCtrl.dispose();
+    _instructionsCtrl.dispose();
+    _customTipCtrl.dispose();
+    super.dispose();
+  }
+
+  void _togglePreset(String label) {
+    setState(() {
+      if (_presetInstructions.contains(label)) {
+        _presetInstructions.remove(label);
+      } else {
+        _presetInstructions.add(label);
+      }
+    });
+  }
+
+  String? _composedInstructions() {
+    final parts = [..._presetInstructions, _instructionsCtrl.text.trim()].where((s) => s.isNotEmpty).toList();
+    return parts.isEmpty ? null : parts.join(', ');
   }
 
   Future<void> _load() async {
@@ -91,6 +123,8 @@ class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
         'items': cart.items.map((i) => {'productId': i.productId, 'quantity': i.quantity}).toList(),
         'paymentMethod': _paymentMethod,
         if (_couponDiscount != null) 'couponCode': _couponCtrl.text.trim().toUpperCase(),
+        if (_composedInstructions() != null) 'deliveryInstructions': _composedInstructions(),
+        if (_tip > 0) 'tipAmount': _tip,
       });
       final orderId = res['id'] as String;
       cart.clear();
@@ -108,7 +142,7 @@ class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
     final cart = context.watch<GroceryCartState>();
     final deliveryFee = cart.subtotal >= _freeDeliveryThreshold ? 0 : _groceryDeliveryFee;
     final taxAmount = cart.subtotal * (_taxRatePercent / 100);
-    final total = (cart.subtotal + deliveryFee + taxAmount - (_couponDiscount ?? 0)).clamp(0, double.infinity).toDouble();
+    final total = (cart.subtotal + deliveryFee + taxAmount + _tip - (_couponDiscount ?? 0)).clamp(0, double.infinity).toDouble();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Checkout')),
@@ -144,7 +178,7 @@ class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
                   contentPadding: EdgeInsets.zero,
                 ),
                 if (_paymentMethod == 'WALLET' && _walletBalance < total)
-                  Text('Insufficient wallet balance.', style: TextStyle(color: GlidoColors.danger, fontSize: 12.5)),
+                  Text('Insufficient wallet balance.', style: TextStyle(color: context.colors.danger, fontSize: 12.5)),
                 const SizedBox(height: 16),
                 const Text('Coupon', style: TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
@@ -166,9 +200,111 @@ class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
                   ],
                 ),
                 if (_couponError != null)
-                  Padding(padding: const EdgeInsets.only(top: 6), child: Text(_couponError!, style: TextStyle(color: GlidoColors.danger, fontSize: 12.5))),
+                  Padding(padding: const EdgeInsets.only(top: 6), child: Text(_couponError!, style: TextStyle(color: context.colors.danger, fontSize: 12.5))),
                 if (_couponDiscount != null)
-                  Padding(padding: const EdgeInsets.only(top: 6), child: Text('₹${_couponDiscount!.toStringAsFixed(2)} discount applied', style: TextStyle(color: GlidoColors.success, fontSize: 12.5, fontWeight: FontWeight.w600))),
+                  Padding(padding: const EdgeInsets.only(top: 6), child: Text('₹${_couponDiscount!.toStringAsFixed(2)} discount applied', style: TextStyle(color: context.colors.success, fontSize: 12.5, fontWeight: FontWeight.w600))),
+                const SizedBox(height: 16),
+                const Text('Delivery instructions (optional)', style: TextStyle(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _kPresetInstructions.map((label) {
+                    final active = _presetInstructions.contains(label);
+                    return GestureDetector(
+                      onTap: () => _togglePreset(label),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: active ? context.colors.groceryLight : Colors.transparent,
+                          border: Border.all(color: active ? context.colors.grocery : context.colors.border, width: 1.2),
+                        ),
+                        child: Text(
+                          label,
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: active ? context.colors.groceryDark : context.colors.muted),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _instructionsCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(hintText: 'Anything else? (optional)'),
+                ),
+                const SizedBox(height: 16),
+                const Text('Tip your delivery hero', style: TextStyle(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 4),
+                Text('100% goes to your delivery partner. Totally optional.', style: TextStyle(fontSize: 11.5, color: context.colors.muted)),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    for (final amount in _kTipOptions)
+                      GestureDetector(
+                        onTap: () => setState(() {
+                          _tip = _tip == amount ? 0 : amount.toDouble();
+                          _customTipOpen = false;
+                        }),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: _tip == amount ? context.colors.grocery : Colors.transparent,
+                            border: Border.all(color: _tip == amount ? context.colors.grocery : context.colors.border, width: 1.6),
+                          ),
+                          child: Text(
+                            '+₹$amount',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _tip == amount ? Colors.white : context.colors.ink),
+                          ),
+                        ),
+                      ),
+                    GestureDetector(
+                      onTap: () => setState(() => _customTipOpen = !_customTipOpen),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: (_customTipOpen || (_tip > 0 && !_kTipOptions.contains(_tip.toInt()))) ? context.colors.grocery : Colors.transparent,
+                          border: Border.all(color: (_customTipOpen || (_tip > 0 && !_kTipOptions.contains(_tip.toInt()))) ? context.colors.grocery : context.colors.border, width: 1.6),
+                        ),
+                        child: Text(
+                          'Custom',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: (_customTipOpen || (_tip > 0 && !_kTipOptions.contains(_tip.toInt()))) ? Colors.white : context.colors.ink,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_tip > 0)
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _tip = 0;
+                          _customTipCtrl.clear();
+                          _customTipOpen = false;
+                        }),
+                        child: Text('Remove', style: TextStyle(color: context.colors.danger, fontWeight: FontWeight.w700, fontSize: 12.5)),
+                      ),
+                  ],
+                ),
+                if (_customTipOpen) ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _customTipCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(hintText: 'Enter amount'),
+                    onChanged: (v) {
+                      final n = double.tryParse(v);
+                      setState(() => _tip = (n != null && n > 0) ? n : 0);
+                    },
+                  ),
+                ],
                 const SizedBox(height: 16),
                 Card(
                   child: Padding(
@@ -181,6 +317,7 @@ class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
                         _Row('Subtotal', cart.subtotal),
                         _Row('Delivery fee', deliveryFee.toDouble()),
                         _Row('Tax', taxAmount),
+                        if (_tip > 0) _Row('Delivery tip', _tip),
                         if (_couponDiscount != null) _Row('Coupon discount', -_couponDiscount!),
                         const Divider(),
                         _Row('Total', total, bold: true),
@@ -190,7 +327,7 @@ class _GroceryCheckoutScreenState extends State<GroceryCheckoutScreen> {
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
-                  Text(_error!, style: TextStyle(color: GlidoColors.danger)),
+                  Text(_error!, style: TextStyle(color: context.colors.danger)),
                 ],
                 const SizedBox(height: 16),
                 ElevatedButton(

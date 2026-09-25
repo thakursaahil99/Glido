@@ -46,7 +46,7 @@ class _PhoneRequiredFieldState extends State<PhoneRequiredField> {
     if (user == null || user.phone != null) return const SizedBox.shrink();
 
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: GlidoColors.primary, width: 1.5)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: context.colors.primary, width: 1.5)),
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -57,7 +57,7 @@ class _PhoneRequiredFieldState extends State<PhoneRequiredField> {
               children: [Icon(Icons.phone, size: 18), SizedBox(width: 6), Text('Phone number required', style: TextStyle(fontWeight: FontWeight.w700))],
             ),
             const SizedBox(height: 4),
-            Text('We need a phone number on file so your delivery partner or driver can reach you.', style: TextStyle(fontSize: 12, color: GlidoColors.muted)),
+            Text('We need a phone number on file so your delivery partner or driver can reach you.', style: TextStyle(fontSize: 12, color: context.colors.muted)),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -74,7 +74,7 @@ class _PhoneRequiredFieldState extends State<PhoneRequiredField> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 6),
-              Text(_error!, style: TextStyle(color: GlidoColors.danger, fontSize: 12)),
+              Text(_error!, style: TextStyle(color: context.colors.danger, fontSize: 12)),
             ],
           ],
         ),

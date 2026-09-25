@@ -44,14 +44,25 @@ class DeliveryPartnerInfo {
   final String phone;
   final String vehicleType;
   final double ratingAvg;
+  final double? currentLat;
+  final double? currentLng;
 
-  DeliveryPartnerInfo({required this.name, required this.phone, required this.vehicleType, required this.ratingAvg});
+  DeliveryPartnerInfo({
+    required this.name,
+    required this.phone,
+    required this.vehicleType,
+    required this.ratingAvg,
+    this.currentLat,
+    this.currentLng,
+  });
 
   factory DeliveryPartnerInfo.fromJson(Map<String, dynamic> json) => DeliveryPartnerInfo(
         name: json['name'],
         phone: json['phone'],
         vehicleType: json['vehicleType'] ?? 'Bike',
         ratingAvg: (json['ratingAvg'] as num?)?.toDouble() ?? 5,
+        currentLat: (json['currentLat'] as num?)?.toDouble(),
+        currentLng: (json['currentLng'] as num?)?.toDouble(),
       );
 }
 
@@ -75,6 +86,7 @@ class GlidoOrder {
   final double packagingFee;
   final double taxAmount;
   final double discountAmount;
+  final double tipAmount;
   final double totalAmount;
   final String paymentMethod;
   final String paymentStatus;
@@ -96,6 +108,7 @@ class GlidoOrder {
     required this.packagingFee,
     required this.taxAmount,
     required this.discountAmount,
+    this.tipAmount = 0,
     required this.totalAmount,
     required this.paymentMethod,
     required this.paymentStatus,
@@ -118,6 +131,7 @@ class GlidoOrder {
         packagingFee: (json['packagingFee'] as num).toDouble(),
         taxAmount: (json['taxAmount'] as num).toDouble(),
         discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0,
+        tipAmount: (json['tipAmount'] as num?)?.toDouble() ?? 0,
         totalAmount: (json['totalAmount'] as num).toDouble(),
         paymentMethod: json['paymentMethod'],
         paymentStatus: json['paymentStatus'],

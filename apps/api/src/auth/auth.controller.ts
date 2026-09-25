@@ -1,6 +1,8 @@
-import { Body, Controller, Post } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
+import { CurrentUser, AuthUser } from "../common/decorators/current-user.decorator";
+import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { AuthService } from "./auth.service";
 import {
   AdminLoginDto,
@@ -9,7 +11,11 @@ import {
   RefreshTokenDto,
   RegisterDto,
   RequestOtpDto,
+  RequestPasswordResetDto,
+  RequestRegistrationOtpDto,
+  ResetPasswordDto,
   VerifyOtpDto,
+  VerifyRegistrationDto,
 } from "./dto/auth.dto";
 
 // Tighter than the global 100/min default (see app.module.ts) — these are the endpoints
@@ -25,6 +31,18 @@ export class AuthController {
   @Post("register")
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto.name, dto.identifier, dto.password, dto.referralCode);
+  }
+
+  @Throttle(AUTH_THROTTLE)
+  @Post("register/request-otp")
+  requestRegistrationOtp(@Body() dto: RequestRegistrationOtpDto) {
+    return this.authService.requestRegistrationOtp(dto.name, dto.email, dto.phone, dto.password, dto.referralCode);
+  }
+
+  @Throttle(AUTH_THROTTLE)
+  @Post("register/verify")
+  verifyRegistration(@Body() dto: VerifyRegistrationDto) {
+    return this.authService.verifyRegistration(dto.email, dto.code);
   }
 
   @Throttle(AUTH_THROTTLE)
@@ -59,6 +77,18 @@ export class AuthController {
     return this.authService.verifyOtp(dto.identifier, dto.code, dto.name);
   }
 
+  @Throttle(AUTH_THROTTLE)
+  @Post("password/reset-request")
+  requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
+    return this.authService.requestPasswordReset(dto.identifier);
+  }
+
+  @Throttle(AUTH_THROTTLE)
+  @Post("password/reset")
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.identifier, dto.code, dto.newPassword);
+  }
+
   @Post("refresh")
   refresh(@Body() dto: RefreshTokenDto) {
     return this.authService.refresh(dto.refreshToken);
@@ -67,5 +97,12 @@ export class AuthController {
   @Post("logout")
   logout(@Body() dto: RefreshTokenDto) {
     return this.authService.logout(dto.refreshToken);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post("logout-all")
+  logoutAll(@CurrentUser() user: AuthUser) {
+    return this.authService.logoutAll(user.id);
   }
 }

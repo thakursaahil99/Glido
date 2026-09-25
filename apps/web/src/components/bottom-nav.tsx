@@ -22,7 +22,7 @@ export function BottomNav() {
   const items = [...ITEMS, lastItem];
 
   return (
-    <nav className="md:hidden sticky bottom-0 z-40 border-t border-[var(--glido-border)] bg-white">
+    <nav className="md:hidden sticky bottom-0 z-40 border-t border-[var(--glido-border)] bg-[var(--glido-surface)]">
       <div className="grid grid-cols-5">
         {items.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href);

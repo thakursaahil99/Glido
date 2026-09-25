@@ -128,9 +128,10 @@ export class OrdersService {
 
     const taxRate = await this.settings.getTaxRate();
     const taxAmount = Math.round(subtotal * taxRate * 100) / 100;
+    const tipAmount = Math.max(0, Math.round((dto.tipAmount ?? 0) * 100) / 100);
     const totalAmount =
       Math.round(
-        (subtotal + restaurant.deliveryFee + restaurant.packagingFee + taxAmount - discountAmount) * 100,
+        (subtotal + restaurant.deliveryFee + restaurant.packagingFee + taxAmount + tipAmount - discountAmount) * 100,
       ) / 100;
 
     if (dto.paymentMethod === "WALLET") {
@@ -149,6 +150,7 @@ export class OrdersService {
         taxAmount,
         discountAmount,
         totalAmount,
+        tipAmount,
         paymentMethod: dto.paymentMethod,
         couponId,
         deliveryInstructions: dto.deliveryInstructions,
@@ -271,7 +273,7 @@ export class OrdersService {
         restaurant: true,
         user: true,
         address: true,
-        items: true,
+        items: { include: { menuItem: { select: { imageUrl: true } } } },
         payment: true,
         statusHistory: { orderBy: { changedAt: "asc" } },
         deliveryPartner: true,
@@ -281,8 +283,52 @@ export class OrdersService {
     return order;
   }
 
+  /** Full record for invoice generation — same shape as adminDetail, kept separate
+   *  so callers that only need PDF data don't have to import admin-only types. */
+  async getForInvoice(orderId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { restaurant: true, user: true, address: true, items: true },
+    });
+    if (!order) throw new NotFoundException("Order not found.");
+    return order;
+  }
+
   async adminUpdateStatus(orderId: string, status: OrderStatus, note?: string, actorId?: string) {
     return this.applyStatusChange(orderId, status, note, actorId);
+  }
+
+  /** Manual override for when auto-assign (on READY) found nobody online, or an admin
+   *  wants to swap the partner — releases whoever was previously assigned so they don't
+   *  stay stuck "unavailable" for an order they're no longer on. */
+  async assignDeliveryPartner(orderId: string, partnerId: string, actorId?: string) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException("Order not found.");
+    if (order.status === "DELIVERED" || order.status === "CANCELLED" || order.status === "REFUNDED") {
+      throw new BadRequestException("Cannot assign a delivery partner to a completed or cancelled order.");
+    }
+
+    const partner = await this.deliveryPartners.getForManualAssign(partnerId);
+
+    if (order.deliveryPartnerId && order.deliveryPartnerId !== partnerId) {
+      await this.deliveryPartners.release(order.deliveryPartnerId);
+    }
+
+    const updated = await this.prisma.order.update({ where: { id: orderId }, data: { deliveryPartnerId: partnerId } });
+
+    if (actorId) {
+      await this.auditLog.record({
+        adminUserId: actorId,
+        action: "ORDER_PARTNER_ASSIGNED",
+        entity: "Order",
+        entityId: orderId,
+        before: { deliveryPartnerId: order.deliveryPartnerId },
+        after: { deliveryPartnerId: partnerId },
+      });
+    }
+
+    this.realtime.emitOrderUpdate(orderId, { orderId, status: updated.status, deliveryPartnerId: partnerId });
+    return { message: `Order assigned to ${partner.name}.` };
   }
 
   private async applyStatusChange(orderId: string, status: OrderStatus, note?: string, actorId?: string) {

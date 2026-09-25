@@ -26,7 +26,7 @@ class GroceryProductCard extends StatelessWidget {
     final discountPct = p.mrp > p.price ? (((p.mrp - p.price) / p.mrp) * 100).round() : 0;
 
     return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: glidoCardShadow()),
+      decoration: BoxDecoration(color: context.colors.surface, borderRadius: BorderRadius.circular(16), boxShadow: glidoCardShadow()),
       clipBehavior: Clip.antiAlias,
       // No mainAxisSize.min — the card sits in a fixed-height slot
       // (mainAxisExtent / SizedBox); the Spacer below absorbs any slack so
@@ -47,7 +47,7 @@ class GroceryProductCard extends StatelessWidget {
                     left: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(color: GlidoColors.success, borderRadius: BorderRadius.circular(6)),
+                      decoration: BoxDecoration(color: context.colors.success, borderRadius: BorderRadius.circular(6)),
                       child: Text('$discountPct% OFF', style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w800)),
                     ),
                   ),
@@ -62,20 +62,20 @@ class GroceryProductCard extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                    decoration: BoxDecoration(color: GlidoColors.primaryLight, borderRadius: BorderRadius.circular(20)),
+                    decoration: BoxDecoration(color: context.colors.primaryLight, borderRadius: BorderRadius.circular(20)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.schedule, size: 11, color: GlidoColors.primaryDark),
+                        Icon(Icons.schedule, size: 11, color: context.colors.primaryDark),
                         const SizedBox(width: 3),
-                        Text('$_etaMinutes MINS', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: GlidoColors.primaryDark)),
+                        Text('$_etaMinutes MINS', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: context.colors.primaryDark)),
                       ],
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(p.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, height: 1.2)),
                   const SizedBox(height: 2),
-                  Text(p.unit, style: TextStyle(fontSize: 11, color: GlidoColors.muted)),
+                  Text(p.unit, style: TextStyle(fontSize: 11, color: context.colors.muted)),
                   const SizedBox(height: 6),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -87,21 +87,21 @@ class GroceryProductCard extends StatelessWidget {
                           children: [
                             Text('₹${p.price.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
                             if (p.mrp > p.price)
-                              Text('₹${p.mrp.toStringAsFixed(0)}', style: TextStyle(fontSize: 10.5, color: GlidoColors.muted, decoration: TextDecoration.lineThrough)),
+                              Text('₹${p.mrp.toStringAsFixed(0)}', style: TextStyle(fontSize: 10.5, color: context.colors.muted, decoration: TextDecoration.lineThrough)),
                           ],
                         ),
                       ),
                       if (p.stockQty == 0)
-                        Text('Sold out', style: TextStyle(fontSize: 10.5, color: GlidoColors.danger, fontWeight: FontWeight.w700))
+                        Text('Sold out', style: TextStyle(fontSize: 10.5, color: context.colors.danger, fontWeight: FontWeight.w700))
                       else if (qty == 0)
                         SizedBox(
                           height: 28,
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
-                              side: const BorderSide(color: GlidoColors.success, width: 1.4),
-                              foregroundColor: GlidoColors.success,
-                              backgroundColor: Colors.white,
+                              side: BorderSide(color: context.colors.success, width: 1.4),
+                              foregroundColor: context.colors.success,
+                              backgroundColor: context.colors.surface,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
                             ),
                             onPressed: () => cart.addItem(GroceryProductRef(id: p.id, name: p.name, price: p.price, unit: p.unit, imageUrl: p.imageUrl, stockQty: p.stockQty)),
@@ -112,7 +112,7 @@ class GroceryProductCard extends StatelessWidget {
                         Container(
                           height: 28,
                           padding: const EdgeInsets.symmetric(horizontal: 2),
-                          decoration: BoxDecoration(color: GlidoColors.success, borderRadius: BorderRadius.circular(9)),
+                          decoration: BoxDecoration(color: context.colors.success, borderRadius: BorderRadius.circular(9)),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

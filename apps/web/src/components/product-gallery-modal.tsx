@@ -37,7 +37,7 @@ export function ProductDetailModal({
         className="card-glido w-full sm:max-w-md max-h-[92vh] overflow-y-auto rounded-b-none sm:rounded-b-[1.1rem]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative aspect-square bg-gray-50">
+        <div className="relative aspect-square bg-gray-50 dark:bg-[var(--glido-surface-alt)]">
           {current ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={current} alt={`${product.name} photo ${index + 1}`} className="h-full w-full object-cover" />

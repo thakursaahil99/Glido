@@ -46,12 +46,17 @@ export default function CartPage() {
           Clear cart
         </button>
       </div>
-      <p className="text-sm text-[var(--glido-muted)] mb-4">Ordering from {cart.restaurantName}</p>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-[var(--glido-muted)]">Ordering from {cart.restaurantName}</p>
+        <Link href={`/food/${cart.restaurantId}`} className="text-sm font-semibold text-[var(--glido-primary)]">
+          + Add more items
+        </Link>
+      </div>
 
       <div className="space-y-3">
         {cart.items.map((item) => (
           <div key={item.menuItemId + item.addonNames.join(",")} className="card-glido p-4 flex items-center gap-3">
-            <div className="h-16 w-16 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+            <div className="h-16 w-16 rounded-lg bg-gray-100 dark:bg-[var(--glido-surface-alt)] overflow-hidden shrink-0">
               {resolveMediaUrl(item.imageUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={resolveMediaUrl(item.imageUrl)} alt={item.name} className="h-full w-full object-cover" />

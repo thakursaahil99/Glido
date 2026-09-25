@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/co
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { CurrentUser, AuthUser } from "../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
-import { CancelRideDto, CreateRideDto, CreateRideReviewDto, EstimateRideDto } from "./dto/rides.dto";
+import { CancelRideDto, CreateRideDto, CreateRideReviewDto, EstimateRideDto, TipRideDto } from "./dto/rides.dto";
 import { RidesService } from "./rides.service";
 
 @ApiTags("cab")
@@ -50,5 +50,12 @@ export class RidesController {
   @Post(":id/review")
   review(@CurrentUser() user: AuthUser, @Param("id") id: string, @Body() dto: CreateRideReviewDto) {
     return this.rides.createReview(user.id, id, dto.rating, dto.comment);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post(":id/tip")
+  tip(@CurrentUser() user: AuthUser, @Param("id") id: string, @Body() dto: TipRideDto) {
+    return this.rides.tipDriver(user.id, id, dto.amount);
   }
 }

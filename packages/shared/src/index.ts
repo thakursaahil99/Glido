@@ -27,9 +27,6 @@ export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 export const PAYMENT_STATUSES = ["PENDING", "PAID", "FAILED", "REFUNDED"] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-export const COUPON_TYPES = ["PERCENT", "FLAT"] as const;
-export type CouponType = (typeof COUPON_TYPES)[number];
-
 // --- RBAC: admin roles, permissions, and role → default-permission map ---
 // Enforced by apps/api/src/common/guards/permissions.guard.ts and rendered by
 // the admin panel's staff management screen (apps/web/src/app/admin/staff).
@@ -115,22 +112,3 @@ export interface ApiError {
   message: string;
   error?: string;
 }
-
-export const BRAND = {
-  name: "Glido",
-  tagline: "Food, groceries and rides — glide through your day.",
-  // Shares its brand orange with the sibling glideinbir.vercel.app project.
-  colors: {
-    primary: "#FF6A00",
-    primaryDark: "#C94F00",
-    primaryLight: "#FFF1E6",
-    accent: "#F99C00",
-    success: "#0EA36C",
-    danger: "#E40014",
-    ink: "#101418",
-    surface: "#FFFFFF",
-    muted: "#5B6470",
-    border: "#E5E7EB",
-    bg: "#F7F7F8",
-  },
-} as const;

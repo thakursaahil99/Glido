@@ -28,8 +28,11 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/glido?schema=public
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-glido-dev-access-3f9a1c7e2b6d4859}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-glido-dev-refresh-8b2e5f1a9c3d7601}
+      # No insecure fallback here on purpose — a committed default secret would let anyone
+      # who reads this file forge admin tokens against any deployment that forgot to
+      # override it. Set real values in a .env file (gitignored) before running this.
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in your environment or .env file}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in your environment or .env file}
       JWT_ACCESS_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 30d
       PORT: 4000

@@ -6,6 +6,7 @@ import 'screens/home/home_shell.dart';
 import 'state/auth_state.dart';
 import 'state/cart_state.dart';
 import 'state/grocery_cart_state.dart';
+import 'state/theme_state.dart';
 
 void main() {
   runApp(const GlidoApp());
@@ -21,12 +22,17 @@ class GlidoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthState()..bootstrap()),
         ChangeNotifierProvider(create: (_) => CartState()),
         ChangeNotifierProvider(create: (_) => GroceryCartState()),
+        ChangeNotifierProvider(create: (_) => ThemeState()..bootstrap()),
       ],
-      child: MaterialApp(
-        title: 'Glido',
-        debugShowCheckedModeBanner: false,
-        theme: buildGlidoTheme(),
-        home: const _RootRouter(),
+      child: Consumer<ThemeState>(
+        builder: (context, themeState, _) => MaterialApp(
+          title: 'Glido',
+          debugShowCheckedModeBanner: false,
+          theme: buildGlidoLightTheme(),
+          darkTheme: buildGlidoDarkTheme(),
+          themeMode: themeState.mode,
+          home: const _RootRouter(),
+        ),
       ),
     );
   }

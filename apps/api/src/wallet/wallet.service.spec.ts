@@ -8,7 +8,7 @@ describe("WalletService", () => {
   let service: WalletService;
   let prisma: {
     wallet: { upsert: jest.Mock; update: jest.Mock };
-    walletTransaction: { create: jest.Mock };
+    walletTransaction: { create: jest.Mock; aggregate: jest.Mock };
     $transaction: jest.Mock;
   };
   let notifications: { notify: jest.Mock };
@@ -16,7 +16,11 @@ describe("WalletService", () => {
   beforeEach(async () => {
     prisma = {
       wallet: { upsert: jest.fn(), update: jest.fn() },
-      walletTransaction: { create: jest.fn() },
+      walletTransaction: {
+        create: jest.fn(),
+        // Default: nothing topped up yet today, so the daily-cap check in topUp() passes.
+        aggregate: jest.fn().mockResolvedValue({ _sum: { amount: null } }),
+      },
       $transaction: jest.fn((cb: (tx: unknown) => unknown) => cb(prisma)),
     };
     notifications = { notify: jest.fn() };
@@ -95,6 +99,22 @@ describe("WalletService", () => {
         expect.objectContaining({ data: expect.objectContaining({ type: "CREDIT", amount: 500 }) }),
       );
       expect(notifications.notify).toHaveBeenCalledWith("u1", "Wallet topped up", expect.stringContaining("500.00"), "SYSTEM");
+    });
+
+    it("rejects a top-up that would exceed the daily demo cap", async () => {
+      prisma.wallet.upsert.mockResolvedValue({ id: "w1", balance: 0 });
+      prisma.walletTransaction.aggregate.mockResolvedValue({ _sum: { amount: 1500 } });
+
+      await expect(service.topUp("u1", 600)).rejects.toThrow(BadRequestException);
+      expect(prisma.wallet.update).not.toHaveBeenCalled();
+    });
+
+    it("allows a top-up that exactly reaches the daily demo cap", async () => {
+      prisma.wallet.upsert.mockResolvedValue({ id: "w1", balance: 0 });
+      prisma.wallet.update.mockResolvedValue({ id: "w1", balance: 2000 });
+      prisma.walletTransaction.aggregate.mockResolvedValue({ _sum: { amount: 1500 } });
+
+      await expect(service.topUp("u1", 500)).resolves.toEqual({ id: "w1", balance: 2000 });
     });
   });
 });

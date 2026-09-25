@@ -117,7 +117,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                             title: Text(a.label, style: const TextStyle(fontWeight: FontWeight.w700)),
                             subtitle: Text('${a.full}${a.pincode != null ? ' ${a.pincode}' : ''}'),
                             trailing: IconButton(
-                              icon: Icon(Icons.delete_outline, color: GlidoColors.danger),
+                              icon: Icon(Icons.delete_outline, color: context.colors.danger),
                               onPressed: () => _removeAddress(a.id),
                             ),
                           ),

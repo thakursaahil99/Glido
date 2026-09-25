@@ -96,6 +96,7 @@ class Ride {
   final double distanceKm;
   final double estimatedFare;
   final double? finalFare;
+  final double tipAmount;
   final String paymentMethod;
   final String paymentStatus;
   final DateTime createdAt;
@@ -117,6 +118,7 @@ class Ride {
     required this.distanceKm,
     required this.estimatedFare,
     this.finalFare,
+    this.tipAmount = 0,
     required this.paymentMethod,
     required this.paymentStatus,
     required this.createdAt,
@@ -139,6 +141,7 @@ class Ride {
         distanceKm: (json['distanceKm'] as num).toDouble(),
         estimatedFare: (json['estimatedFare'] as num).toDouble(),
         finalFare: (json['finalFare'] as num?)?.toDouble(),
+        tipAmount: (json['tipAmount'] as num?)?.toDouble() ?? 0,
         paymentMethod: json['paymentMethod'] ?? 'COD',
         paymentStatus: json['paymentStatus'] ?? 'PENDING',
         createdAt: DateTime.parse(json['createdAt']),

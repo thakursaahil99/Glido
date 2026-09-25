@@ -36,12 +36,27 @@ export class WalletService {
     return { items, total, page, pageSize };
   }
 
-  /** Demo-mode top-up — credits instantly, standing in for a real payment gateway charge. */
+  /** Demo-mode top-up — credits instantly, standing in for a real payment gateway charge.
+   *  There's no real money behind this, so it's capped per-request (DTO) and per-day here
+   *  to stop it being used to mint unlimited wallet balance via many small requests. */
   async topUp(userId: string, amount: number) {
     if (amount <= 0) throw new BadRequestException("Enter a valid amount.");
-    const wallet = await this.credit(userId, amount, "Wallet top-up");
+
+    const wallet = await this.getOrCreate(userId);
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const toppedUpToday = await this.prisma.walletTransaction.aggregate({
+      where: { walletId: wallet.id, type: "CREDIT", reason: "Wallet top-up", createdAt: { gte: since } },
+      _sum: { amount: true },
+    });
+    const dailyCap = 2000;
+    const alreadyToday = toppedUpToday._sum.amount ?? 0;
+    if (alreadyToday + amount > dailyCap) {
+      throw new BadRequestException(`Demo top-up is capped at ₹${dailyCap} per day. You've already added ₹${alreadyToday.toFixed(2)} today.`);
+    }
+
+    const updated = await this.credit(userId, amount, "Wallet top-up");
     this.notifications.notify(userId, "Wallet topped up", `₹${amount.toFixed(2)} added to your Glido Wallet.`, "SYSTEM");
-    return wallet;
+    return updated;
   }
 
   async credit(userId: string, amount: number, reason: string, referenceId?: string) {

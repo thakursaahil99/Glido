@@ -138,7 +138,7 @@ function SupportInbox() {
             <button
               key={c.user.id}
               onClick={() => openConversation(c.user.id)}
-              className={`block w-full border-b border-[var(--glido-border)] px-3 py-3 text-left transition-colors hover:bg-gray-50 ${
+              className={`block w-full border-b border-[var(--glido-border)] px-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[var(--glido-surface-alt)] ${
                 selectedUserId === c.user.id ? "bg-[var(--glido-primary-light)]" : ""
               }`}
             >
@@ -174,7 +174,7 @@ function SupportInbox() {
                       className={`max-w-[70%] rounded-2xl px-3 py-2 text-sm ${
                         m.senderRole === "ADMIN"
                           ? "bg-[var(--glido-primary)] text-white rounded-br-sm"
-                          : "bg-gray-100 text-[var(--glido-ink)] rounded-bl-sm"
+                          : "bg-gray-100 dark:bg-[var(--glido-surface-alt)] text-[var(--glido-ink)] rounded-bl-sm"
                       }`}
                     >
                       {m.message}

@@ -118,4 +118,32 @@ export async function uploadImage(file: File): Promise<{ url: string }> {
   return data as { url: string };
 }
 
+/** Downloads a file from an authenticated API endpoint (e.g. a PDF invoice) and
+ * triggers the browser's normal save-file flow — plain <a href> can't carry the
+ * bearer token, so this fetches as a blob and clicks a temporary object-URL link. */
+export async function downloadFile(path: string, filename: string): Promise<void> {
+  const { accessToken } = getTokens();
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+  if (!res.ok) {
+    let message = "Could not download file.";
+    try {
+      message = (await res.json())?.message ?? message;
+    } catch {
+      // no JSON body
+    }
+    throw new ApiError(message, res.status);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export { API_URL };

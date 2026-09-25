@@ -216,7 +216,7 @@ function RestaurantDetailContent() {
           </label>
         </div>
         <label className="text-xs block">
-          Commission % (Glido's cut per order)
+          Commission % (Glido&apos;s cut per order)
           <input type="number" className="input-glido mt-1" value={restaurant.commissionPercent} onChange={(e) => setRestaurant({ ...restaurant, commissionPercent: Number(e.target.value) })} />
         </label>
         <label className="flex items-center gap-2 text-sm">
@@ -253,7 +253,7 @@ function RestaurantDetailContent() {
       <div className="card-glido overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50">
+            <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50 dark:bg-[var(--glido-surface-alt)]">
               <th className="py-2 px-4">Item</th>
               <th className="py-2 px-4">Price</th>
               <th className="py-2 px-4">Available</th>

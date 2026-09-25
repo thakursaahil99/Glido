@@ -16,8 +16,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _identifierCtrl = TextEditingController(text: 'customer@glido.app');
-  final _passwordCtrl = TextEditingController(text: 'Customer@123');
+  final _identifierCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
   bool _loading = false;
   String? _error;
 
@@ -98,13 +98,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     text: TextSpan(
                       style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
                       children: [
-                        TextSpan(text: 'glid', style: TextStyle(color: GlidoColors.ink)),
-                        TextSpan(text: 'o', style: TextStyle(color: GlidoColors.primary)),
+                        TextSpan(text: 'glid', style: TextStyle(color: context.colors.ink)),
+                        TextSpan(text: 'o', style: TextStyle(color: context.colors.primary)),
                       ],
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text('Food, groceries and rides.', style: TextStyle(color: GlidoColors.muted)),
+                  Text('Food, groceries and rides.', style: TextStyle(color: context.colors.muted)),
                   const SizedBox(height: 32),
                   TextField(
                     controller: _identifierCtrl,
@@ -119,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(_error!, style: TextStyle(color: GlidoColors.danger, fontSize: 13)),
+                    Text(_error!, style: TextStyle(color: context.colors.danger, fontSize: 13)),
                   ],
                   const SizedBox(height: 20),
                   ElevatedButton(
@@ -136,12 +136,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Expanded(child: Divider(color: GlidoColors.border)),
+                      Expanded(child: Divider(color: context.colors.border)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text('or', style: TextStyle(color: GlidoColors.muted, fontSize: 12)),
+                        child: Text('or', style: TextStyle(color: context.colors.muted, fontSize: 12)),
                       ),
-                      Expanded(child: Divider(color: GlidoColors.border)),
+                      Expanded(child: Divider(color: context.colors.border)),
                     ],
                   ),
                   const SizedBox(height: 12),

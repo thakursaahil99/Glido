@@ -78,9 +78,9 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (status) {
-      'DELIVERED' => GlidoColors.success,
-      'CANCELLED' => GlidoColors.danger,
-      _ => GlidoColors.primary,
+      'DELIVERED' => context.colors.success,
+      'CANCELLED' => context.colors.danger,
+      _ => context.colors.primary,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

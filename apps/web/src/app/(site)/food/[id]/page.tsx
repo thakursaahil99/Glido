@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, IndianRupee } from "lucide-react";
+import { ArrowLeft, Clock, IndianRupee, Leaf, Search, Sparkles, Star } from "lucide-react";
 import { api, ApiError, resolveMediaUrl } from "@/lib/api";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/lib/toast-context";
@@ -20,6 +20,7 @@ export default function RestaurantDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [vegOnly, setVegOnly] = useState(false);
+  const [itemSearch, setItemSearch] = useState("");
   const [pendingItem, setPendingItem] = useState<{ item: MenuItem; addons: string[] } | null>(null);
 
   async function load() {
@@ -40,10 +41,15 @@ export default function RestaurantDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const itemsByCategory = useMemo(() => {
+  const vegFiltered = useMemo(() => {
     if (!restaurant?.menuItems) return [];
-    const filtered = vegOnly ? restaurant.menuItems.filter((i) => i.isVeg) : restaurant.menuItems;
-    const categories = restaurant.menuCategories ?? [];
+    return vegOnly ? restaurant.menuItems.filter((i) => i.isVeg) : restaurant.menuItems;
+  }, [restaurant, vegOnly]);
+
+  const itemsByCategory = useMemo(() => {
+    const q = itemSearch.trim().toLowerCase();
+    const filtered = q ? vegFiltered.filter((i) => i.name.toLowerCase().includes(q)) : vegFiltered;
+    const categories = restaurant?.menuCategories ?? [];
     const grouped = categories.map((cat) => ({
       category: cat,
       items: filtered.filter((i) => i.categoryId === cat.id),
@@ -51,7 +57,17 @@ export default function RestaurantDetailPage() {
     const uncategorized = filtered.filter((i) => !i.categoryId);
     if (uncategorized.length) grouped.push({ category: { id: "none", name: "Other", sortOrder: 999 }, items: uncategorized });
     return grouped.filter((g) => g.items.length > 0);
-  }, [restaurant, vegOnly]);
+  }, [restaurant, vegFiltered, itemSearch]);
+
+  // "Chef's Must Try": a defensible, honest discovery row. Prefer items that have
+  // add-ons (they're customizable/signature dishes), falling back to the first few
+  // menu items when there isn't enough add-on signal. No fabricated bestseller flag.
+  const featuredItems = useMemo(() => {
+    const available = vegFiltered.filter((i) => i.isAvailable);
+    const withAddons = available.filter((i) => i.addons.length > 0);
+    const base = withAddons.length >= 3 ? withAddons : available;
+    return base.slice(0, 6);
+  }, [vegFiltered]);
 
   function confirmAdd(item: MenuItem, addonNames: string[] = []) {
     if (!restaurant) return;
@@ -95,18 +111,22 @@ export default function RestaurantDetailPage() {
 
   return (
     <div>
-      <div className="h-48 md:h-64 bg-gray-100 overflow-hidden relative">
+      <div className="h-48 md:h-64 bg-[var(--glido-hero-bg)] overflow-hidden relative">
         {resolveMediaUrl(restaurant.imageUrl) ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={resolveMediaUrl(restaurant.imageUrl)} alt={restaurant.name} className="h-full w-full object-cover" />
         ) : null}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
         <Link
           href="/food"
           aria-label="Back to restaurants"
-          className="absolute top-3 left-3 h-10 w-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-50"
+          className="absolute top-3 left-3 h-10 w-10 rounded-full bg-white dark:bg-[var(--glido-surface)] shadow-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-[var(--glido-surface-alt)]"
         >
           <ArrowLeft size={18} className="text-[var(--glido-ink)]" />
         </Link>
+        {!restaurant.isOpen && (
+          <span className="absolute top-3 right-3 badge bg-black/60 text-white">Closed now</span>
+        )}
       </div>
 
       <div className="container-glido -mt-8 relative">
@@ -121,7 +141,9 @@ export default function RestaurantDetailPage() {
                 <p className="text-sm text-[var(--glido-muted)] mt-1 max-w-xl">{restaurant.description}</p>
               )}
             </div>
-            <span className="badge badge-status">★ {restaurant.ratingAvg?.toFixed(1) ?? "New"} ({restaurant.ratingCount})</span>
+            <span className="badge bg-[var(--glido-success)] text-white shrink-0 inline-flex items-center gap-1">
+              <Star size={12} fill="currentColor" /> {restaurant.ratingAvg?.toFixed(1) ?? "New"} ({restaurant.ratingCount})
+            </span>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[var(--glido-muted)]">
@@ -129,20 +151,89 @@ export default function RestaurantDetailPage() {
               <Clock size={14} /> {restaurant.avgDeliveryTimeMin} min delivery
             </span>
             <span className="inline-flex items-center gap-1">
-              <IndianRupee size={14} /> {restaurant.deliveryFee} delivery fee
+              <IndianRupee size={14} /> {restaurant.deliveryFee === 0 ? "Free delivery" : `₹${restaurant.deliveryFee} delivery fee`}
             </span>
             {restaurant.minOrderAmount > 0 && <span>Min order ₹{restaurant.minOrderAmount}</span>}
             {!restaurant.isOpen && <span className="text-[var(--glido-danger)] font-semibold">Currently closed</span>}
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-6 mb-3">
-          <h2 className="font-bold text-lg">Menu</h2>
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <input type="checkbox" checked={vegOnly} onChange={(e) => setVegOnly(e.target.checked)} />
-            Veg only
-          </label>
+        {featuredItems.length >= 2 && (
+          <section className="mt-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles size={16} className="text-[var(--glido-food-dark)]" />
+              <h2 className="text-base font-bold">Chef&apos;s Must Try</h2>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+              {featuredItems.map((item) => {
+                const image = resolveMediaUrl(item.imageUrl);
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => confirmAdd(item)}
+                    disabled={!restaurant.isOpen || !item.isAvailable}
+                    className="w-40 shrink-0 card-glido overflow-hidden text-left disabled:opacity-50"
+                  >
+                    <div className="aspect-square bg-gray-100 dark:bg-[var(--glido-surface-alt)] overflow-hidden">
+                      {image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={image} alt={item.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <VegIcon isVeg={item.isVeg} large />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2.5">
+                      <VegIcon isVeg={item.isVeg} />
+                      <p className="text-sm font-medium leading-tight mt-1 line-clamp-2">{item.name}</p>
+                      <p className="text-xs font-semibold mt-1">₹{item.price}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        <div className="mt-6 mb-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="font-bold text-lg">Menu</h2>
+            <button
+              onClick={() => setVegOnly((v) => !v)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                vegOnly
+                  ? "bg-[var(--glido-success)] text-white border-[var(--glido-success)]"
+                  : "bg-white dark:bg-[var(--glido-surface)] text-[var(--glido-muted)] border-[var(--glido-border)]"
+              }`}
+            >
+              <Leaf size={13} /> Veg only
+            </button>
+          </div>
+          <div className="relative mt-3 max-w-sm">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--glido-muted)]" />
+            <input
+              value={itemSearch}
+              onChange={(e) => setItemSearch(e.target.value)}
+              placeholder="Search in menu..."
+              className="input-glido !pl-9 !py-2 text-sm"
+            />
+          </div>
         </div>
+
+        {itemsByCategory.length > 1 && (
+          <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+            {itemsByCategory.map(({ category }) => (
+              <a
+                key={category.id}
+                href={`#cat-${category.id}`}
+                className="px-3 py-1.5 rounded-full text-xs font-medium shrink-0 border bg-white dark:bg-[var(--glido-surface)] text-[var(--glido-muted)] border-[var(--glido-border)] hover:border-[var(--glido-food)] hover:text-[var(--glido-food-dark)]"
+              >
+                {category.name}
+              </a>
+            ))}
+          </div>
+        )}
 
         {itemsByCategory.length === 0 && (
           <p className="text-sm text-[var(--glido-muted)] py-8">No menu items match this filter yet.</p>
@@ -150,8 +241,10 @@ export default function RestaurantDetailPage() {
 
         <div className="space-y-8 pb-24">
           {itemsByCategory.map(({ category, items }) => (
-            <div key={category.id}>
-              <h3 className="font-semibold text-[var(--glido-ink)] mb-3">{category.name}</h3>
+            <div key={category.id} id={`cat-${category.id}`} className="scroll-mt-20">
+              <h3 className="font-semibold text-[var(--glido-ink)] mb-3">
+                {category.name} <span className="text-[var(--glido-muted)] font-normal">({items.length})</span>
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {items.map((item) => (
                   <MenuItemRow key={item.id} item={item} disabled={!restaurant.isOpen} onAdd={confirmAdd} />
@@ -204,29 +297,30 @@ function MenuItemRow({
   }
 
   const image = resolveMediaUrl(item.imageUrl);
+  const canAdd = !disabled && item.isAvailable;
 
   return (
     <div className="card-glido p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className={`badge ${item.isVeg ? "badge-veg" : "badge-nonveg"}`}>{item.isVeg ? "Veg" : "Non-veg"}</span>
+            <VegIcon isVeg={item.isVeg} />
             {!item.isAvailable && <span className="badge badge-muted">Sold out</span>}
           </div>
-          <h4 className="font-medium mt-1">{item.name}</h4>
-          {item.description && <p className="text-xs text-[var(--glido-muted)] mt-0.5">{item.description}</p>}
+          <h4 className="font-medium mt-1.5">{item.name}</h4>
           <p className="text-sm font-semibold mt-1">₹{item.price}</p>
+          {item.description && <p className="text-xs text-[var(--glido-muted)] mt-1">{item.description}</p>}
 
           {item.addons.length > 0 && (
             <button
               onClick={() => setExpanded((v) => !v)}
-              className="text-xs text-[var(--glido-primary)] font-medium mt-1"
+              className="text-xs text-[var(--glido-food-dark)] font-semibold mt-2"
             >
               {expanded ? "Hide add-ons" : `Customize (${item.addons.length} add-ons)`}
             </button>
           )}
           {expanded && (
-            <div className="mt-2 space-y-1">
+            <div className="mt-2 space-y-1 border-t border-[var(--glido-border)] pt-2">
               {item.addons.map((a) => (
                 <label key={a.id} className="flex items-center gap-2 text-xs">
                   <input
@@ -240,20 +334,43 @@ function MenuItemRow({
             </div>
           )}
         </div>
-        {image && (
-          <div className="h-20 w-20 shrink-0 rounded-lg overflow-hidden bg-gray-100">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={image} alt={item.name} className="h-full w-full object-cover" />
+
+        <div className="shrink-0 relative">
+          <div className="h-24 w-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-[var(--glido-surface-alt)] flex items-center justify-center">
+            {image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={image} alt={item.name} className="h-full w-full object-cover" />
+            ) : (
+              <VegIcon isVeg={item.isVeg} large />
+            )}
           </div>
-        )}
+          <button
+            disabled={!canAdd}
+            onClick={() => onAdd(item, selectedAddons)}
+            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 rounded-lg px-4 py-1.5 text-xs font-bold shadow-md border bg-white dark:bg-[var(--glido-surface)] text-[var(--glido-food-dark)] border-[var(--glido-border)] disabled:opacity-50 whitespace-nowrap"
+          >
+            {disabled ? "Closed" : "ADD"}
+          </button>
+        </div>
       </div>
-      <button
-        disabled={disabled || !item.isAvailable}
-        onClick={() => onAdd(item, selectedAddons)}
-        className="btn-secondary mt-3 w-full text-sm disabled:opacity-50"
-      >
-        {disabled ? "Restaurant closed" : "Add to cart"}
-      </button>
     </div>
+  );
+}
+
+function VegIcon({ isVeg, large }: { isVeg: boolean; large?: boolean }) {
+  const size = large ? "h-8 w-8" : "h-4 w-4";
+  const dot = large ? "h-3.5 w-3.5" : "h-1.5 w-1.5";
+  // Inline styles here (not Tailwind arbitrary-value classes) so the color is applied
+  // reliably regardless of JIT class-detection edge cases with these CSS variables.
+  const colorVar = isVeg ? "var(--glido-success)" : "var(--glido-danger)";
+  return (
+    <span
+      className={`inline-flex items-center justify-center ${size} border-2 ${large ? "rounded-lg" : "rounded-sm"}`}
+      style={{ borderColor: colorVar }}
+      aria-label={isVeg ? "Veg" : "Non-veg"}
+      title={isVeg ? "Veg" : "Non-veg"}
+    >
+      <span className={`${dot} rounded-full`} style={{ background: colorVar }} />
+    </span>
   );
 }

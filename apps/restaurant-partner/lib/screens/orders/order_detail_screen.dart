@@ -90,8 +90,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(color: GlidoColors.primaryLight, borderRadius: BorderRadius.circular(10)),
-                            child: Text(_order!.status.replaceAll('_', ' '), style: TextStyle(color: GlidoColors.primaryDark, fontWeight: FontWeight.w700, fontSize: 12.5)),
+                            decoration: BoxDecoration(color: context.colors.primaryLight, borderRadius: BorderRadius.circular(10)),
+                            child: Text(_order!.status.replaceAll('_', ' '), style: TextStyle(color: context.colors.primaryDark, fontWeight: FontWeight.w700, fontSize: 12.5)),
                           ),
                           const Spacer(),
                           Text('₹${_order!.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
@@ -109,7 +109,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               return isCancel
                                   ? OutlinedButton(
                                       onPressed: _updating ? null : () => _setStatus(s),
-                                      style: OutlinedButton.styleFrom(foregroundColor: GlidoColors.danger, side: BorderSide(color: GlidoColors.danger)),
+                                      style: OutlinedButton.styleFrom(foregroundColor: context.colors.danger, side: BorderSide(color: context.colors.danger)),
                                       child: Text(s.replaceAll('_', ' ')),
                                     )
                                   : ElevatedButton(onPressed: _updating ? null : () => _setStatus(s), child: Text(s.replaceAll('_', ' ')));
@@ -129,9 +129,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 3),
                               child: Row(
                                 children: [
-                                  Icon(reached ? Icons.check_circle : Icons.radio_button_unchecked, size: 16, color: reached ? GlidoColors.success : GlidoColors.border),
+                                  Icon(reached ? Icons.check_circle : Icons.radio_button_unchecked, size: 16, color: reached ? context.colors.success : context.colors.border),
                                   const SizedBox(width: 8),
-                                  Text(s.replaceAll('_', ' '), style: TextStyle(fontSize: 13, color: reached ? GlidoColors.ink : GlidoColors.muted)),
+                                  Text(s.replaceAll('_', ' '), style: TextStyle(fontSize: 13, color: reached ? context.colors.ink : context.colors.muted)),
                                 ],
                               ),
                             );
@@ -175,7 +175,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             Text(_order!.addressFull ?? '—', style: const TextStyle(fontSize: 13.5)),
                             if (_order!.deliveryInstructions != null && _order!.deliveryInstructions!.isNotEmpty) ...[
                               const SizedBox(height: 4),
-                              Text('Note: ${_order!.deliveryInstructions}', style: TextStyle(color: GlidoColors.muted, fontSize: 12.5)),
+                              Text('Note: ${_order!.deliveryInstructions}', style: TextStyle(color: context.colors.muted, fontSize: 12.5)),
                             ],
                           ],
                         ),
@@ -197,7 +197,7 @@ class _SectionCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: glidoCardShadow()),
+      decoration: BoxDecoration(color: context.colors.surface, borderRadius: BorderRadius.circular(14), boxShadow: glidoCardShadow()),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

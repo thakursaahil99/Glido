@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
 import '../../core/socket_client.dart';
@@ -112,8 +114,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(order.restaurant?.name ?? '', style: TextStyle(color: GlidoColors.muted)),
+          Text(order.restaurant?.name ?? '', style: TextStyle(color: context.colors.muted)),
           const SizedBox(height: 16),
+          if (order.status == 'OUT_FOR_DELIVERY' &&
+              order.deliveryPartner?.currentLat != null &&
+              order.deliveryPartner?.currentLng != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: SizedBox(
+                height: 180,
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(order.deliveryPartner!.currentLat!, order.deliveryPartner!.currentLng!),
+                    initialZoom: 15,
+                  ),
+                  children: [
+                    TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'app.glido.customer'),
+                    MarkerLayer(markers: [
+                      Marker(
+                        point: LatLng(order.deliveryPartner!.currentLat!, order.deliveryPartner!.currentLng!),
+                        width: 32,
+                        height: 32,
+                        child: Icon(Icons.delivery_dining, color: context.colors.food, size: 30),
+                      ),
+                    ]),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (order.deliveryPartner != null && ['READY', 'OUT_FOR_DELIVERY', 'DELIVERED'].contains(order.status))
             Card(
               child: ListTile(
@@ -136,7 +166,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: _cancel,
-              style: OutlinedButton.styleFrom(foregroundColor: GlidoColors.danger, side: BorderSide(color: GlidoColors.danger)),
+              style: OutlinedButton.styleFrom(foregroundColor: context.colors.danger, side: BorderSide(color: context.colors.danger)),
               child: const Text('Cancel order'),
             ),
           ],
@@ -158,7 +188,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           onPressed: () => setState(() => _reviewRating = n),
                           icon: Icon(
                             n <= _reviewRating ? Icons.star : Icons.star_border,
-                            color: GlidoColors.accent,
+                            color: context.colors.accent,
                             size: 28,
                           ),
                         );
@@ -192,14 +222,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         const Text('Your review: ', style: TextStyle(fontWeight: FontWeight.w700)),
                         ...List.generate(5, (i) => Icon(
                               i < order.review!.rating ? Icons.star : Icons.star_border,
-                              color: GlidoColors.accent,
+                              color: context.colors.accent,
                               size: 16,
                             )),
                       ],
                     ),
                     if (order.review!.comment != null && order.review!.comment!.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      Text(order.review!.comment!, style: TextStyle(color: GlidoColors.muted)),
+                      Text(order.review!.comment!, style: TextStyle(color: context.colors.muted)),
                     ],
                   ],
                 ),
@@ -229,6 +259,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Subtotal'), Text('₹${order.subtotal.toStringAsFixed(2)}')]),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Delivery fee'), Text('₹${order.deliveryFee.toStringAsFixed(2)}')]),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Tax'), Text('₹${order.taxAmount.toStringAsFixed(2)}')]),
+                  if (order.tipAmount > 0)
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Delivery tip'), Text('₹${order.tipAmount.toStringAsFixed(2)}')]),
                   const Divider(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -252,7 +284,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   const SizedBox(height: 6),
                   Text(order.address?.full ?? ''),
                   const SizedBox(height: 6),
-                  Text('Payment: ${order.paymentMethod} · ${order.paymentStatus}', style: TextStyle(color: GlidoColors.muted)),
+                  Text('Payment: ${order.paymentMethod} · ${order.paymentStatus}', style: TextStyle(color: context.colors.muted)),
                 ],
               ),
             ),
@@ -272,9 +304,9 @@ class _Timeline extends StatelessWidget {
     if (status == 'CANCELLED') {
       return Row(
         children: [
-          Icon(Icons.cancel, color: GlidoColors.danger),
+          Icon(Icons.cancel, color: context.colors.danger),
           const SizedBox(width: 8),
-          Text('Order cancelled', style: TextStyle(color: GlidoColors.danger, fontWeight: FontWeight.w700)),
+          Text('Order cancelled', style: TextStyle(color: context.colors.danger, fontWeight: FontWeight.w700)),
         ],
       );
     }
@@ -287,14 +319,14 @@ class _Timeline extends StatelessWidget {
               Icon(
                 i <= currentIndex ? Icons.check_circle : Icons.radio_button_unchecked,
                 size: 18,
-                color: i <= currentIndex ? GlidoColors.primary : GlidoColors.border,
+                color: i <= currentIndex ? context.colors.primary : context.colors.border,
               ),
               const SizedBox(width: 10),
               Text(
                 _statusSteps[i].replaceAll('_', ' '),
                 style: TextStyle(
                   fontWeight: i == currentIndex ? FontWeight.w800 : FontWeight.w500,
-                  color: i <= currentIndex ? GlidoColors.ink : GlidoColors.muted,
+                  color: i <= currentIndex ? context.colors.ink : context.colors.muted,
                 ),
               ),
             ],

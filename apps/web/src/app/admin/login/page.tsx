@@ -4,7 +4,19 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
-import { GlidoLogoFull } from "@/components/logo";
+import { AnimatedSignInShell, AnimatedForm } from "@/components/ui/animated-sign-in";
+import { Pizza, Soup, Sandwich, ShoppingBasket, Carrot, Apple, Car, CarTaxiFront } from "lucide-react";
+
+const orbitItems = [
+  { icon: Pizza, module: "food" as const },
+  { icon: ShoppingBasket, module: "grocery" as const },
+  { icon: Car, module: "cab" as const },
+  { icon: Soup, module: "food" as const },
+  { icon: Carrot, module: "grocery" as const },
+  { icon: CarTaxiFront, module: "cab" as const },
+  { icon: Sandwich, module: "food" as const },
+  { icon: Apple, module: "grocery" as const },
+];
 
 function AdminLoginForm() {
   const { passwordLogin } = useAuth();
@@ -17,7 +29,7 @@ function AdminLoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -32,48 +44,36 @@ function AdminLoginForm() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center relative overflow-hidden"
-      style={{ background: "radial-gradient(120% 100% at 15% 0%, var(--glido-food) 0%, var(--glido-cab) 55%, var(--glido-ink) 90%)" }}
-    >
-      <div
-        className="absolute inset-0 opacity-[0.08] pointer-events-none"
-        style={{ backgroundImage: "radial-gradient(circle, white 1.5px, transparent 1.5px)", backgroundSize: "22px 22px" }}
+    <AnimatedSignInShell orbitItems={orbitItems}>
+      <AnimatedForm
+        header="Admin sign in"
+        subHeader="Sign in to manage food, grocery and cab operations."
+        submitButton="Sign in"
+        submitting={loading}
+        errorMessage={error}
+        onSubmit={onSubmit}
+        fields={[
+          {
+            label: "Email",
+            name: "email",
+            type: "email",
+            required: true,
+            autoComplete: "username",
+            value: email,
+            onChange: (e) => setEmail(e.target.value),
+          },
+          {
+            label: "Password",
+            name: "password",
+            type: "password",
+            required: true,
+            autoComplete: "current-password",
+            value: password,
+            onChange: (e) => setPassword(e.target.value),
+          },
+        ]}
       />
-      <div className="card-glido p-8 w-full max-w-sm relative z-10 !bg-white/95 backdrop-blur">
-        <GlidoLogoFull className="mb-1" />
-        <p className="text-sm text-[var(--glido-muted)] mt-4 mb-6">Sign in to the admin panel</p>
-
-        <form onSubmit={onSubmit} className="space-y-3">
-          <label className="block text-sm font-medium">
-            Email
-            <input
-              type="email"
-              className="input-glido mt-1"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username"
-              required
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            Password
-            <input
-              type="password"
-              className="input-glido mt-1"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
-          </label>
-          {error && <p className="text-sm text-[var(--glido-danger)]">{error}</p>}
-          <button className="btn-primary w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-      </div>
-    </div>
+    </AnimatedSignInShell>
   );
 }
 

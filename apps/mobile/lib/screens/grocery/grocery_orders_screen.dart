@@ -56,8 +56,8 @@ class _GroceryOrdersScreenState extends State<GroceryOrdersScreen> {
                               subtitle: Text('₹${o.totalAmount.toStringAsFixed(2)}'),
                               trailing: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(color: GlidoColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-                                child: Text(o.status.replaceAll('_', ' '), style: TextStyle(color: GlidoColors.primaryDark, fontSize: 11, fontWeight: FontWeight.w700)),
+                                decoration: BoxDecoration(color: context.colors.primaryLight, borderRadius: BorderRadius.circular(8)),
+                                child: Text(o.status.replaceAll('_', ' '), style: TextStyle(color: context.colors.primaryDark, fontSize: 11, fontWeight: FontWeight.w700)),
                               ),
                               onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroceryOrderDetailScreen(orderId: o.id))),
                             ),

@@ -38,7 +38,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-[var(--glido-border)] bg-white">
+    <footer className="mt-16 border-t border-[var(--glido-border)] bg-white dark:bg-[var(--glido-surface)]">
       <div className="container-glido py-10 grid grid-cols-2 md:grid-cols-5 gap-8">
         <div className="col-span-2 md:col-span-1">
           <GlidoLogo className="text-lg" />

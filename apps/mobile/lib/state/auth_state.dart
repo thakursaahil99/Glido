@@ -62,6 +62,29 @@ class AuthState extends ChangeNotifier {
     return user!;
   }
 
+  /// Step 1 of email-OTP signup — sends a code to [email]; the account isn't
+  /// created yet, so this doesn't touch AuthState.user.
+  Future<void> requestRegistrationOtp(String name, String email, String phone, String password) async {
+    await ApiClient.instance.post<Map<String, dynamic>>('/auth/register/request-otp', {
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'password': password,
+    });
+  }
+
+  /// Step 2 — verifying the code actually creates the account and logs in.
+  Future<GlidoUser> verifyRegistration(String email, String code) async {
+    final res = await ApiClient.instance.post<Map<String, dynamic>>('/auth/register/verify', {
+      'email': email,
+      'code': code,
+    });
+    await ApiClient.instance.setTokens(res['accessToken'], res['refreshToken']);
+    user = GlidoUser.fromJson(res['user']);
+    notifyListeners();
+    return user!;
+  }
+
   Future<void> logout() async {
     await ApiClient.instance.clearTokens();
     user = null;

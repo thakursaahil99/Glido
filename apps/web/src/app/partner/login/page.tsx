@@ -4,7 +4,17 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
-import { GlidoLogo } from "@/components/logo";
+import { AnimatedSignInShell, AnimatedForm } from "@/components/ui/animated-sign-in";
+import { Pizza, Soup, Sandwich, ShoppingBasket, Carrot, Apple } from "lucide-react";
+
+const orbitItems = [
+  { icon: Pizza, module: "food" as const },
+  { icon: Soup, module: "food" as const },
+  { icon: Sandwich, module: "food" as const },
+  { icon: ShoppingBasket, module: "grocery" as const },
+  { icon: Carrot, module: "grocery" as const },
+  { icon: Apple, module: "grocery" as const },
+];
 
 function PartnerLoginForm() {
   const { login } = useAuth();
@@ -17,7 +27,7 @@ function PartnerLoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -36,41 +46,36 @@ function PartnerLoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--glido-bg)]">
-      <div className="card-glido p-8 w-full max-w-sm">
-        <GlidoLogo className="text-xl mb-1" />
-        <p className="text-sm text-[var(--glido-muted)] mb-6">Restaurant Partner Portal</p>
-
-        <form onSubmit={onSubmit} className="space-y-3">
-          <label className="block text-sm font-medium">
-            Email
-            <input
-              type="email"
-              className="input-glido mt-1"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              autoComplete="username"
-              required
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            Password
-            <input
-              type="password"
-              className="input-glido mt-1"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
-          </label>
-          {error && <p className="text-sm text-[var(--glido-danger)]">{error}</p>}
-          <button className="btn-primary w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-      </div>
-    </div>
+    <AnimatedSignInShell orbitItems={orbitItems}>
+      <AnimatedForm
+        header="Restaurant Partner Portal"
+        subHeader="Sign in to manage your menu, orders and payouts."
+        submitButton="Sign in"
+        submitting={loading}
+        errorMessage={error}
+        onSubmit={onSubmit}
+        fields={[
+          {
+            label: "Email",
+            name: "email",
+            type: "email",
+            required: true,
+            autoComplete: "username",
+            value: identifier,
+            onChange: (e) => setIdentifier(e.target.value),
+          },
+          {
+            label: "Password",
+            name: "password",
+            type: "password",
+            required: true,
+            autoComplete: "current-password",
+            value: password,
+            onChange: (e) => setPassword(e.target.value),
+          },
+        ]}
+      />
+    </AnimatedSignInShell>
   );
 }
 

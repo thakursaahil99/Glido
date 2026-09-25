@@ -146,6 +146,36 @@ export class RestaurantsService {
     return restaurant;
   }
 
+  /** Real order counts/revenue for this restaurant — today, last 7 days, and currently-active
+   *  (not yet delivered/cancelled) orders. Revenue uses `subtotal` (food cost only, excludes
+   *  delivery fee/tax which aren't the restaurant's), derived from actual orders, not estimated. */
+  async getStats(restaurantId: string) {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const activeStatuses = ["PENDING", "ACCEPTED", "PREPARING", "READY", "OUT_FOR_DELIVERY"] as const;
+
+    const [today, week, active] = await Promise.all([
+      this.prisma.order.aggregate({
+        where: { restaurantId, status: "DELIVERED", updatedAt: { gte: startOfToday } },
+        _count: true,
+        _sum: { subtotal: true },
+      }),
+      this.prisma.order.aggregate({
+        where: { restaurantId, status: "DELIVERED", updatedAt: { gte: sevenDaysAgo } },
+        _count: true,
+        _sum: { subtotal: true },
+      }),
+      this.prisma.order.count({ where: { restaurantId, status: { in: [...activeStatuses] } } }),
+    ]);
+
+    return {
+      today: { orders: today._count, revenue: today._sum.subtotal ?? 0 },
+      last7Days: { orders: week._count, revenue: week._sum.subtotal ?? 0 },
+      activeOrders: active,
+    };
+  }
+
   private async ensureExists(id: string) {
     const r = await this.prisma.restaurant.findUnique({ where: { id } });
     if (!r) throw new NotFoundException("Restaurant not found.");

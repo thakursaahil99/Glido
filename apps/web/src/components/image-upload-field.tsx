@@ -58,7 +58,7 @@ export function ImageUploadField({
           dragOver ? "border-[var(--glido-primary)] bg-[var(--glido-primary-light)]" : "border-[var(--glido-border)] hover:border-[var(--glido-primary)]"
         }`}
       >
-        <div className="h-16 w-16 shrink-0 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
+        <div className="h-16 w-16 shrink-0 rounded-lg bg-gray-100 dark:bg-[var(--glido-surface-alt)] overflow-hidden flex items-center justify-center">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="" className="h-full w-full object-cover" />

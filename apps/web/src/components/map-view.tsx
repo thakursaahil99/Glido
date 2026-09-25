@@ -93,7 +93,10 @@ export function MapView({
       layersRef.current.forEach((layer) => map.removeLayer(layer));
       layersRef.current = [];
 
+      // Skip anything with a non-finite lat/lng instead of letting Leaflet throw and
+      // silently break the whole map (and everything after it) for the rest of the page.
       for (const m of markers) {
+        if (!Number.isFinite(m.lat) || !Number.isFinite(m.lng)) continue;
         const size = m.kind === "pickup" || m.kind === "drop" ? 24 : 28;
         const icon = L.divIcon({
           className: "",
@@ -105,7 +108,7 @@ export function MapView({
         layersRef.current.push(marker);
       }
 
-      if (polyline && polyline.length > 1) {
+      if (polyline && polyline.length > 1 && polyline.every((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng))) {
         const line = L.polyline(
           polyline.map((p) => [p.lat, p.lng]),
           { color: "#FF6A00", weight: 4, dashArray: "1 8", lineCap: "round" },
@@ -114,6 +117,7 @@ export function MapView({
       }
 
       for (const c of circles ?? []) {
+        if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng) || !Number.isFinite(c.radiusMeters)) continue;
         const circle = L.circle([c.lat, c.lng], {
           radius: c.radiusMeters,
           color: c.color ?? "#0EA36C",
@@ -138,5 +142,15 @@ export function MapView({
     };
   }, []);
 
-  return <div ref={containerRef} style={{ height, width: "100%" }} className={`rounded-xl overflow-hidden ${className}`} />;
+  // `isolate` is load-bearing: Leaflet's internal panes use z-index up to 700
+  // (markers/popups), which — without this — escape into the page's ambient
+  // stacking context and paint over absolutely-positioned siblings like the
+  // cab page's bottom sheet, even though those siblings have their own z-index.
+  return (
+    <div
+      ref={containerRef}
+      style={{ height, width: "100%" }}
+      className={`relative isolate rounded-xl overflow-hidden ${className}`}
+    />
+  );
 }

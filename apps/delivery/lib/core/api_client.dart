@@ -44,6 +44,7 @@ class ApiClient {
   }
 
   bool get isLoggedIn => _accessToken != null;
+  String? get accessToken => _accessToken;
 
   Future<void> setTokens(String access, String refresh) async {
     _accessToken = access;

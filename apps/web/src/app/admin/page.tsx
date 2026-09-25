@@ -141,7 +141,7 @@ function DashboardContent() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50">
+              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50 dark:bg-[var(--glido-surface-alt)]">
                 <th className="py-2.5 px-4">Order</th>
                 <th className="py-2.5 px-4">Restaurant</th>
                 <th className="py-2.5 px-4">Customer</th>
@@ -151,7 +151,7 @@ function DashboardContent() {
             </thead>
             <tbody>
               {data.recentOrders.map((o) => (
-                <tr key={o.id} className="border-b border-[var(--glido-border)] last:border-0 hover:bg-gray-50/60">
+                <tr key={o.id} className="border-b border-[var(--glido-border)] last:border-0 hover:bg-gray-50/60 dark:hover:bg-[var(--glido-surface-alt)]/60">
                   <td className="py-2.5 px-4">
                     <Link href={`/admin/orders/${o.id}`} className="text-[var(--glido-primary)] font-medium">
                       #{o.orderNumber}

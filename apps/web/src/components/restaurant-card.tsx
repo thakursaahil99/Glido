@@ -7,7 +7,7 @@ export function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
   const image = resolveMediaUrl(restaurant.imageUrl);
   return (
     <Link href={`/food/${restaurant.id}`} className="card-glido overflow-hidden group block">
-      <div className="aspect-[16/10] bg-gray-100 overflow-hidden relative">
+      <div className="aspect-[16/10] bg-gray-100 dark:bg-[var(--glido-surface-alt)] overflow-hidden relative">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -20,7 +20,7 @@ export function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
             <UtensilsCrossed size={32} className="text-gray-300" />
           </div>
         )}
-        <span className="absolute bottom-2 right-2 badge bg-white/95 text-[var(--glido-ink)] shadow-sm">
+        <span className="absolute bottom-2 right-2 badge bg-white/95 text-[var(--glido-hero-bg)] shadow-sm">
           ★ {restaurant.ratingAvg ? restaurant.ratingAvg.toFixed(1) : "New"}
         </span>
         {!restaurant.isOpen && (

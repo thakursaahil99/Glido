@@ -105,7 +105,7 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
         onClick={toggle}
         aria-label="Notifications"
         className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-          dark ? "text-white/90 hover:bg-white/10" : "text-[var(--glido-ink)] hover:bg-gray-100"
+          dark ? "text-white/90 hover:bg-white/10" : "text-[var(--glido-ink)] hover:bg-gray-100 dark:hover:bg-[var(--glido-surface-alt)]"
         }`}
       >
         <Bell size={20} />
@@ -117,7 +117,7 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[90vw] rounded-xl border border-[var(--glido-border)] bg-white shadow-lg z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-80 max-w-[90vw] rounded-xl border border-[var(--glido-border)] bg-white dark:bg-[var(--glido-surface)] shadow-lg z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--glido-border)]">
             <span className="text-sm font-semibold text-[var(--glido-ink)]">Notifications</span>
             {unread > 0 && (
@@ -143,7 +143,7 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
                   key={n.id}
                   type="button"
                   onClick={() => !n.isRead && markOneRead(n.id)}
-                  className={`w-full text-left px-4 py-3 border-b border-[var(--glido-border)] last:border-0 transition-colors hover:bg-gray-50 ${
+                  className={`w-full text-left px-4 py-3 border-b border-[var(--glido-border)] last:border-0 transition-colors hover:bg-gray-50 dark:hover:bg-[var(--glido-surface-alt)] ${
                     n.isRead ? "" : "bg-[var(--glido-primary-light)]/40"
                   }`}
                 >

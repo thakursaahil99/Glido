@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../state/cart_state.dart';
+import '../food/restaurant_detail_screen.dart';
 import 'checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
@@ -19,9 +20,25 @@ class CartScreen extends StatelessWidget {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(cart.restaurantName ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(cart.restaurantName ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16), overflow: TextOverflow.ellipsis),
+                    ),
+                    if (cart.restaurantId != null)
+                      TextButton(
+                        style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => RestaurantDetailScreen(restaurantId: cart.restaurantId!)),
+                        ),
+                        child: Text('+ Add more items', style: TextStyle(color: context.colors.primary, fontWeight: FontWeight.w700, fontSize: 12.5)),
+                      ),
+                  ],
+                ),
               ),
+              const SizedBox(height: 4),
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -37,7 +54,7 @@ class CartScreen extends StatelessWidget {
                             children: [
                               Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                               if (item.addonNames.isNotEmpty)
-                                Text(item.addonNames.join(', '), style: TextStyle(fontSize: 12, color: GlidoColors.muted)),
+                                Text(item.addonNames.join(', '), style: TextStyle(fontSize: 12, color: context.colors.muted)),
                               const SizedBox(height: 4),
                               Text('₹${(item.price + item.addonsPrice).toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                             ],

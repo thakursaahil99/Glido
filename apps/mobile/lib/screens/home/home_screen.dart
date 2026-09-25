@@ -7,6 +7,7 @@ import '../../models/banner.dart';
 import '../../models/grocery.dart';
 import '../../models/restaurant.dart';
 import '../../state/grocery_cart_state.dart';
+import '../../state/theme_state.dart';
 import '../../widgets/grocery_product_card.dart';
 import '../../widgets/network_image.dart';
 import '../../widgets/restaurant_card.dart';
@@ -100,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Center(
                         child: Text(
                           _error!,
-                          style: TextStyle(color: GlidoColors.danger),
+                          style: TextStyle(color: context.colors.danger),
                         ),
                       ),
                     ),
@@ -113,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: _QuickTile(
                             icon: Icons.restaurant_menu,
                             label: 'Food',
-                            gradient: GlidoGradients.foodTile,
+                            gradient: GlidoGradients.foodTile(context.colors),
                             onTap: () => widget.onNavigateToTab(1),
                           ),
                         ),
@@ -122,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: _QuickTile(
                             icon: Icons.shopping_cart,
                             label: 'Grocery',
-                            gradient: GlidoGradients.groceryTile,
+                            gradient: GlidoGradients.groceryTile(context.colors),
                             onTap: () => widget.onNavigateToTab(2),
                           ),
                         ),
@@ -131,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: _QuickTile(
                             icon: Icons.local_taxi,
                             label: 'Cab',
-                            gradient: GlidoGradients.cabTile,
+                            gradient: GlidoGradients.cabTile(context.colors),
                             onTap: () => widget.onNavigateToTab(3),
                           ),
                         ),
@@ -226,8 +227,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
-                      gradient: GlidoGradients.primaryButton,
-                      boxShadow: glidoButtonShadow(),
+                      gradient: GlidoGradients.primaryButton(context.colors),
+                      boxShadow: glidoButtonShadow(context.colors.primary),
                     ),
                     child: Material(
                       color: Colors.transparent,
@@ -285,7 +286,7 @@ class _Hero extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-      decoration: const BoxDecoration(gradient: GlidoGradients.heroBg),
+      decoration: BoxDecoration(gradient: GlidoGradients.heroBg(context.colors)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -294,7 +295,7 @@ class _Hero extends StatelessWidget {
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
               children: [
                 TextSpan(text: 'glid', style: TextStyle(color: Colors.white)),
-                TextSpan(text: 'o', style: TextStyle(color: GlidoColors.accent)),
+                TextSpan(text: 'o', style: TextStyle(color: context.colors.accent)),
               ],
             ),
           ),
@@ -310,6 +311,17 @@ class _Hero extends StatelessWidget {
               const SizedBox(width: 4),
               const Icon(Icons.expand_more, size: 16, color: Colors.white70),
               const Spacer(),
+              Builder(
+                builder: (context) => IconButton(
+                  onPressed: () => context.read<ThemeState>().toggle(),
+                  tooltip: context.watch<ThemeState>().isDark ? 'Switch to light mode' : 'Switch to dark mode',
+                  icon: Icon(
+                    context.watch<ThemeState>().isDark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
               const NotificationBellButton(color: Colors.white),
             ],
           ),
@@ -345,13 +357,13 @@ class _Hero extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.search, color: GlidoColors.muted),
+                  Icon(Icons.search, color: context.colors.muted),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Search restaurants, dishes, groceries...',
                       style: TextStyle(
-                        color: GlidoColors.muted,
+                        color: context.colors.muted,
                         fontSize: 13.5,
                       ),
                     ),
@@ -410,7 +422,7 @@ class _QuickTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context.colors.surface,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -460,7 +472,7 @@ class _CategoryCard extends StatelessWidget {
       child: Container(
         width: 92,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: glidoCardShadow(opacity: 0.06),
         ),
@@ -542,7 +554,7 @@ class _HorizontalSkeletonRow extends StatelessWidget {
           width: 150,
           margin: const EdgeInsets.only(right: 12),
           decoration: BoxDecoration(
-            color: GlidoColors.border,
+            color: context.colors.border,
             borderRadius: BorderRadius.circular(18),
           ),
         ),
@@ -577,7 +589,7 @@ class _HowItWorksSection extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: glidoCardShadow(),
       ),
@@ -597,11 +609,11 @@ class _HowItWorksSection extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                      color: GlidoColors.primaryLight,
+                    decoration: BoxDecoration(
+                      color: context.colors.primaryLight,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(step.$1, color: GlidoColors.primary, size: 20),
+                    child: Icon(step.$1, color: context.colors.primary, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -619,7 +631,7 @@ class _HowItWorksSection extends StatelessWidget {
                           step.$3,
                           style: TextStyle(
                             fontSize: 12,
-                            color: GlidoColors.muted,
+                            color: context.colors.muted,
                           ),
                         ),
                       ],
@@ -647,7 +659,7 @@ class _PartnerCtaSection extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: GlidoColors.primaryLight,
+                color: context.colors.primaryLight,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Column(
@@ -660,7 +672,7 @@ class _PartnerCtaSection extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'List your restaurant or store.',
-                    style: TextStyle(fontSize: 11.5, color: GlidoColors.muted),
+                    style: TextStyle(fontSize: 11.5, color: context.colors.muted),
                   ),
                 ],
               ),
@@ -671,7 +683,7 @@ class _PartnerCtaSection extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: GlidoColors.successLight,
+                color: context.colors.successLight,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Column(
@@ -684,7 +696,7 @@ class _PartnerCtaSection extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Flexible hours, weekly payouts.',
-                    style: TextStyle(fontSize: 11.5, color: GlidoColors.muted),
+                    style: TextStyle(fontSize: 11.5, color: context.colors.muted),
                   ),
                 ],
               ),

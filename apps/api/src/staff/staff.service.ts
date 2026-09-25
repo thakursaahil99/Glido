@@ -1,5 +1,6 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { DEFAULT_PERMISSIONS_BY_ADMIN_ROLE } from "@glido/shared";
+import type { AdminRole } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import { AuditLogService } from "../audit/audit-log.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -28,7 +29,13 @@ export class StaffService {
     });
   }
 
-  async create(dto: CreateStaffDto, creatorId: string, ip?: string) {
+  async create(dto: CreateStaffDto, creatorId: string, creatorAdminRole: AdminRole | null | undefined, ip?: string) {
+    if (dto.adminRole === "SUPER_ADMIN" && creatorAdminRole !== "SUPER_ADMIN") {
+      // Otherwise any admin holding just `manage_staff` could mint a super-admin
+      // account for themselves and bypass every other permission check.
+      throw new ForbiddenException("Only a Super Admin can create another Super Admin.");
+    }
+
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
     if (existing) throw new ConflictException("A user with this email already exists.");
 
@@ -60,9 +67,13 @@ export class StaffService {
     return staff;
   }
 
-  async update(id: string, dto: UpdateStaffDto, actorId: string, ip?: string) {
+  async update(id: string, dto: UpdateStaffDto, actorId: string, actorAdminRole: AdminRole | null | undefined, ip?: string) {
     const target = await this.prisma.user.findUnique({ where: { id } });
     if (!target || target.role !== "ADMIN") throw new NotFoundException("Staff member not found.");
+
+    if (dto.adminRole === "SUPER_ADMIN" && target.adminRole !== "SUPER_ADMIN" && actorAdminRole !== "SUPER_ADMIN") {
+      throw new ForbiddenException("Only a Super Admin can promote another admin to Super Admin.");
+    }
 
     // Never allow the last active Super Admin to be demoted/blocked — that would lock everyone out.
     const isDemotingSuperAdmin =

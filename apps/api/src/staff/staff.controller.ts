@@ -26,7 +26,7 @@ export class StaffController {
 
   @Post()
   create(@Body() dto: CreateStaffDto, @CurrentUser() user: AuthUser, @Req() req: Request) {
-    return this.staffService.create(dto, user.id, req.ip);
+    return this.staffService.create(dto, user.id, user.adminRole, req.ip);
   }
 
   @Patch(":id")
@@ -36,6 +36,6 @@ export class StaffController {
     @CurrentUser() user: AuthUser,
     @Req() req: Request,
   ) {
-    return this.staffService.update(id, dto, user.id, req.ip);
+    return this.staffService.update(id, dto, user.id, user.adminRole, req.ip);
   }
 }

@@ -74,7 +74,7 @@ export function SupportChatWidget() {
   return (
     <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40">
       {open && (
-        <div className="mb-3 flex h-[28rem] w-80 max-w-[85vw] flex-col overflow-hidden rounded-2xl border border-[var(--glido-border)] bg-white shadow-2xl">
+        <div className="mb-3 flex h-[28rem] w-80 max-w-[85vw] flex-col overflow-hidden rounded-2xl border border-[var(--glido-border)] bg-white dark:bg-[var(--glido-surface)] shadow-2xl">
           <div className="flex items-center justify-between bg-[var(--glido-primary)] px-4 py-3 text-white">
             <span className="text-sm font-semibold">Glido Support</span>
             <button onClick={() => setOpen(false)} aria-label="Close chat">
@@ -94,7 +94,7 @@ export function SupportChatWidget() {
                   className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
                     m.senderRole === "CUSTOMER"
                       ? "bg-[var(--glido-primary)] text-white rounded-br-sm"
-                      : "bg-gray-100 text-[var(--glido-ink)] rounded-bl-sm"
+                      : "bg-gray-100 dark:bg-[var(--glido-surface-alt)] text-[var(--glido-ink)] rounded-bl-sm"
                   }`}
                 >
                   {m.message}
@@ -129,7 +129,7 @@ export function SupportChatWidget() {
         className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--glido-primary)] text-white shadow-lg transition-transform hover:scale-105"
       >
         {open ? <X size={22} /> : <MessageCircle size={22} />}
-        {hasUnseen && !open && <span className="absolute top-1 right-1 h-3 w-3 rounded-full bg-[var(--glido-accent)] ring-2 ring-white" />}
+        {hasUnseen && !open && <span className="absolute top-1 right-1 h-3 w-3 rounded-full bg-[var(--glido-accent)] ring-2 ring-white dark:ring-[var(--glido-surface)]" />}
       </button>
     </div>
   );

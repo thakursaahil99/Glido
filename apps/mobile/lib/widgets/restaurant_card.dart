@@ -18,7 +18,7 @@ class RestaurantCard extends StatelessWidget {
     final r = restaurant;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: glidoCardShadow(),
       ),
@@ -58,9 +58,15 @@ class RestaurantCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star, size: 13, color: GlidoColors.accent),
+                            Icon(Icons.star, size: 13, color: context.colors.accent),
                             const SizedBox(width: 3),
-                            Text(r.ratingAvg.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+                            Text(
+                              r.ratingAvg.toStringAsFixed(1),
+                              // Fixed dark text — this pill stays white in both themes (it floats on a
+                              // photo), so the text must NOT use context.colors.ink, which flips to
+                              // near-white in dark mode and would vanish on the white pill.
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5, color: context.colors.heroBg),
+                            ),
                           ],
                         ),
                       ),
@@ -69,7 +75,7 @@ class RestaurantCard extends StatelessWidget {
                       Positioned(
                         left: 8,
                         top: 8,
-                        child: _Pill(color: GlidoColors.danger, child: const Text('Closed', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 10.5))),
+                        child: _Pill(color: context.colors.danger, child: const Text('Closed', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 10.5))),
                       ),
                     Positioned(
                       left: 10,
@@ -97,17 +103,17 @@ class RestaurantCard extends StatelessWidget {
                           r.cuisineTagList.join(' · '),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 12, color: GlidoColors.muted, fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 12, color: context.colors.muted, fontWeight: FontWeight.w500),
                         ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.access_time_filled, size: 12, color: GlidoColors.muted),
+                          Icon(Icons.access_time_filled, size: 12, color: context.colors.muted),
                           const SizedBox(width: 3),
-                          Text('${r.avgDeliveryTimeMin} min', style: TextStyle(fontSize: 11.5, color: GlidoColors.muted, fontWeight: FontWeight.w600)),
+                          Text('${r.avgDeliveryTimeMin} min', style: TextStyle(fontSize: 11.5, color: context.colors.muted, fontWeight: FontWeight.w600)),
                           const SizedBox(width: 10),
-                          Icon(Icons.currency_rupee, size: 12, color: GlidoColors.muted),
-                          Text('${r.deliveryFee.toStringAsFixed(0)} delivery', style: TextStyle(fontSize: 11.5, color: GlidoColors.muted, fontWeight: FontWeight.w600)),
+                          Icon(Icons.currency_rupee, size: 12, color: context.colors.muted),
+                          Text('${r.deliveryFee.toStringAsFixed(0)} delivery', style: TextStyle(fontSize: 11.5, color: context.colors.muted, fontWeight: FontWeight.w600)),
                         ],
                       ),
                     ],

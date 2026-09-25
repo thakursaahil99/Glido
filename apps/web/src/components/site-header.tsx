@@ -11,6 +11,7 @@ import { useCart } from "@/lib/cart-context";
 import type { WalletSummary } from "@/lib/types";
 import { GlidoLogo } from "./logo";
 import { NotificationBell } from "./notification-bell";
+import { ThemeToggle } from "./theme-toggle";
 
 const NAV_LINKS: { href: string; label: string; icon: LucideIcon; color: string }[] = [
   { href: "/food", label: "Food", icon: UtensilsCrossed, color: "var(--glido-food)" },
@@ -51,7 +52,7 @@ export function SiteHeader() {
 
   return (
     <header
-      className={`sticky top-0 z-40 bg-white/90 backdrop-blur-xl transition-shadow ${scrolled ? "shadow-[var(--shadow-lg)]" : "shadow-[0_1px_8px_rgba(0,0,0,0.04)]"}`}
+      className={`sticky top-0 z-40 bg-[var(--glido-surface)]/90 backdrop-blur-xl transition-shadow ${scrolled ? "shadow-[var(--shadow-lg)]" : "shadow-[0_1px_8px_rgba(0,0,0,0.04)]"}`}
     >
       {/* Top row: brand + location, search, wallet/cart/account */}
       <div className="container-glido flex h-[4.5rem] items-center gap-3 md:gap-5">
@@ -75,12 +76,13 @@ export function SiteHeader() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search restaurants, dishes, stores..."
-              className="w-full rounded-full border border-[var(--glido-border)] bg-[var(--glido-bg)] pl-10 pr-4 py-2.5 text-sm focus:outline-2 focus:outline-[var(--glido-primary)] focus:bg-white transition-colors"
+              className="w-full rounded-full border border-[var(--glido-border)] bg-[var(--glido-bg)] pl-10 pr-4 py-2.5 text-sm focus:outline-2 focus:outline-[var(--glido-primary)] focus:bg-[var(--glido-surface)] transition-colors"
             />
           </div>
         </form>
 
         <div className="flex items-center gap-2 ml-auto">
+          <ThemeToggle />
           {user && (
             <Link
               href="/wallet"
@@ -94,7 +96,7 @@ export function SiteHeader() {
           <Link href="/cart" className="btn-secondary relative text-sm !py-2 !px-3 shrink-0">
             Cart
             {itemCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--glido-accent)] text-white text-[11px] font-bold ring-2 ring-white">
+              <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--glido-accent)] text-white text-[11px] font-bold ring-2 ring-[var(--glido-surface)]">
                 {itemCount}
               </span>
             )}

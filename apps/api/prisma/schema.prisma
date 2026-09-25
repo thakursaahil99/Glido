@@ -181,13 +181,28 @@ model SupportMessage {
   @@index([createdAt])
 }
 
+// Backs a custom ThrottlerStorage (see src/common/throttler-storage.service.ts) so
+// rate limits are shared across Vercel's separate serverless instances — the
+// library's default in-memory storage is per-process and doesn't actually limit
+// anything meaningful there, since each instance keeps its own counters.
+model ThrottleHit {
+  key          String    @id
+  count        Int       @default(1)
+  expiresAt    DateTime
+  blockedUntil DateTime?
+
+  @@index([expiresAt])
+}
+
 model Otp {
-  id         String   @id @default(cuid())
-  identifier String // email or phone
-  code       String
-  consumed   Boolean  @default(false)
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
+  id             String   @id @default(cuid())
+  identifier     String // email or phone
+  code           String
+  consumed       Boolean  @default(false)
+  attempts       Int      @default(0)
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  pendingPayload String? // JSON-encoded {name, phone, passwordHash} for the email-OTP signup flow — the account isn't created until this OTP is verified.
 
   @@index([identifier])
 }
@@ -348,6 +363,7 @@ model Order {
   taxAmount             Float         @default(0)
   discountAmount        Float         @default(0)
   totalAmount           Float
+  tipAmount             Float         @default(0)
   paymentMethod         PaymentMethod @default(COD)
   paymentStatus         PaymentStatus @default(PENDING)
   couponId              String?
@@ -554,6 +570,7 @@ model GroceryOrder {
   taxAmount            Float         @default(0)
   discountAmount       Float         @default(0)
   totalAmount          Float
+  tipAmount            Float         @default(0)
   paymentMethod        PaymentMethod @default(COD)
   paymentStatus        PaymentStatus @default(PENDING)
   couponId             String?
@@ -700,6 +717,7 @@ model Ride {
   distanceKm     Float
   estimatedFare  Float
   finalFare      Float?
+  tipAmount      Float         @default(0)
   paymentMethod  PaymentMethod @default(COD) // COD doubles as "pay driver in cash" here
   paymentStatus  PaymentStatus @default(PENDING)
   couponId       String?

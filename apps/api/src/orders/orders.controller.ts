@@ -1,12 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, Res, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import type { Response } from "express";
 import { CurrentUser, AuthUser } from "../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../common/decorators/permissions.decorator";
 import { Roles } from "../common/decorators/roles.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
-import { CancelOrderDto, CreateOrderDto, UpdateOrderStatusDto } from "./dto/orders.dto";
+import { streamInvoicePdf } from "../common/invoice.util";
+import { AssignDeliveryPartnerDto, CancelOrderDto, CreateOrderDto, UpdateOrderStatusDto } from "./dto/orders.dto";
 import { OrdersService } from "./orders.service";
 
 @ApiTags("orders")
@@ -72,6 +74,38 @@ export class OrdersController {
     return this.ordersService.adminDetail(id);
   }
 
+  @Get("admin/orders/:id/invoice.pdf")
+  @Roles("ADMIN")
+  @RequirePermissions("manage_orders")
+  async downloadInvoice(@Param("id") id: string, @Res() res: Response) {
+    const order = await this.ordersService.getForInvoice(id);
+    streamInvoicePdf(res, {
+      orderNumber: order.orderNumber,
+      createdAt: order.createdAt,
+      businessLine: "Glido Food",
+      sellerName: order.restaurant?.name,
+      customerName: order.user?.name ?? "Customer",
+      customerPhone: order.user?.phone,
+      customerEmail: order.user?.email,
+      addressLine: `${order.address?.line1 ?? ""}${order.address?.line2 ? `, ${order.address.line2}` : ""}`,
+      items: order.items.map((i) => ({
+        name: i.nameSnapshot,
+        quantity: i.quantity,
+        unitPrice: i.priceSnapshot,
+        subtotal: i.subtotal,
+      })),
+      subtotal: order.subtotal,
+      deliveryFee: order.deliveryFee,
+      packagingFee: order.packagingFee,
+      taxAmount: order.taxAmount,
+      discountAmount: order.discountAmount,
+      tipAmount: order.tipAmount,
+      totalAmount: order.totalAmount,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+    });
+  }
+
   @Patch("admin/orders/:id/status")
   @Roles("ADMIN")
   @RequirePermissions("manage_orders")
@@ -81,5 +115,16 @@ export class OrdersController {
     @CurrentUser() actor: AuthUser,
   ) {
     return this.ordersService.adminUpdateStatus(id, dto.status, dto.note, actor.id);
+  }
+
+  @Patch("admin/orders/:id/assign-partner")
+  @Roles("ADMIN")
+  @RequirePermissions("manage_orders")
+  assignDeliveryPartner(
+    @Param("id") id: string,
+    @Body() dto: AssignDeliveryPartnerDto,
+    @CurrentUser() actor: AuthUser,
+  ) {
+    return this.ordersService.assignDeliveryPartner(id, dto.deliveryPartnerId, actor.id);
   }
 }

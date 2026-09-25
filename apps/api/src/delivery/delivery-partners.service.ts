@@ -87,10 +87,65 @@ export class DeliveryPartnersService {
     return { message: "Delivery partner account created.", email: user.email };
   }
 
+  /** Validates a partner is eligible to be manually assigned an order by an admin —
+   *  must exist and be APPROVED (an admin overriding onto a suspended/pending partner
+   *  would be a support nightmare, not a convenience). Doesn't check isOnline/isAvailable
+   *  since a manual override is explicitly for cases where auto-assign already failed. */
+  async getForManualAssign(id: string) {
+    const partner = await this.prisma.deliveryPartner.findUnique({ where: { id } });
+    if (!partner) throw new NotFoundException("Delivery partner not found.");
+    if (partner.status !== "APPROVED") {
+      throw new BadRequestException("Only approved delivery partners can be assigned to orders.");
+    }
+    return partner;
+  }
+
   /** Resolves the delivery partner linked to this user, or throws — used by every /delivery-partner/me endpoint. */
   async findByUser(userId: string) {
     const partner = await this.prisma.deliveryPartner.findUnique({ where: { userId } });
     if (!partner) throw new NotFoundException("No delivery partner profile is linked to this account.");
     return partner;
+  }
+
+  /** Real delivered-order counts/earnings for this partner — today and the last 7 days,
+   *  derived from actual DELIVERED orders' deliveryFee, not a fabricated/estimated figure. */
+  async getStats(partnerId: string) {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [todayFood, todayGrocery, weekFood, weekGrocery] = await Promise.all([
+      this.prisma.order.aggregate({
+        where: { deliveryPartnerId: partnerId, status: "DELIVERED", updatedAt: { gte: startOfToday } },
+        _count: true,
+        _sum: { deliveryFee: true },
+      }),
+      this.prisma.groceryOrder.aggregate({
+        where: { deliveryPartnerId: partnerId, status: "DELIVERED", updatedAt: { gte: startOfToday } },
+        _count: true,
+        _sum: { deliveryFee: true },
+      }),
+      this.prisma.order.aggregate({
+        where: { deliveryPartnerId: partnerId, status: "DELIVERED", updatedAt: { gte: sevenDaysAgo } },
+        _count: true,
+        _sum: { deliveryFee: true },
+      }),
+      this.prisma.groceryOrder.aggregate({
+        where: { deliveryPartnerId: partnerId, status: "DELIVERED", updatedAt: { gte: sevenDaysAgo } },
+        _count: true,
+        _sum: { deliveryFee: true },
+      }),
+    ]);
+
+    return {
+      today: {
+        deliveries: todayFood._count + todayGrocery._count,
+        earnings: (todayFood._sum.deliveryFee ?? 0) + (todayGrocery._sum.deliveryFee ?? 0),
+      },
+      last7Days: {
+        deliveries: weekFood._count + weekGrocery._count,
+        earnings: (weekFood._sum.deliveryFee ?? 0) + (weekGrocery._sum.deliveryFee ?? 0),
+      },
+    };
   }
 }

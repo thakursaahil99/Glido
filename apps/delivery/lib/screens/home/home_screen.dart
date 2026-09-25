@@ -6,6 +6,7 @@ import '../../core/socket_client.dart';
 import '../../core/theme.dart';
 import '../../models/assigned_order.dart';
 import '../../models/partner_profile.dart';
+import '../../models/partner_stats.dart';
 import '../../widgets/error_state.dart';
 import '../profile/profile_screen.dart';
 
@@ -19,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   PartnerProfile? _profile;
   List<AssignedOrder>? _orders;
+  PartnerStats? _stats;
   String? _error;
   bool _togglingOnline = false;
   Timer? _poll;
@@ -54,6 +56,15 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } on ApiException catch (e) {
       setState(() => _error = e.message);
+    }
+
+    // Stats are a nice-to-have overlay — fetched separately so a failure here
+    // never blocks the profile/orders load above.
+    try {
+      final statsRes = await ApiClient.instance.get<Map<String, dynamic>>('/delivery-partner/me/stats');
+      if (mounted) setState(() => _stats = PartnerStats.fromJson(statsRes));
+    } catch (_) {
+      // best-effort — stats section just stays hidden/loading
     }
   }
 
@@ -115,8 +126,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          gradient: _profile!.isOnline ? GlidoGradients.primaryButton : null,
-                          color: _profile!.isOnline ? null : Colors.white,
+                          gradient: _profile!.isOnline ? GlidoGradients.primaryButton(context.colors) : null,
+                          color: _profile!.isOnline ? null : context.colors.surface,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: glidoCardShadow(),
                         ),
@@ -131,12 +142,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 16,
-                                      color: _profile!.isOnline ? Colors.white : GlidoColors.ink,
+                                      color: _profile!.isOnline ? Colors.white : context.colors.ink,
                                     ),
                                   ),
                                   Text(
                                     _profile!.isOnline ? 'Looking for deliveries nearby' : 'Go online to start receiving orders',
-                                    style: TextStyle(fontSize: 12, color: _profile!.isOnline ? Colors.white70 : GlidoColors.muted),
+                                    style: TextStyle(fontSize: 12, color: _profile!.isOnline ? Colors.white70 : context.colors.muted),
                                   ),
                                 ],
                               ),
@@ -153,6 +164,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+                      _StatsSection(stats: _stats, activeOrders: _orders?.length),
+                      const SizedBox(height: 20),
                       Text('Assigned deliveries', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                       const SizedBox(height: 10),
                       if (_orders == null)
@@ -160,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       else if (_orders!.isEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 32),
-                          child: Center(child: Text('No deliveries assigned right now.', style: TextStyle(color: GlidoColors.muted))),
+                          child: Center(child: Text('No deliveries assigned right now.', style: TextStyle(color: context.colors.muted))),
                         )
                       else
                         ..._orders!.map((o) => _OrderCard(order: o, onAdvance: () => _advanceStatus(o))),
@@ -182,7 +195,7 @@ class _OrderCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: glidoCardShadow()),
+      decoration: BoxDecoration(color: context.colors.surface, borderRadius: BorderRadius.circular(18), boxShadow: glidoCardShadow()),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -190,10 +203,10 @@ class _OrderCard extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: GlidoColors.primaryLight, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(color: context.colors.primaryLight, borderRadius: BorderRadius.circular(8)),
                 child: Text(
                   order.kind == 'food' ? 'FOOD' : 'GROCERY',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: GlidoColors.primaryDark),
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: context.colors.primaryDark),
                 ),
               ),
               const SizedBox(width: 8),
@@ -202,9 +215,11 @@ class _OrderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          if (order.restaurantName != null) Text('Pickup: ${order.restaurantName}', style: TextStyle(fontSize: 12.5, color: GlidoColors.muted)),
-          if (order.address != null) Text('Drop: ${order.address!.full}', style: TextStyle(fontSize: 12.5, color: GlidoColors.muted)),
-          Text('${order.items.length} item(s) · ${order.paymentMethod} · ${order.paymentStatus}', style: TextStyle(fontSize: 11.5, color: GlidoColors.muted)),
+          _StatusChip(status: order.status),
+          const SizedBox(height: 8),
+          if (order.restaurantName != null) Text('Pickup: ${order.restaurantName}', style: TextStyle(fontSize: 12.5, color: context.colors.muted)),
+          if (order.address != null) Text('Drop: ${order.address!.full}', style: TextStyle(fontSize: 12.5, color: context.colors.muted)),
+          Text('${order.items.length} item(s) · ${order.paymentMethod} · ${order.paymentStatus}', style: TextStyle(fontSize: 11.5, color: context.colors.muted)),
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -213,6 +228,143 @@ class _OrderCard extends StatelessWidget {
               icon: Icon(isPickup ? Icons.two_wheeler : Icons.check_circle_outline, size: 18),
               label: Text(isPickup ? 'Mark picked up' : 'Mark delivered'),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small colored-dot + label status signal for an order card — READY (waiting
+/// pickup) vs OUT_FOR_DELIVERY (in transit) vs anything else, using the
+/// theme's semantic colors so it stays legible in both light and dark mode.
+class _StatusChip extends StatelessWidget {
+  final String status;
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    late final Color dotColor;
+    late final String label;
+    switch (status) {
+      case 'READY':
+        dotColor = c.accent;
+        label = 'Ready for pickup';
+        break;
+      case 'OUT_FOR_DELIVERY':
+        dotColor = c.cab;
+        label = 'Out for delivery';
+        break;
+      case 'DELIVERED':
+        dotColor = c.success;
+        label = 'Delivered';
+        break;
+      default:
+        dotColor = c.muted;
+        label = status;
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(width: 7, height: 7, decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
+        Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: dotColor)),
+      ],
+    );
+  }
+}
+
+/// "Today" / "This week" earnings + delivery-count tiles, fed by the real
+/// GET /delivery-partner/me/stats endpoint. Stays out of the way (compact
+/// skeleton) while loading, and hides gracefully if the fetch failed —
+/// the rest of the home screen doesn't depend on it.
+class _StatsSection extends StatelessWidget {
+  final PartnerStats? stats;
+  final int? activeOrders;
+  const _StatsSection({required this.stats, required this.activeOrders});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    if (stats == null) {
+      return Container(
+        height: 84,
+        decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(18), boxShadow: glidoCardShadow()),
+        alignment: Alignment.center,
+        child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: c.muted)),
+      );
+    }
+    final today = stats!.today;
+    final week = stats!.last7Days;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _StatTile(
+            label: "Today's earnings",
+            value: '₹${today.earnings.toStringAsFixed(0)}',
+            sublabel: '${today.deliveries} ${today.deliveries == 1 ? 'delivery' : 'deliveries'}',
+            emphasize: true,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatTile(
+            label: 'This week',
+            value: '₹${week.earnings.toStringAsFixed(0)}',
+            sublabel: '${week.deliveries} ${week.deliveries == 1 ? 'delivery' : 'deliveries'}',
+          ),
+        ),
+        if (activeOrders != null) ...[
+          const SizedBox(width: 12),
+          Expanded(
+            child: _StatTile(
+              label: 'Active now',
+              value: '$activeOrders',
+              sublabel: activeOrders == 1 ? 'delivery' : 'deliveries',
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final String sublabel;
+  final bool emphasize;
+  const _StatTile({required this.label, required this.value, required this.sublabel, this.emphasize = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: emphasize ? GlidoGradients.primaryButton(c) : null,
+        color: emphasize ? null : c.surface,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: glidoCardShadow(),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: emphasize ? Colors.white70 : c.muted),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: emphasize ? Colors.white : c.ink),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            sublabel,
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: emphasize ? Colors.white70 : c.muted),
           ),
         ],
       ),

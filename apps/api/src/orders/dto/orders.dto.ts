@@ -4,6 +4,7 @@ import {
   IsArray,
   IsIn,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Min,
@@ -46,6 +47,11 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   deliveryInstructions?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  tipAmount?: number;
 }
 
 export class UpdateOrderStatusDto {
@@ -72,6 +78,11 @@ export class UpdateOrderStatusDto {
   @IsOptional()
   @IsString()
   note?: string;
+}
+
+export class AssignDeliveryPartnerDto {
+  @IsString()
+  deliveryPartnerId: string;
 }
 
 export class CancelOrderDto {

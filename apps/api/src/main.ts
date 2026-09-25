@@ -10,7 +10,15 @@ import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: true });
+  // `cors: true` here would register a second, wildcard-origin CORS middleware that runs
+  // BEFORE the restrictive one below and answers preflight requests itself — silently
+  // voiding the WEB_ORIGIN allowlist. Only the explicit app.enableCors(...) below should exist.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Trust the platform's reverse proxy (Vercel/most PaaS) so req.ip is the real client IP,
+  // not the proxy's — without this every request looks like it comes from one IP, so
+  // per-IP rate limiting (ThrottlerGuard) effectively rate-limits nobody.
+  app.set("trust proxy", 1);
 
   app.use(
     helmet({

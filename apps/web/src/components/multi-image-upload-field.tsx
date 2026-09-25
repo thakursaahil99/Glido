@@ -52,7 +52,7 @@ export function MultiImageUploadField({
       {label && <label className="block text-xs font-medium mb-1">{label}</label>}
       <div className="flex flex-wrap gap-3">
         {values.map((url, i) => (
-          <div key={i} className="relative h-20 w-20 rounded-lg overflow-hidden bg-gray-100 shrink-0 group">
+          <div key={i} className="relative h-20 w-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-[var(--glido-surface-alt)] shrink-0 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={resolveMediaUrl(url)} alt="" className="h-full w-full object-cover" />
             <button

@@ -24,7 +24,13 @@ async function bootstrap(): Promise<Express> {
   if (cachedApp) return cachedApp;
 
   const expressApp = express();
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), { cors: true });
+  // Trust Vercel's edge proxy so req.ip is the real client IP — otherwise every request
+  // looks like it comes from the same address and per-IP rate limiting protects nobody.
+  expressApp.set("trust proxy", 1);
+  // `cors: true` here would register a second, wildcard-origin CORS middleware that runs
+  // BEFORE the restrictive one below and answers preflight requests itself — silently
+  // voiding the WEB_ORIGIN allowlist. Only the explicit app.enableCors(...) below should exist.
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
 
   app.use(
     helmet({

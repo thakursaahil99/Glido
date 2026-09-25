@@ -4,6 +4,7 @@ import 'core/theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'state/auth_state.dart';
+import 'state/theme_state.dart';
 
 void main() {
   runApp(const GlidoDeliveryApp());
@@ -14,13 +15,20 @@ class GlidoDeliveryApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthState()..bootstrap(),
-      child: MaterialApp(
-        title: 'Glido Partner',
-        debugShowCheckedModeBanner: false,
-        theme: buildGlidoTheme(),
-        home: const _RootRouter(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthState()..bootstrap()),
+        ChangeNotifierProvider(create: (_) => ThemeState()..bootstrap()),
+      ],
+      child: Consumer<ThemeState>(
+        builder: (context, themeState, _) => MaterialApp(
+          title: 'Glido Partner',
+          debugShowCheckedModeBanner: false,
+          theme: buildGlidoLightTheme(),
+          darkTheme: buildGlidoDarkTheme(),
+          themeMode: themeState.mode,
+          home: const _RootRouter(),
+        ),
       ),
     );
   }

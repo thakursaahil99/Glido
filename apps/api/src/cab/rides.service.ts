@@ -233,6 +233,27 @@ export class RidesService {
     return review;
   }
 
+  async tipDriver(userId: string, rideId: string, amount: number) {
+    const ride = await this.prisma.ride.findFirst({ where: { id: rideId, userId } });
+    if (!ride) throw new NotFoundException("Ride not found.");
+    if (ride.status !== "COMPLETED") {
+      throw new BadRequestException("You can only tip after the ride is completed.");
+    }
+    if (!ride.driverId) throw new BadRequestException("This ride has no driver to tip.");
+    if (ride.tipAmount > 0) throw new BadRequestException("You have already tipped this ride.");
+
+    const roundedAmount = Math.round(amount * 100) / 100;
+    if (ride.paymentMethod === "WALLET") {
+      await this.wallet.debit(userId, roundedAmount, "Ride driver tip", rideId);
+    }
+
+    return this.prisma.ride.update({
+      where: { id: rideId },
+      data: { tipAmount: roundedAmount },
+      include: { rideType: true, driver: true },
+    });
+  }
+
   async cancel(userId: string, rideId: string, reason?: string) {
     const ride = await this.prisma.ride.findFirst({ where: { id: rideId, userId } });
     if (!ride) throw new NotFoundException("Ride not found.");

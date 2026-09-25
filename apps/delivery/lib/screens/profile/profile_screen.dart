@@ -4,6 +4,7 @@ import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../models/partner_profile.dart';
 import '../../state/auth_state.dart';
+import '../../state/theme_state.dart';
 import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -40,55 +41,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 26,
-                          backgroundColor: GlidoColors.primaryLight,
-                          child: Text(_profile!.name.substring(0, 1).toUpperCase(), style: TextStyle(color: GlidoColors.primaryDark, fontWeight: FontWeight.w800, fontSize: 18)),
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(color: context.colors.surface, borderRadius: BorderRadius.circular(20), boxShadow: glidoCardShadow()),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: context.colors.primaryLight,
+                        child: Text(_profile!.name.substring(0, 1).toUpperCase(), style: TextStyle(color: context.colors.primaryDark, fontWeight: FontWeight.w800, fontSize: 20)),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(_profile!.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                            const SizedBox(height: 2),
+                            Text(_profile!.phone, style: TextStyle(color: context.colors.muted, fontSize: 13)),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(_profile!.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                              Text(_profile!.phone, style: TextStyle(color: GlidoColors.muted)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _Row('Vehicle', '${_profile!.vehicleType}${_profile!.vehicleNumber != null ? ' · ${_profile!.vehicleNumber}' : ''}'),
-                        _Row('Status', _profile!.status),
-                        _Row('Rating', '★ ${_profile!.ratingAvg.toStringAsFixed(1)} (${_profile!.ratingCount})'),
-                      ],
-                    ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                  decoration: BoxDecoration(color: context.colors.surface, borderRadius: BorderRadius.circular(18), boxShadow: glidoCardShadow()),
+                  child: Column(
+                    children: [
+                      _Row('Vehicle', '${_profile!.vehicleType}${_profile!.vehicleNumber != null ? ' · ${_profile!.vehicleNumber}' : ''}'),
+                      Divider(height: 1, color: context.colors.border),
+                      _Row('Status', _profile!.status),
+                      Divider(height: 1, color: context.colors.border),
+                      _Row('Rating', '★ ${_profile!.ratingAvg.toStringAsFixed(1)} (${_profile!.ratingCount})'),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    await context.read<AuthState>().logout();
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
-                    }
-                  },
-                  style: OutlinedButton.styleFrom(foregroundColor: GlidoColors.danger, side: BorderSide(color: GlidoColors.danger)),
-                  icon: const Icon(Icons.logout, size: 18),
-                  label: const Text('Log out'),
+                const SizedBox(height: 14),
+                Container(
+                  decoration: BoxDecoration(color: context.colors.surface, borderRadius: BorderRadius.circular(18), boxShadow: glidoCardShadow()),
+                  child: SwitchListTile(
+                    value: context.watch<ThemeState>().isDark,
+                    onChanged: (_) => context.read<ThemeState>().toggle(),
+                    secondary: Icon(
+                      context.watch<ThemeState>().isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                      color: context.colors.primary,
+                    ),
+                    title: const Text('Dark mode', style: TextStyle(fontWeight: FontWeight.w600)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await context.read<AuthState>().logout();
+                      if (context.mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(foregroundColor: context.colors.danger, side: BorderSide(color: context.colors.danger)),
+                    icon: const Icon(Icons.logout, size: 18),
+                    label: const Text('Log out'),
+                  ),
                 ),
               ],
             ),
@@ -108,7 +126,7 @@ class _Row extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: GlidoColors.muted)),
+          Text(label, style: TextStyle(color: context.colors.muted)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),

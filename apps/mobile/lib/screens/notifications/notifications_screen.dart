@@ -101,19 +101,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         itemBuilder: (context, i) {
                           final n = _items![i];
                           return ListTile(
-                            tileColor: n.isRead ? null : GlidoColors.primaryLight.withValues(alpha: 0.4),
+                            tileColor: n.isRead ? null : context.colors.primaryLight.withValues(alpha: 0.4),
                             onTap: () => _markRead(n),
                             leading: CircleAvatar(
-                              backgroundColor: GlidoColors.primaryLight,
+                              backgroundColor: context.colors.primaryLight,
                               child: Icon(
                                 n.type == 'ORDER' ? Icons.receipt_long : (n.type == 'PROMOTION' ? Icons.local_offer : Icons.notifications),
-                                color: GlidoColors.primary,
+                                color: context.colors.primary,
                                 size: 18,
                               ),
                             ),
                             title: Text(n.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
                             subtitle: Text(n.body, style: const TextStyle(fontSize: 12.5)),
-                            trailing: Text(_timeAgo(n.createdAt), style: TextStyle(fontSize: 10.5, color: GlidoColors.muted)),
+                            trailing: Text(_timeAgo(n.createdAt), style: TextStyle(fontSize: 10.5, color: context.colors.muted)),
                             isThreeLine: false,
                           );
                         },

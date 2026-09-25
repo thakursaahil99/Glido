@@ -150,7 +150,7 @@ function ProductsContent() {
         <div className="card-glido overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50">
+              <tr className="text-left text-[var(--glido-muted)] border-b border-[var(--glido-border)] bg-gray-50 dark:bg-[var(--glido-surface-alt)]">
                 <th className="py-2.5 px-4">Product</th>
                 <th className="py-2.5 px-4">Category</th>
                 <th className="py-2.5 px-4">Price</th>
@@ -168,8 +168,8 @@ function ProductsContent() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={resolveMediaUrl(p.imageUrl)} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
                       ) : (
-                        <span className="h-8 w-8 rounded bg-gray-100 flex items-center justify-center shrink-0">
-                          <ShoppingCart size={14} className="text-gray-400" />
+                        <span className="h-8 w-8 rounded bg-gray-100 dark:bg-[var(--glido-surface-alt)] flex items-center justify-center shrink-0">
+                          <ShoppingCart size={14} className="text-gray-400 dark:text-[var(--glido-muted)]" />
                         </span>
                       )}
                       <div>

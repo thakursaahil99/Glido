@@ -52,6 +52,7 @@ class GroceryOrder {
   final double subtotal;
   final double deliveryFee;
   final double taxAmount;
+  final double tipAmount;
   final double totalAmount;
   final String paymentMethod;
   final String paymentStatus;
@@ -68,6 +69,7 @@ class GroceryOrder {
     required this.subtotal,
     required this.deliveryFee,
     required this.taxAmount,
+    this.tipAmount = 0,
     required this.totalAmount,
     required this.paymentMethod,
     required this.paymentStatus,
@@ -85,6 +87,7 @@ class GroceryOrder {
         subtotal: (json['subtotal'] as num).toDouble(),
         deliveryFee: (json['deliveryFee'] as num).toDouble(),
         taxAmount: (json['taxAmount'] as num).toDouble(),
+        tipAmount: (json['tipAmount'] as num?)?.toDouble() ?? 0,
         totalAmount: (json['totalAmount'] as num).toDouble(),
         paymentMethod: json['paymentMethod'],
         paymentStatus: json['paymentStatus'],

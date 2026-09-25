@@ -166,7 +166,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       ),
                       const SizedBox(height: 8),
                       if (_restaurant!.menuCategories.isEmpty)
-                        Text('No categories yet.', style: TextStyle(color: GlidoColors.muted, fontSize: 13))
+                        Text('No categories yet.', style: TextStyle(color: context.colors.muted, fontSize: 13))
                       else
                         Wrap(
                           spacing: 8,
@@ -175,7 +175,7 @@ class _MenuScreenState extends State<MenuScreen> {
                               .map((c) => Chip(
                                     label: Text(c.name),
                                     onDeleted: () => _deleteCategory(c.id),
-                                    backgroundColor: GlidoColors.primaryLight,
+                                    backgroundColor: context.colors.primaryLight,
                                   ))
                               .toList(),
                         ),
@@ -191,14 +191,14 @@ class _MenuScreenState extends State<MenuScreen> {
                       if (_restaurant!.menuItems.isEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: Center(child: Text('No menu items yet.', style: TextStyle(color: GlidoColors.muted))),
+                          child: Center(child: Text('No menu items yet.', style: TextStyle(color: context.colors.muted))),
                         )
                       else
                         ..._restaurant!.menuItems.map((item) => Container(
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: context.colors.surface,
                                 borderRadius: BorderRadius.circular(14),
                                 boxShadow: glidoCardShadow(),
                               ),
@@ -208,7 +208,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                     width: 16,
                                     height: 16,
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: item.isVeg ? GlidoColors.success : GlidoColors.danger, width: 1.5),
+                                      border: Border.all(color: item.isVeg ? context.colors.success : context.colors.danger, width: 1.5),
                                       borderRadius: BorderRadius.circular(3),
                                     ),
                                     child: Center(
@@ -217,7 +217,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                         height: 8,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: item.isVeg ? GlidoColors.success : GlidoColors.danger,
+                                          color: item.isVeg ? context.colors.success : context.colors.danger,
                                         ),
                                       ),
                                     ),
@@ -228,7 +228,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(item.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                                        Text('₹${item.price.toStringAsFixed(0)}', style: TextStyle(color: GlidoColors.muted, fontSize: 12.5)),
+                                        Text('₹${item.price.toStringAsFixed(0)}', style: TextStyle(color: context.colors.muted, fontSize: 12.5)),
                                       ],
                                     ),
                                   ),
@@ -236,11 +236,11 @@ class _MenuScreenState extends State<MenuScreen> {
                                     onPressed: () => _toggleAvailability(item),
                                     child: Text(
                                       item.isAvailable ? 'Available' : 'Unavailable',
-                                      style: TextStyle(color: item.isAvailable ? GlidoColors.success : GlidoColors.danger, fontSize: 12.5, fontWeight: FontWeight.w600),
+                                      style: TextStyle(color: item.isAvailable ? context.colors.success : context.colors.danger, fontSize: 12.5, fontWeight: FontWeight.w600),
                                     ),
                                   ),
                                   IconButton(
-                                    icon: Icon(Icons.delete_outline, color: GlidoColors.danger, size: 20),
+                                    icon: Icon(Icons.delete_outline, color: context.colors.danger, size: 20),
                                     onPressed: () => _deleteItem(item.id),
                                   ),
                                 ],

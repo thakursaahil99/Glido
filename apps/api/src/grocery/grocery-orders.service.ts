@@ -104,7 +104,8 @@ export class GroceryOrdersService {
     const settings = await this.settings.getAll();
     const deliveryFee = subtotal >= settings.groceryFreeDeliveryThreshold ? 0 : settings.groceryDeliveryFee;
     const taxAmount = Math.round(subtotal * (settings.taxRatePercent / 100) * 100) / 100;
-    const totalAmount = Math.round((subtotal + deliveryFee + taxAmount - discountAmount) * 100) / 100;
+    const tipAmount = Math.max(0, Math.round((dto.tipAmount ?? 0) * 100) / 100);
+    const totalAmount = Math.round((subtotal + deliveryFee + taxAmount + tipAmount - discountAmount) * 100) / 100;
     const paymentMethod = dto.paymentMethod ?? "COD";
 
     if (paymentMethod === "WALLET") {
@@ -122,6 +123,7 @@ export class GroceryOrdersService {
           taxAmount,
           discountAmount,
           totalAmount,
+          tipAmount,
           paymentMethod,
           paymentStatus: paymentMethod === "WALLET" ? "PAID" : "PENDING",
           couponId,
@@ -219,7 +221,7 @@ export class GroceryOrdersService {
       include: {
         user: true,
         address: true,
-        items: true,
+        items: { include: { product: { select: { imageUrl: true } } } },
         statusHistory: { orderBy: { changedAt: "asc" } },
         deliveryPartner: true,
       },
@@ -228,9 +230,52 @@ export class GroceryOrdersService {
     return order;
   }
 
+  /** Full record for invoice generation. */
+  async getForInvoice(orderId: string) {
+    const order = await this.prisma.groceryOrder.findUnique({
+      where: { id: orderId },
+      include: { user: true, address: true, items: true },
+    });
+    if (!order) throw new NotFoundException("Order not found.");
+    return order;
+  }
+
   async adminUpdateStatus(orderId: string, status: OrderStatus, note?: string, actorId?: string) {
     if (status === "CANCELLED") await this.restockItems(orderId);
     return this.applyStatusChange(orderId, status, note, actorId);
+  }
+
+  /** Manual override for when auto-assign (on READY) found nobody online, or an admin
+   *  wants to swap the partner — releases whoever was previously assigned so they don't
+   *  stay stuck "unavailable" for an order they're no longer on. */
+  async assignDeliveryPartner(orderId: string, partnerId: string, actorId?: string) {
+    const order = await this.prisma.groceryOrder.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException("Order not found.");
+    if (order.status === "DELIVERED" || order.status === "CANCELLED" || order.status === "REFUNDED") {
+      throw new BadRequestException("Cannot assign a delivery partner to a completed or cancelled order.");
+    }
+
+    const partner = await this.deliveryPartners.getForManualAssign(partnerId);
+
+    if (order.deliveryPartnerId && order.deliveryPartnerId !== partnerId) {
+      await this.deliveryPartners.release(order.deliveryPartnerId);
+    }
+
+    const updated = await this.prisma.groceryOrder.update({ where: { id: orderId }, data: { deliveryPartnerId: partnerId } });
+
+    if (actorId) {
+      await this.auditLog.record({
+        adminUserId: actorId,
+        action: "GROCERY_ORDER_PARTNER_ASSIGNED",
+        entity: "GroceryOrder",
+        entityId: orderId,
+        before: { deliveryPartnerId: order.deliveryPartnerId },
+        after: { deliveryPartnerId: partnerId },
+      });
+    }
+
+    this.realtime.emitOrderUpdate(orderId, { orderId, status: updated.status, deliveryPartnerId: partnerId });
+    return { message: `Order assigned to ${partner.name}.` };
   }
 
   private async restockItems(orderId: string) {

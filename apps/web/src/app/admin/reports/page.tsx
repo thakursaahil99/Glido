@@ -83,7 +83,7 @@ function ReportsContent() {
             key={r.value}
             onClick={() => setRange(r.value)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-              range === r.value ? "bg-[var(--glido-primary)] text-white" : "bg-white border border-[var(--glido-border)] text-[var(--glido-muted)]"
+              range === r.value ? "bg-[var(--glido-primary)] text-white" : "bg-white dark:bg-[var(--glido-surface)] border border-[var(--glido-border)] text-[var(--glido-muted)]"
             }`}
           >
             {r.label}
@@ -237,7 +237,7 @@ function RankedList({
         <div className="space-y-2.5">
           {rows.map((r, i) => (
             <div key={r.id} className="flex items-center gap-3">
-              <span className="h-6 w-6 rounded-full bg-gray-100 text-xs font-semibold flex items-center justify-center shrink-0 text-[var(--glido-muted)]">
+              <span className="h-6 w-6 rounded-full bg-gray-100 dark:bg-[var(--glido-surface-alt)] text-xs font-semibold flex items-center justify-center shrink-0 text-[var(--glido-muted)]">
                 {i + 1}
               </span>
               <div className="min-w-0 flex-1">

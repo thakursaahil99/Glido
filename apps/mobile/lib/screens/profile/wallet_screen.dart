@@ -76,7 +76,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [GlidoColors.primary, GlidoColors.primaryDark]),
+                    gradient: LinearGradient(colors: [context.colors.primary, context.colors.primaryDark]),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -109,11 +109,11 @@ class _WalletScreenState extends State<WalletScreen> {
                   ..._transactions!.map((t) => ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: CircleAvatar(
-                          backgroundColor: t.type == 'CREDIT' ? GlidoColors.successLight : GlidoColors.dangerLight,
+                          backgroundColor: t.type == 'CREDIT' ? context.colors.successLight : context.colors.dangerLight,
                           child: Icon(
                             t.type == 'CREDIT' ? Icons.arrow_downward : Icons.arrow_upward,
                             size: 16,
-                            color: t.type == 'CREDIT' ? GlidoColors.success : GlidoColors.danger,
+                            color: t.type == 'CREDIT' ? context.colors.success : context.colors.danger,
                           ),
                         ),
                         title: Text(t.reason, style: const TextStyle(fontSize: 13.5)),
@@ -122,7 +122,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           '${t.type == 'CREDIT' ? '+' : '-'}₹${t.amount.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            color: t.type == 'CREDIT' ? GlidoColors.success : GlidoColors.danger,
+                            color: t.type == 'CREDIT' ? context.colors.success : context.colors.danger,
                           ),
                         ),
                       )),

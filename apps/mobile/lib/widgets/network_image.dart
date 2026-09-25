@@ -16,8 +16,8 @@ class GlidoNetworkImage extends StatelessWidget {
     final resolved = resolveMediaUrl(url);
     if (resolved == null) {
       return Container(
-        color: GlidoColors.primaryLight,
-        child: Icon(icon, color: GlidoColors.primary, size: 28),
+        color: context.colors.primaryLight,
+        child: Icon(icon, color: context.colors.primary, size: 28),
       );
     }
     return Image.network(
@@ -26,12 +26,12 @@ class GlidoNetworkImage extends StatelessWidget {
       width: double.infinity,
       height: double.infinity,
       errorBuilder: (context, error, stackTrace) => Container(
-        color: GlidoColors.primaryLight,
-        child: Icon(icon, color: GlidoColors.primary, size: 28),
+        color: context.colors.primaryLight,
+        child: Icon(icon, color: context.colors.primary, size: 28),
       ),
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
-        return Container(color: GlidoColors.border);
+        return Container(color: context.colors.border);
       },
     );
   }
