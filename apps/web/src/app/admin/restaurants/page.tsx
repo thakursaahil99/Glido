@@ -10,9 +10,11 @@ import type { Paginated, Restaurant } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/components/empty-state";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { Modal } from "@/components/modal";
+import { Pagination } from "@/components/pagination";
 import { RequirePermission } from "@/components/require-permission";
 
 const STATUS_TABS = ["ALL", "PENDING", "APPROVED", "REJECTED", "SUSPENDED"] as const;
+const PAGE_SIZE = 50;
 
 function RestaurantsList() {
   const { show } = useToast();
@@ -20,7 +22,9 @@ function RestaurantsList() {
   const initialStatus = (searchParams.get("status") as (typeof STATUS_TABS)[number]) ?? "ALL";
 
   const [status, setStatus] = useState<(typeof STATUS_TABS)[number]>(initialStatus);
+  const [page, setPage] = useState(1);
   const [restaurants, setRestaurants] = useState<Restaurant[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", cuisineTags: "", imageUrl: "", deliveryFee: 25, packagingFee: 10, minOrderAmount: 0 });
@@ -30,9 +34,10 @@ function RestaurantsList() {
     setError(null);
     try {
       const res = await api.get<Paginated<Restaurant>>(
-        `/admin/restaurants?pageSize=50${status !== "ALL" ? `&status=${status}` : ""}`,
+        `/admin/restaurants?page=${page}&pageSize=${PAGE_SIZE}${status !== "ALL" ? `&status=${status}` : ""}`,
       );
       setRestaurants(res.items);
+      setTotal(res.total);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not load restaurants.");
     }
@@ -41,6 +46,10 @@ function RestaurantsList() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, page]);
+
+  useEffect(() => {
+    setPage(1);
   }, [status]);
 
   async function updateStatus(id: string, newStatus: string) {
@@ -157,6 +166,9 @@ function RestaurantsList() {
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+          </div>
         </div>
       )}
 

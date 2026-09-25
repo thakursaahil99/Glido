@@ -78,11 +78,19 @@ export class WalletService {
     if (wallet.balance < amount) {
       throw new BadRequestException("Insufficient wallet balance.");
     }
+    // The balance check above reads outside the transaction, so two concurrent debits
+    // (e.g. two orders paid from the same wallet at the same instant) could both pass
+    // it before either lands. Re-check the post-decrement balance inside the
+    // transaction and throw to roll it back if it went negative — the DB-level
+    // decrement is still atomic, this just refuses to let it go below zero.
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.wallet.update({
         where: { id: wallet.id },
         data: { balance: { decrement: amount } },
       });
+      if (updated.balance < 0) {
+        throw new BadRequestException("Insufficient wallet balance.");
+      }
       await tx.walletTransaction.create({
         data: { walletId: wallet.id, type: "DEBIT", amount, reason, referenceId },
       });

@@ -198,8 +198,11 @@ export default function GroceryCheckoutPage() {
             <input
               className="input-glido"
               placeholder="Pincode"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
               value={newAddress.pincode}
-              onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value })}
+              onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value.replace(/\D/g, "") })}
             />
             <div className="flex gap-2">
               <button className="btn-primary" type="submit">

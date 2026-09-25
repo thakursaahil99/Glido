@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../models/user.dart';
@@ -84,7 +85,13 @@ class _AddressesScreenState extends State<AddressesScreen> {
             const SizedBox(height: 8),
             TextField(controller: _line2Ctrl, decoration: const InputDecoration(labelText: 'Address line 2 (optional)')),
             const SizedBox(height: 8),
-            TextField(controller: _pincodeCtrl, decoration: const InputDecoration(labelText: 'Pincode')),
+            TextField(
+              controller: _pincodeCtrl,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(labelText: 'Pincode', counterText: ''),
+            ),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _addAddress, child: const Text('Save address')),
             const SizedBox(height: 16),
@@ -99,7 +106,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Saved addresses'),
-        actions: [IconButton(onPressed: _showAddSheet, icon: const Icon(Icons.add))],
+        actions: [IconButton(onPressed: _showAddSheet, icon: const Icon(Icons.add), tooltip: 'Add address')],
       ),
       body: _error != null
           ? ErrorStateView(message: _error!, onRetry: _load)
@@ -118,6 +125,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                             subtitle: Text('${a.full}${a.pincode != null ? ' ${a.pincode}' : ''}'),
                             trailing: IconButton(
                               icon: Icon(Icons.delete_outline, color: context.colors.danger),
+                              tooltip: 'Delete address',
                               onPressed: () => _removeAddress(a.id),
                             ),
                           ),

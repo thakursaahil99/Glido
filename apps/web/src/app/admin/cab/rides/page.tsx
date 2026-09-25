@@ -7,9 +7,11 @@ import { api, ApiError } from "@/lib/api";
 import type { Paginated, Ride } from "@/lib/types";
 import { RideStatusBadge } from "@/components/ride-status";
 import { EmptyState, ErrorState } from "@/components/empty-state";
+import { Pagination } from "@/components/pagination";
 import { RequirePermission } from "@/components/require-permission";
 
 const STATUS_TABS = ["ALL", "REQUESTED", "DRIVER_ASSIGNED", "DRIVER_ARRIVED", "ONGOING", "COMPLETED", "CANCELLED"] as const;
+const PAGE_SIZE = 50;
 
 export default function AdminCabRidesPage() {
   return (
@@ -21,16 +23,19 @@ export default function AdminCabRidesPage() {
 
 function RidesContent() {
   const [status, setStatus] = useState<(typeof STATUS_TABS)[number]>("ALL");
+  const [page, setPage] = useState(1);
   const [rides, setRides] = useState<Ride[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
     setError(null);
     try {
       const res = await api.get<Paginated<Ride>>(
-        `/admin/cab/rides?pageSize=50${status !== "ALL" ? `&status=${status}` : ""}`,
+        `/admin/cab/rides?page=${page}&pageSize=${PAGE_SIZE}${status !== "ALL" ? `&status=${status}` : ""}`,
       );
       setRides(res.items);
+      setTotal(res.total);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not load rides.");
     }
@@ -39,6 +44,10 @@ function RidesContent() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, page]);
+
+  useEffect(() => {
+    setPage(1);
   }, [status]);
 
   return (
@@ -93,6 +102,9 @@ function RidesContent() {
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+          </div>
         </div>
       )}
     </div>

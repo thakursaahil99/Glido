@@ -6,6 +6,8 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 
+const PHONE_REGEX = /^\+?[0-9]{7,15}$/;
+
 /** Shown on checkout/booking screens when the signed-in user has no phone on file yet —
  * a phone number is required before placing an order or booking a ride, but doesn't need OTP. */
 export function PhoneRequiredField() {
@@ -19,10 +21,15 @@ export function PhoneRequiredField() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    const trimmed = phone.trim();
+    if (!PHONE_REGEX.test(trimmed)) {
+      setError("Enter a valid phone number (digits only, optionally starting with +).");
+      return;
+    }
     setError(null);
     setSaving(true);
     try {
-      await api.patch("/users/me", { phone: phone.trim() });
+      await api.patch("/users/me", { phone: trimmed });
       await refreshUser();
       show("Phone number saved", "success");
     } catch (e) {
@@ -43,6 +50,7 @@ export function PhoneRequiredField() {
       <form onSubmit={save} className="flex gap-2">
         <input
           className="input-glido"
+          type="tel"
           placeholder="e.g. +919800000000"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}

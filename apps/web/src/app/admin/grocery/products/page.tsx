@@ -8,7 +8,10 @@ import type { GroceryCategory, GroceryProduct, Paginated } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/components/empty-state";
 import { Modal } from "@/components/modal";
 import { MultiImageUploadField } from "@/components/multi-image-upload-field";
+import { Pagination } from "@/components/pagination";
 import { RequirePermission } from "@/components/require-permission";
+
+const PAGE_SIZE = 50;
 
 const emptyForm = {
   categoryId: "",
@@ -34,6 +37,8 @@ function ProductsContent() {
   const { show } = useToast();
   const [categories, setCategories] = useState<GroceryCategory[]>([]);
   const [products, setProducts] = useState<GroceryProduct[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -49,9 +54,10 @@ function ProductsContent() {
   async function loadProducts() {
     setError(null);
     try {
-      const query = categoryFilter ? `?categoryId=${categoryFilter}&pageSize=100` : "?pageSize=100";
+      const query = `?page=${page}&pageSize=${PAGE_SIZE}${categoryFilter ? `&categoryId=${categoryFilter}` : ""}`;
       const res = await api.get<Paginated<GroceryProduct>>(`/admin/grocery/products${query}`);
       setProducts(res.items);
+      setTotal(res.total);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not load products.");
     }
@@ -62,9 +68,13 @@ function ProductsContent() {
   }, []);
 
   useEffect(() => {
+    setPage(1);
+  }, [categoryFilter]);
+
+  useEffect(() => {
     loadProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryFilter]);
+  }, [categoryFilter, page]);
 
   async function toggleAvailability(p: GroceryProduct) {
     try {
@@ -211,6 +221,9 @@ function ProductsContent() {
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+          </div>
         </div>
       )}
 

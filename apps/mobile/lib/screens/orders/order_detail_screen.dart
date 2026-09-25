@@ -156,6 +156,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 subtitle: Text('${order.deliveryPartner!.vehicleType} · ★ ${order.deliveryPartner!.ratingAvg.toStringAsFixed(1)}'),
                 trailing: IconButton(
                   icon: const Icon(Icons.call),
+                  tooltip: 'Call delivery partner',
                   onPressed: () => launchUrl(Uri.parse('tel:${order.deliveryPartner!.phone}')),
                 ),
               ),

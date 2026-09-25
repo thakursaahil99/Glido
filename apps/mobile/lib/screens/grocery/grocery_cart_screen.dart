@@ -72,13 +72,22 @@ class _GroceryCartScreenState extends State<GroceryCartScreen> {
                                 ],
                               ),
                             ),
-                            IconButton(icon: const Icon(Icons.remove_circle_outline), onPressed: () => cart.updateQuantity(item.productId, item.quantity - 1)),
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle_outline),
+                              tooltip: 'Decrease quantity',
+                              onPressed: () => cart.updateQuantity(item.productId, item.quantity - 1),
+                            ),
                             Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w700)),
                             IconButton(
                               icon: const Icon(Icons.add_circle_outline),
+                              tooltip: 'Increase quantity',
                               onPressed: item.quantity >= item.maxStock ? null : () => cart.updateQuantity(item.productId, item.quantity + 1),
                             ),
-                            IconButton(icon: Icon(Icons.close, color: context.colors.muted, size: 18), onPressed: () => cart.removeItem(item.productId)),
+                            IconButton(
+                              icon: Icon(Icons.close, color: context.colors.muted, size: 18),
+                              tooltip: 'Remove item',
+                              onPressed: () => cart.removeItem(item.productId),
+                            ),
                           ],
                         );
                       }),

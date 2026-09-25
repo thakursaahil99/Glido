@@ -7,9 +7,11 @@ import { useToast } from "@/lib/toast-context";
 import type { DeliveryPartner, Paginated } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/components/empty-state";
 import { Modal } from "@/components/modal";
+import { Pagination } from "@/components/pagination";
 import { RequirePermission } from "@/components/require-permission";
 
 const STATUS_TABS = ["ALL", "PENDING", "APPROVED", "REJECTED", "SUSPENDED"] as const;
+const PAGE_SIZE = 50;
 const emptyForm = { name: "", phone: "", vehicleType: "Bike", vehicleNumber: "" };
 
 export default function AdminDeliveryPartnersPage() {
@@ -23,7 +25,9 @@ export default function AdminDeliveryPartnersPage() {
 function DeliveryPartnersContent() {
   const { show } = useToast();
   const [status, setStatus] = useState<(typeof STATUS_TABS)[number]>("ALL");
+  const [page, setPage] = useState(1);
   const [partners, setPartners] = useState<DeliveryPartner[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -34,9 +38,10 @@ function DeliveryPartnersContent() {
     setError(null);
     try {
       const res = await api.get<Paginated<DeliveryPartner>>(
-        `/admin/delivery-partners?pageSize=100${status !== "ALL" ? `&status=${status}` : ""}`,
+        `/admin/delivery-partners?page=${page}&pageSize=${PAGE_SIZE}${status !== "ALL" ? `&status=${status}` : ""}`,
       );
       setPartners(res.items);
+      setTotal(res.total);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not load delivery partners.");
     }
@@ -45,6 +50,10 @@ function DeliveryPartnersContent() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, page]);
+
+  useEffect(() => {
+    setPage(1);
   }, [status]);
 
   async function updateStatus(id: string, newStatus: string) {
@@ -183,6 +192,9 @@ function DeliveryPartnersContent() {
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+          </div>
         </div>
       )}
 

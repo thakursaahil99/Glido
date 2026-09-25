@@ -348,6 +348,7 @@ class _CabBookingScreenState extends State<CabBookingScreen> {
                   hintText: 'Search ${_settingPickup ? 'pickup' : 'drop'} location...',
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.close, size: 18),
+                    tooltip: 'Close search',
                     onPressed: () => setState(() {
                       _searchOpen = false;
                       _searchCtrl.text = '';

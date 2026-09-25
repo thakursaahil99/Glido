@@ -7,7 +7,10 @@ import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/lib/toast-context";
 import type { Paginated, User } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/components/empty-state";
+import { Pagination } from "@/components/pagination";
 import { RequirePermission } from "@/components/require-permission";
+
+const PAGE_SIZE = 50;
 
 export default function AdminUsersPage() {
   return (
@@ -20,16 +23,19 @@ export default function AdminUsersPage() {
 function UsersContent() {
   const { show } = useToast();
   const [users, setUsers] = useState<User[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-  async function load(q = "") {
+  async function load(q = "", p = page) {
     setError(null);
     try {
       const res = await api.get<Paginated<User>>(
-        `/admin/users?pageSize=50&role=CUSTOMER${q ? `&search=${encodeURIComponent(q)}` : ""}`,
+        `/admin/users?page=${p}&pageSize=${PAGE_SIZE}&role=CUSTOMER${q ? `&search=${encodeURIComponent(q)}` : ""}`,
       );
       setUsers(res.items);
+      setTotal(res.total);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not load users.");
     }
@@ -37,7 +43,8 @@ function UsersContent() {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   async function toggleBlock(user: User & { status?: string }) {
     const newStatus = user.status === "BLOCKED" ? "ACTIVE" : "BLOCKED";
@@ -57,7 +64,8 @@ function UsersContent() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          load(search);
+          setPage(1);
+          load(search, 1);
         }}
         className="flex gap-2 mb-4 max-w-sm"
       >
@@ -106,6 +114,9 @@ function UsersContent() {
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+          </div>
         </div>
       )}
     </div>

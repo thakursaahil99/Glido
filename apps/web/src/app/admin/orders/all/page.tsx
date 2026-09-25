@@ -9,8 +9,14 @@ import { hasPermission } from "@/lib/permissions";
 import type { GroceryOrder, Order, Paginated } from "@/lib/types";
 import { StatusBadge } from "@/components/order-status";
 import { EmptyState, ErrorState } from "@/components/empty-state";
+import { Pagination } from "@/components/pagination";
 
 const STATUS_TABS = ["ALL", "PENDING", "ACCEPTED", "PREPARING", "READY", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"] as const;
+const PAGE_SIZE = 50;
+// Pulled from each source before merging+sorting client-side — large enough that the
+// combined, sorted, paginated view is correct as long as neither source has more open
+// orders than this between them; a true server-side merge would remove this cap.
+const FETCH_SIZE = 300;
 
 type UnifiedRow = {
   id: string;
@@ -47,7 +53,8 @@ export default function AdminAllOrdersPage() {
 
 function AllOrdersContent({ canFood, canGrocery }: { canFood: boolean; canGrocery: boolean }) {
   const [status, setStatus] = useState<(typeof STATUS_TABS)[number]>("ALL");
-  const [rows, setRows] = useState<UnifiedRow[] | null>(null);
+  const [page, setPage] = useState(1);
+  const [allRows, setAllRows] = useState<UnifiedRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
@@ -55,8 +62,8 @@ function AllOrdersContent({ canFood, canGrocery }: { canFood: boolean; canGrocer
     try {
       const qs = status !== "ALL" ? `&status=${status}` : "";
       const [foodRes, groceryRes] = await Promise.all([
-        canFood ? api.get<Paginated<Order>>(`/admin/orders?pageSize=50${qs}`) : Promise.resolve<Paginated<Order>>({ items: [], total: 0, page: 1, pageSize: 50 }),
-        canGrocery ? api.get<Paginated<GroceryOrder>>(`/admin/grocery/orders?pageSize=50${qs}`) : Promise.resolve<Paginated<GroceryOrder>>({ items: [], total: 0, page: 1, pageSize: 50 }),
+        canFood ? api.get<Paginated<Order>>(`/admin/orders?pageSize=${FETCH_SIZE}${qs}`) : Promise.resolve<Paginated<Order>>({ items: [], total: 0, page: 1, pageSize: FETCH_SIZE }),
+        canGrocery ? api.get<Paginated<GroceryOrder>>(`/admin/grocery/orders?pageSize=${FETCH_SIZE}${qs}`) : Promise.resolve<Paginated<GroceryOrder>>({ items: [], total: 0, page: 1, pageSize: FETCH_SIZE }),
       ]);
 
       const foodRows: UnifiedRow[] = foodRes.items.map((o) => ({
@@ -80,7 +87,7 @@ function AllOrdersContent({ canFood, canGrocery }: { canFood: boolean; canGrocer
         href: `/admin/grocery/orders/${o.id}`,
       }));
 
-      setRows([...foodRows, ...groceryRows].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      setAllRows([...foodRows, ...groceryRows].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not load orders.");
     }
@@ -90,6 +97,13 @@ function AllOrdersContent({ canFood, canGrocery }: { canFood: boolean; canGrocer
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [status]);
+
+  const total = allRows?.length ?? 0;
+  const rows = allRows?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) ?? null;
 
   return (
     <div>
@@ -156,6 +170,9 @@ function AllOrdersContent({ canFood, canGrocery }: { canFood: boolean; canGrocer
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+          </div>
         </div>
       )}
     </div>

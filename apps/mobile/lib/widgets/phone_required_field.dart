@@ -13,6 +13,8 @@ class PhoneRequiredField extends StatefulWidget {
   State<PhoneRequiredField> createState() => _PhoneRequiredFieldState();
 }
 
+final _phoneRegex = RegExp(r'^\+?[0-9]{7,15}$');
+
 class _PhoneRequiredFieldState extends State<PhoneRequiredField> {
   final _controller = TextEditingController();
   bool _saving = false;
@@ -25,13 +27,17 @@ class _PhoneRequiredFieldState extends State<PhoneRequiredField> {
   }
 
   Future<void> _save() async {
-    if (_controller.text.trim().isEmpty) return;
+    final trimmed = _controller.text.trim();
+    if (!_phoneRegex.hasMatch(trimmed)) {
+      setState(() => _error = 'Enter a valid phone number (digits only, optionally starting with +).');
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
-      await ApiClient.instance.patch('/users/me', {'phone': _controller.text.trim()});
+      await ApiClient.instance.patch('/users/me', {'phone': trimmed});
       if (mounted) await context.read<AuthState>().refreshUser();
     } on ApiException catch (e) {
       setState(() => _error = e.message);

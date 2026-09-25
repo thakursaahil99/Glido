@@ -128,7 +128,11 @@ class _GroceryOrderDetailScreenState extends State<GroceryOrderDetailScreen> {
               child: ListTile(
                 title: Text(order.deliveryPartner!.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                 subtitle: Text(order.deliveryPartner!.vehicleType),
-                trailing: IconButton(icon: const Icon(Icons.call), onPressed: () => launchUrl(Uri.parse('tel:${order.deliveryPartner!.phone}'))),
+                trailing: IconButton(
+                  icon: const Icon(Icons.call),
+                  tooltip: 'Call delivery partner',
+                  onPressed: () => launchUrl(Uri.parse('tel:${order.deliveryPartner!.phone}')),
+                ),
               ),
             ),
           const SizedBox(height: 8),

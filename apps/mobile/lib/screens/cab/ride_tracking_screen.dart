@@ -201,7 +201,11 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                       title: Text(ride.driver!.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                       subtitle: Text('${ride.driver!.vehicleModel ?? ''} · ${ride.driver!.vehicleNumber}\n★ ${ride.driver!.ratingAvg.toStringAsFixed(1)}'),
                       isThreeLine: true,
-                      trailing: IconButton(icon: const Icon(Icons.call), onPressed: () => launchUrl(Uri.parse('tel:${ride.driver!.phone}'))),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.call),
+                        tooltip: 'Call driver',
+                        onPressed: () => launchUrl(Uri.parse('tel:${ride.driver!.phone}')),
+                      ),
                     ),
                   ),
                 const SizedBox(height: 12),

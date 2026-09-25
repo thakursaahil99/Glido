@@ -7,10 +7,12 @@ import { useToast } from "@/lib/toast-context";
 import type { Driver, Paginated, RideType } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/components/empty-state";
 import { Modal } from "@/components/modal";
+import { Pagination } from "@/components/pagination";
 import { RequirePermission } from "@/components/require-permission";
 
 const STATUS_TABS = ["ALL", "PENDING", "APPROVED", "REJECTED", "SUSPENDED"] as const;
 const emptyForm = { name: "", phone: "", vehicleNumber: "", vehicleModel: "", rideTypeId: "" };
+const PAGE_SIZE = 50;
 
 export default function AdminDriversPage() {
   return (
@@ -23,7 +25,9 @@ export default function AdminDriversPage() {
 function DriversContent() {
   const { show } = useToast();
   const [status, setStatus] = useState<(typeof STATUS_TABS)[number]>("ALL");
+  const [page, setPage] = useState(1);
   const [drivers, setDrivers] = useState<Driver[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [rideTypes, setRideTypes] = useState<RideType[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -35,9 +39,10 @@ function DriversContent() {
     setError(null);
     try {
       const res = await api.get<Paginated<Driver>>(
-        `/admin/cab/drivers?pageSize=100${status !== "ALL" ? `&status=${status}` : ""}`,
+        `/admin/cab/drivers?page=${page}&pageSize=${PAGE_SIZE}${status !== "ALL" ? `&status=${status}` : ""}`,
       );
       setDrivers(res.items);
+      setTotal(res.total);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not load drivers.");
     }
@@ -48,9 +53,13 @@ function DriversContent() {
   }, []);
 
   useEffect(() => {
+    setPage(1);
+  }, [status]);
+
+  useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
+  }, [status, page]);
 
   async function updateStatus(id: string, newStatus: string) {
     try {
@@ -180,6 +189,9 @@ function DriversContent() {
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+          </div>
         </div>
       )}
 
