@@ -56,7 +56,7 @@ class CartScreen extends StatelessWidget {
                               if (item.addonNames.isNotEmpty)
                                 Text(item.addonNames.join(', '), style: TextStyle(fontSize: 12, color: context.colors.muted)),
                               const SizedBox(height: 4),
-                              Text('₹${(item.price + item.addonsPrice).toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                              Text('₹${((item.price + item.addonsPrice) * item.quantity).toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                             ],
                           ),
                         ),

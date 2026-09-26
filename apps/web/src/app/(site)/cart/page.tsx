@@ -71,7 +71,7 @@ export default function CartPage() {
               {item.addonNames.length > 0 && (
                 <p className="text-xs text-[var(--glido-muted)]">+ {item.addonNames.join(", ")}</p>
               )}
-              <p className="text-sm font-semibold mt-1">₹{item.price + item.addonsPrice}</p>
+              <p className="text-sm font-semibold mt-1">₹{((item.price + item.addonsPrice) * item.quantity).toFixed(2)}</p>
             </div>
             <div className="flex items-center gap-2">
               <button

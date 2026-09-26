@@ -68,7 +68,7 @@ class _GroceryCartScreenState extends State<GroceryCartScreen> {
                                 children: [
                                   Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                                   Text(item.unit, style: TextStyle(fontSize: 12, color: context.colors.muted)),
-                                  Text('₹${item.price.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                  Text('₹${(item.price * item.quantity).toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                                 ],
                               ),
                             ),
