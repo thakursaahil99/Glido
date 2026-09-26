@@ -1,3 +1,4 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
+  "installCommand": "cd ../.. && npm install && rm -rf packages/shared/dist && npm run build --workspace=packages/shared && npm run prisma:generate --workspace=apps/api"
 }
