@@ -271,16 +271,18 @@ function LoginForm() {
         footer={
           <div className="flex flex-col gap-3">
             {!isSignup && (
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("forgot");
-                  setError(null);
-                }}
-                className="text-left text-xs font-medium text-[var(--glido-primary)]"
-              >
-                Forgot password?
-              </button>
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("forgot");
+                    setError(null);
+                  }}
+                  className="text-sm font-medium text-[var(--glido-primary)] hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
             )}
             <ModeSwitchFooter
               label={isSignup ? "Already have an account? Log in" : "New here? Create an account"}
@@ -290,8 +292,7 @@ function LoginForm() {
               }}
             />
             <p className="text-center text-xs text-[var(--glido-muted)]">
-              Demo customer account: <code>customer@glido.app</code> / <code>Customer@123</code>. Looking for the
-              admin panel?{" "}
+              Looking for the admin panel?{" "}
               <a href="/admin/login" className="underline">
                 Sign in here
               </a>

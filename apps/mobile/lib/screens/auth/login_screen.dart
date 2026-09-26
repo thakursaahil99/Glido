@@ -6,6 +6,7 @@ import '../../core/google_config.dart';
 import '../../core/theme.dart';
 import '../../state/auth_state.dart';
 import '../home/home_shell.dart';
+import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -116,6 +117,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordCtrl,
                     decoration: const InputDecoration(labelText: 'Password'),
                     obscureText: true,
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                      ),
+                      child: const Text('Forgot password?'),
+                    ),
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),

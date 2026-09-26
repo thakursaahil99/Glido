@@ -90,4 +90,22 @@ class AuthState extends ChangeNotifier {
     user = null;
     notifyListeners();
   }
+
+  /// Step 1 of "forgot password" — sends a reset code to the identifier
+  /// (email or phone). Doesn't touch AuthState.user.
+  Future<void> requestPasswordReset(String identifier) async {
+    await ApiClient.instance.post<Map<String, dynamic>>('/auth/password/reset-request', {
+      'identifier': identifier,
+    });
+  }
+
+  /// Step 2 — verifies the code and sets the new password. Doesn't log the
+  /// user in; they still go through the normal login screen afterwards.
+  Future<void> resetPassword(String identifier, String code, String newPassword) async {
+    await ApiClient.instance.post<Map<String, dynamic>>('/auth/password/reset', {
+      'identifier': identifier,
+      'code': code,
+      'newPassword': newPassword,
+    });
+  }
 }
