@@ -265,13 +265,16 @@ function OrbitIconChip({ icon: Icon, module, size = 34 }: OrbitItem) {
   );
 }
 
-type TechOrbitDisplayProps = { items: OrbitItem[]; text?: string };
+type TechOrbitDisplayProps = { items: OrbitItem[]; text?: string; compact?: boolean };
 
-const TechOrbitDisplay = memo(function TechOrbitDisplay({ items, text }: TechOrbitDisplayProps) {
-  const radii = [70, 130, 190];
+const TechOrbitDisplay = memo(function TechOrbitDisplay({ items, text, compact }: TechOrbitDisplayProps) {
+  // Compact is used in the mobile/tablet strip above the form (fixed, short
+  // height), so both the ring radii and the logo/icon sizes scale down to fit
+  // instead of clipping against the container.
+  const radii = compact ? [30, 55, 78] : [70, 130, 190];
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden">
-      <GlidoLogo className="scale-[2.4] opacity-90" />
+      <GlidoLogo className={compact ? "scale-100 opacity-90" : "scale-[2.4] opacity-90"} />
       {text && <span className="sr-only">{text}</span>}
 
       {items.map((item, index) => {
@@ -289,7 +292,7 @@ const TechOrbitDisplay = memo(function TechOrbitDisplay({ items, text }: TechOrb
             reverse={ring % 2 === 1}
             className="border-none bg-transparent"
           >
-            <OrbitIconChip icon={item.icon} module={item.module} />
+            <OrbitIconChip icon={item.icon} module={item.module} size={compact ? 20 : 34} />
           </OrbitingCircles>
         );
       })}
@@ -450,13 +453,24 @@ export type AnimatedSignInShellProps = {
   children: ReactNode;
 };
 
-/** Two-column full-viewport shell: left = ripple + orbiting module icons (desktop
- * only), right = the form. Use with <AnimatedForm> as `children`. */
+/** Two-column full-viewport shell on desktop (left = ripple + orbiting module
+ * icons, right = the form). On mobile/tablet the same orbiting icons show in a
+ * compact strip above the form instead of side-by-side, so they're never
+ * hidden — just laid out differently below the `lg` breakpoint. Use with
+ * <AnimatedForm> as `children`. */
 export function AnimatedSignInShell({ orbitItems, children }: AnimatedSignInShellProps) {
+  const hasOrbit = orbitItems && orbitItems.length > 0;
   return (
-    <div className="flex min-h-screen bg-[var(--glido-bg)] max-lg:justify-center">
+    <div className="flex min-h-screen flex-col bg-[var(--glido-bg)] lg:flex-row">
+      {hasOrbit && (
+        <div className="relative flex h-40 w-full shrink-0 items-center justify-center overflow-hidden lg:hidden">
+          <Ripple />
+          <TechOrbitDisplay items={orbitItems} compact />
+        </div>
+      )}
+
       <div className="relative hidden w-1/2 flex-col justify-center lg:flex">
-        {orbitItems && orbitItems.length > 0 && (
+        {hasOrbit && (
           <>
             <Ripple />
             <TechOrbitDisplay items={orbitItems} />
@@ -464,7 +478,7 @@ export function AnimatedSignInShell({ orbitItems, children }: AnimatedSignInShel
         )}
       </div>
 
-      <div className="flex h-screen w-full flex-col items-center justify-center px-[8%] lg:w-1/2 lg:px-0">
+      <div className="flex w-full flex-1 flex-col items-center justify-center px-[8%] lg:h-screen lg:w-1/2 lg:px-0">
         {children}
       </div>
     </div>
