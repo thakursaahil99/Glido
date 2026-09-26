@@ -17,6 +17,7 @@
   /* Module colors — each vertical gets its own vivid, distinct identity */
   --glido-food: #ff4b26;
   --glido-food-dark: #c92a0a;
+  --glido-food-light: #ffe3d6;
   --glido-grocery: #00c37d;
   --glido-grocery-dark: #00874f;
   --glido-grocery-light: #d7fbe9;
@@ -70,6 +71,7 @@
 
   --glido-food: #ff6a41;
   --glido-food-dark: #ffb49a;
+  --glido-food-light: rgba(255, 106, 65, 0.16);
   --glido-grocery: #2fe0a0;
   --glido-grocery-dark: #8ff5ce;
   --glido-grocery-light: rgba(47, 224, 160, 0.14);
