@@ -94,7 +94,7 @@ export function ProductDetailModal({
           </p>
 
           <div className="flex items-center gap-2 mt-3">
-            <span className="text-xl font-bold">₹{product.price}</span>
+            <span className="text-xl font-bold">₹{quantity > 0 ? (product.price * quantity).toFixed(2) : product.price}</span>
             {product.mrp > product.price && <span className="text-sm text-[var(--glido-muted)] line-through">₹{product.mrp}</span>}
           </div>
 

@@ -114,7 +114,7 @@ export default function GroceryPage() {
           <p className="text-sm font-medium leading-tight line-clamp-2">{p.name}</p>
           <p className="text-xs text-[var(--glido-muted)] mt-0.5">{p.unit}</p>
           <div className="flex items-center gap-1.5 mt-1.5">
-            <span className="text-sm font-bold">₹{p.price}</span>
+            <span className="text-sm font-bold">₹{qty > 0 ? (p.price * qty).toFixed(2) : p.price}</span>
             {p.mrp > p.price && <span className="text-xs text-[var(--glido-muted)] line-through">₹{p.mrp}</span>}
           </div>
         </button>

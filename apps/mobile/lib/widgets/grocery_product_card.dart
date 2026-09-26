@@ -85,7 +85,7 @@ class GroceryProductCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('₹${p.price.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                            Text('₹${(qty > 0 ? p.price * qty : p.price).toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
                             if (p.mrp > p.price)
                               Text('₹${p.mrp.toStringAsFixed(0)}', style: TextStyle(fontSize: 10.5, color: context.colors.muted, decoration: TextDecoration.lineThrough)),
                           ],
