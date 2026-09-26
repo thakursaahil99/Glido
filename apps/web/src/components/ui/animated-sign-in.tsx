@@ -233,13 +233,25 @@ const OrbitingCircles = memo(function OrbitingCircles({
         </svg>
       )}
       <div
-        style={{ "--duration": duration, "--radius": radius, "--delay": -delay } as React.CSSProperties}
-        className={cn(
-          "absolute flex size-full items-center justify-center rounded-full",
-          "[animation:var(--animate-orbit)] [animation-delay:calc(var(--delay)*1000ms)]",
-          reverse && "[animation-direction:reverse]",
-          className
-        )}
+        style={{
+          "--radius": radius,
+          // Set the animation longhand properties directly with real numbers
+          // rather than through the Tailwind theme's --animate-orbit token —
+          // that token bakes in whatever --duration was in scope at CSS build
+          // time (there's no element yet, so it falls back to a fixed value),
+          // not the per-instance duration each orbit ring actually needs. Every
+          // ring ended up animating at the same speed, which combined with the
+          // exact 0%/100% keyframes for evenly-spaced rings sometimes reads as
+          // "not moving" at a glance. --radius only needs to reach the keyframes
+          // below, so it still comes from CSS.
+          animationName: "orbit",
+          animationDuration: `${duration}s`,
+          animationTimingFunction: "linear",
+          animationIterationCount: "infinite",
+          animationDelay: `${-delay}s`,
+          animationDirection: reverse ? "reverse" : undefined,
+        } as React.CSSProperties}
+        className={cn("absolute flex size-full items-center justify-center rounded-full", className)}
       >
         {children}
       </div>
@@ -469,7 +481,7 @@ export function AnimatedSignInShell({ orbitItems, children }: AnimatedSignInShel
         </div>
       )}
 
-      <div className="relative hidden w-1/2 flex-col justify-center lg:flex">
+      <div className="relative hidden w-1/2 flex-col justify-center lg:flex lg:h-screen">
         {hasOrbit && (
           <>
             <Ripple />
