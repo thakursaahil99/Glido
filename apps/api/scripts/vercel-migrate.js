@@ -8,9 +8,11 @@
 const { execSync } = require("child_process");
 
 if (!process.env.VERCEL) process.exit(0);
+// Other Vercel projects built from this monorepo (the web app) also run this
+// postinstall but have no database — nothing to migrate there.
 if (!process.env.DATABASE_URL) {
-  console.error("[migrate] DATABASE_URL is not set for this Vercel build — cannot apply migrations.");
-  process.exit(1);
+  console.log("[migrate] no DATABASE_URL in this Vercel project — skipping migrations.");
+  process.exit(0);
 }
 console.log("[migrate] applying pending migrations…");
 execSync("npx prisma migrate deploy", { stdio: "inherit", cwd: __dirname + "/.." });
