@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
 import '../../core/socket_client.dart';
 import '../../core/theme.dart';
 import '../../models/order.dart';
 import '../../widgets/error_state.dart';
+import '../../widgets/live_order_tracking.dart';
 
 const _statusSteps = ['PENDING', 'ACCEPTED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED'];
 
@@ -121,31 +120,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         children: [
           Text(order.restaurant?.name ?? '', style: TextStyle(color: context.colors.muted)),
           const SizedBox(height: 16),
-          if (order.status == 'OUT_FOR_DELIVERY' &&
-              order.deliveryPartner?.currentLat != null &&
-              order.deliveryPartner?.currentLng != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: SizedBox(
-                height: 180,
-                child: FlutterMap(
-                  options: MapOptions(
-                    initialCenter: LatLng(order.deliveryPartner!.currentLat!, order.deliveryPartner!.currentLng!),
-                    initialZoom: 15,
-                  ),
-                  children: [
-                    TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'app.glido.customer'),
-                    MarkerLayer(markers: [
-                      Marker(
-                        point: LatLng(order.deliveryPartner!.currentLat!, order.deliveryPartner!.currentLng!),
-                        width: 32,
-                        height: 32,
-                        child: Icon(Icons.delivery_dining, color: context.colors.food, size: 30),
-                      ),
-                    ]),
-                  ],
-                ),
-              ),
+          if (isTrackableStatus(order.status)) ...[
+            LiveOrderTracking(
+              orderId: order.id,
+              status: order.status,
+              riderColor: context.colors.food,
+              userAgentPackageName: 'app.glido.customer',
             ),
             const SizedBox(height: 12),
           ],

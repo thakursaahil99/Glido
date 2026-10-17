@@ -305,3 +305,20 @@ button.card-glido:hover {
 }
 
 } /* @layer components */
+
+/* Live order tracking — expanding ring behind the rider's map marker. */
+.glido-rider-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--glido-food);
+  opacity: 0.45;
+  animation: rider-pulse 1.8s ease-out infinite;
+}
+@keyframes rider-pulse {
+  from { transform: scale(1); opacity: 0.45; }
+  to { transform: scale(2.4); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glido-rider-pulse { animation: none; opacity: 0; }
+}

@@ -9,6 +9,7 @@ import type { OrderStatus } from "@glido/shared";
 import type { Order as OrderType } from "@/lib/types";
 import { OrderTimeline, StatusBadge } from "@/components/order-status";
 import { ErrorState } from "@/components/empty-state";
+import { LiveOrderTracking } from "@/components/live-order-tracking";
 
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus[]>> = {
   PENDING: ["ACCEPTED", "CANCELLED"],
@@ -110,6 +111,8 @@ export default function PartnerOrderDetailPage() {
           <p className="text-[var(--glido-muted)]">{order.deliveryPartner.vehicleType}</p>
         </div>
       )}
+
+      <LiveOrderTracking orderId={order.id} status={order.status} audience="staff" height="260px" />
 
       <div className="card-glido p-4 mb-4 text-sm">
         <h3 className="font-semibold mb-2">Items</h3>

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/api_client.dart';
+import '../../core/location_tracker.dart';
 import '../../core/socket_client.dart';
 import '../../core/theme.dart';
 import '../../models/assigned_order.dart';
@@ -9,6 +10,7 @@ import '../../models/partner_profile.dart';
 import '../../models/partner_stats.dart';
 import '../../widgets/error_state.dart';
 import '../profile/profile_screen.dart';
+import 'delivery_map_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _load();
     SocketClient.instance.socket.on('order:update', _onUpdate);
     SocketClient.instance.socket.emit('admin:subscribe');
+    LocationTracker.instance.addListener(_onTrackerChanged);
     // Polling fallback — the live serverless API doesn't hold a persistent socket connection,
     // so a newly-assigned order needs an active refresh loop instead of a push event.
     _poll = Timer.periodic(const Duration(seconds: 8), (_) => _load());
@@ -39,11 +42,27 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     SocketClient.instance.socket.off('order:update', _onUpdate);
+    LocationTracker.instance.removeListener(_onTrackerChanged);
     _poll?.cancel();
     super.dispose();
   }
 
   void _onUpdate(dynamic _) => _load();
+
+  void _onTrackerChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Live location is shared for as long as the rider is online — that's when they
+  /// can be assigned, heading to a restaurant, or carrying an order.
+  void _syncTracker(bool online) {
+    final tracker = LocationTracker.instance;
+    if (online && !tracker.isActive) {
+      tracker.start();
+    } else if (!online && tracker.isActive) {
+      tracker.stop();
+    }
+  }
 
   Future<void> _load() async {
     setState(() => _error = null);
@@ -54,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _profile = PartnerProfile.fromJson(profileRes);
         _orders = ordersRes.map((o) => AssignedOrder.fromJson(o)).toList();
       });
+      _syncTracker(_profile!.isOnline);
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     }
@@ -172,6 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
+                      if (_profile!.isOnline) _LocationSharingRow(onRetry: () => LocationTracker.instance.start()),
                       const SizedBox(height: 20),
                       _StatsSection(stats: _stats, activeOrders: _orders?.length),
                       const SizedBox(height: 20),
@@ -187,6 +208,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       else
                         ..._orders!.map((o) => _OrderCard(
                               order: o,
+                              onOpenMap: o.kind == 'food' && !o.needsResponse
+                                  ? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DeliveryMapScreen(order: o)))
+                                  : null,
                               onAdvance: () => _advanceStatus(o),
                               onAccept: () => _respondToAssignment(o, true),
                               onReject: () => _respondToAssignment(o, false),
@@ -200,10 +224,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _OrderCard extends StatelessWidget {
   final AssignedOrder order;
+  final VoidCallback? onOpenMap;
   final VoidCallback onAdvance;
   final VoidCallback onAccept;
   final VoidCallback onReject;
-  const _OrderCard({required this.order, required this.onAdvance, required this.onAccept, required this.onReject});
+  const _OrderCard({required this.order, this.onOpenMap, required this.onAdvance, required this.onAccept, required this.onReject});
 
   @override
   Widget build(BuildContext context) {
@@ -252,6 +277,17 @@ class _OrderCard extends StatelessWidget {
           if (order.address != null) Text('Drop: ${order.address!.full}', style: TextStyle(fontSize: 12.5, color: context.colors.muted)),
           Text('${order.items.length} item(s) · ${order.paymentMethod} · ${order.paymentStatus}', style: TextStyle(fontSize: 11.5, color: context.colors.muted)),
           const SizedBox(height: 10),
+          if (onOpenMap != null) ...[
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onOpenMap,
+                icon: const Icon(Icons.map_outlined, size: 18),
+                label: const Text('Open map & navigate'),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           if (needsResponse)
             Row(
               children: [
@@ -439,6 +475,36 @@ class _StatTile extends StatelessWidget {
             sublabel,
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: emphasize ? Colors.white70 : c.muted),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Whether this rider's GPS is reaching customers' maps right now, with a retry when
+/// permission or GPS was off.
+class _LocationSharingRow extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _LocationSharingRow({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final tracker = LocationTracker.instance;
+    final ok = tracker.isActive && tracker.error == null;
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        children: [
+          Icon(ok ? Icons.wifi_tethering : Icons.location_off_outlined, size: 16, color: ok ? c.success : c.danger),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              ok ? 'Sharing live location' : (tracker.error ?? 'Live location is off'),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: ok ? c.success : c.danger),
+            ),
+          ),
+          if (!ok) TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );

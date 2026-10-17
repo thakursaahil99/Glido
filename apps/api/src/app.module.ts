@@ -25,6 +25,7 @@ import { ReviewsModule } from "./reviews/reviews.module";
 import { SettingsModule } from "./settings/settings.module";
 import { StaffModule } from "./staff/staff.module";
 import { SupportModule } from "./support/support.module";
+import { TrackingModule } from "./tracking/tracking.module";
 import { UploadsModule } from "./uploads/uploads.module";
 import { UsersModule } from "./users/users.module";
 import { WalletModule } from "./wallet/wallet.module";
@@ -68,6 +69,7 @@ import { WalletModule } from "./wallet/wallet.module";
     AdminModule,
     StaffModule,
     SupportModule,
+    TrackingModule,
     UploadsModule,
   ],
   controllers: [AppController],

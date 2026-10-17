@@ -5,6 +5,7 @@ import '../../core/socket_client.dart';
 import '../../core/theme.dart';
 import '../../models/order.dart';
 import '../../widgets/error_state.dart';
+import '../../widgets/live_order_tracking.dart';
 
 const Map<String, List<String>> _nextStatus = {
   'PENDING': ['ACCEPTED', 'CANCELLED'],
@@ -141,6 +142,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       const SizedBox(height: 12),
                       if (_order!.deliveryPartnerName != null) ...[
                         _SectionCard(title: 'Delivery partner', child: Text(_order!.deliveryPartnerName!, style: const TextStyle(fontSize: 13.5))),
+                        const SizedBox(height: 12),
+                      ],
+                      if (isTrackableStatus(_order!.status)) ...[
+                        LiveOrderTracking(
+                          orderId: _order!.id,
+                          status: _order!.status,
+                          riderColor: context.colors.food,
+                          userAgentPackageName: 'app.glido.restaurant',
+                          forStaff: true,
+                          mapHeight: 230,
+                        ),
                         const SizedBox(height: 12),
                       ],
                       _SectionCard(

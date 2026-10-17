@@ -11,7 +11,7 @@ import type { Order } from "@/lib/types";
 import { OrderTimeline, StatusBadge } from "@/components/order-status";
 import { ConfirmDialog } from "@/components/modal";
 import { ErrorState } from "@/components/empty-state";
-import { MapView, type MapMarker } from "@/components/map-view";
+import { LiveOrderTracking } from "@/components/live-order-tracking";
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -116,17 +116,7 @@ export default function OrderDetailPage() {
       </div>
       <p className="text-sm text-[var(--glido-muted)] mb-6">{order.restaurant?.name}</p>
 
-      {order.deliveryPartner && order.status === "OUT_FOR_DELIVERY" && order.deliveryPartner.currentLat != null && order.deliveryPartner.currentLng != null && (
-        <div className="card-glido overflow-hidden mb-4">
-          <MapView
-            center={{ lat: order.deliveryPartner.currentLat, lng: order.deliveryPartner.currentLng }}
-            zoom={15}
-            markers={[{ lat: order.deliveryPartner.currentLat, lng: order.deliveryPartner.currentLng, kind: "driver" as const, color: "var(--glido-food)" } as MapMarker]}
-            height="220px"
-            className="!rounded-none"
-          />
-        </div>
-      )}
+      <LiveOrderTracking orderId={order.id} status={order.status} />
 
       {order.deliveryPartner && ["READY", "OUT_FOR_DELIVERY", "DELIVERED"].includes(order.status) && (
         <div className="card-glido p-4 mb-4">

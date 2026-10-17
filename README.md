@@ -154,6 +154,30 @@ from `PENDING`/`ACCEPTED`/`PREPARING` and `REFUNDED` following a cancelled, paid
 transitions are rejected server-side (`apps/api/src/orders/orders.service.ts`) regardless of what
 the UI sends — the admin UI only exposes the valid next steps, but the API is the real guard.
 
+## Live delivery tracking (Leaflet + OpenStreetMap + Socket.IO)
+
+Food orders get a live map (restaurant, customer, moving rider, route, ETA) on the customer web
+order page, the admin and restaurant-partner order pages, the customer app, the restaurant-partner
+app, and a navigation map in the delivery app. Free stack throughout: OpenStreetMap tiles via
+Leaflet (web) / `flutter_map` (apps), Nominatim for geocoding, no API keys.
+
+- **Rider → server**: the delivery app streams GPS while the rider is online
+  (`apps/delivery/lib/core/location_tracker.dart`, at most one fix per 4s, heartbeat every 15s).
+  It sends over Socket.IO (`rider:location`) when connected, else `PATCH /api/delivery-partner/me/location`.
+- **Server → viewers**: `apps/api/src/tracking/` saves the fix and emits `order:location`
+  (position, heading, ETA) to the `order:<id>` room of every order that rider is carrying.
+  `GET /api/orders/:id/tracking` returns the full snapshot (customer, restaurant owner, assigned
+  rider, or staff with `manage_orders` only).
+- **Viewers** apply socket pushes instantly and poll the snapshot as a fallback — every 4s when
+  the socket is down, every 20s when it's up.
+- Restaurants/addresses without coordinates are geocoded once via Nominatim and saved; restaurants
+  that still can't be resolved fall back to their city centre. ETA is straight-line × 1.35 at 18 km/h.
+- Location is shared only while the delivery app is open (foreground) — no background tracking yet.
+
+On the current Vercel API, sockets can't connect (serverless), so tracking there runs on the REST
+path + 4s polling. Host the API on any persistent Node server (Render/Railway/Fly/Docker) to get
+instant socket pushes — no code changes needed.
+
 ## Deployment notes
 
 ### Docker (local or any container host)

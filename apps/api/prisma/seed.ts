@@ -67,6 +67,8 @@ async function main() {
           cityId: city.id,
           pincode: "400002",
           isDefault: true,
+          lat: 18.954,
+          lng: 72.8148,
         },
       },
     },
@@ -76,6 +78,8 @@ async function main() {
   const restaurantsSeed = [
     {
       name: "Spice Route Kitchen",
+      lat: 18.9322,
+      lng: 72.8264,
       description: "North Indian & Mughlai favourites, made fresh.",
       cuisineTags: "North Indian,Mughlai,Curries",
       imageUrl: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800",
@@ -94,6 +98,8 @@ async function main() {
     },
     {
       name: "Sushi & Bowl Co.",
+      lat: 18.922,
+      lng: 72.832,
       description: "Fresh sushi rolls and Japanese rice bowls.",
       cuisineTags: "Japanese,Sushi,Healthy",
       imageUrl: "https://images.unsplash.com/photo-1553621042-f6e147245754?w=800",
@@ -110,6 +116,8 @@ async function main() {
     },
     {
       name: "Pizza Bros",
+      lat: 18.9339,
+      lng: 72.8355,
       description: "Wood-fired pizzas with a Glido twist.",
       cuisineTags: "Italian,Pizza,Fast Food",
       imageUrl: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800",
@@ -138,6 +146,8 @@ async function main() {
         imageUrl: r.imageUrl,
         cityId: city.id,
         addressLine: "Glido Food Court, Mumbai",
+        lat: r.lat,
+        lng: r.lng,
         status: "APPROVED",
         isOpen: true,
         deliveryFee: r.deliveryFee,
@@ -146,6 +156,10 @@ async function main() {
         commissionPercent: 15,
       },
     });
+    // Backfill coordinates on databases seeded before restaurants had them — live
+    // order tracking needs a pickup point to draw the map — without clobbering any
+    // location an admin has since set by hand.
+    await prisma.restaurant.updateMany({ where: { id: restaurant.id, lat: null }, data: { lat: r.lat, lng: r.lng } });
 
     const categoryMap = new Map<string, string>();
     for (let i = 0; i < r.categories.length; i++) {

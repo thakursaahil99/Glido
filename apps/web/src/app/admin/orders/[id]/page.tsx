@@ -12,6 +12,7 @@ import { OrderTimeline, StatusBadge } from "@/components/order-status";
 import { AssignPartnerPanel } from "@/components/assign-partner-panel";
 import { ErrorState } from "@/components/empty-state";
 import { RequirePermission } from "@/components/require-permission";
+import { LiveOrderTracking } from "@/components/live-order-tracking";
 
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus[]>> = {
   PENDING: ["ACCEPTED", "CANCELLED"],
@@ -127,6 +128,8 @@ function OrderDetailContent() {
           </div>
         </div>
       )}
+
+      <LiveOrderTracking orderId={order.id} status={order.status} audience="staff" height="280px" />
 
       <div className="card-glido p-4 mb-4">
         <OrderTimeline status={order.status} />

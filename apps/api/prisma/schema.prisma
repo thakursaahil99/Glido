@@ -702,6 +702,8 @@ model DeliveryPartner {
   isAvailable   Boolean      @default(true) // false while on an active delivery
   currentLat    Float?
   currentLng    Float?
+  heading       Float? // degrees clockwise from north, as reported by the rider app's GPS
+  lastLocationAt DateTime? // when currentLat/currentLng were last reported by the rider app
   ratingAvg     Float        @default(5)
   ratingCount   Int          @default(0)
   createdAt     DateTime     @default(now())

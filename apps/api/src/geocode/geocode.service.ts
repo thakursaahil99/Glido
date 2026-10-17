@@ -23,4 +23,21 @@ export class GeocodeService {
     const data = (await res.json()) as Array<{ display_name: string; lat: string; lon: string }>;
     return data.map((r) => ({ address: r.display_name, lat: Number(r.lat), lng: Number(r.lon) }));
   }
+
+  /** Best single match for a free-text address, or null — never throws, for background
+   *  lookups (e.g. filling in coordinates for live tracking) that must not fail a request. */
+  async firstMatch(query: string): Promise<{ lat: number; lng: number } | null> {
+    try {
+      const url = `${NOMINATIM_BASE}/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=in`;
+      const res = await fetch(url, { headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.timeout(4000) });
+      if (!res.ok) return null;
+      const [hit] = (await res.json()) as Array<{ lat: string; lon: string }>;
+      if (!hit) return null;
+      const lat = Number(hit.lat);
+      const lng = Number(hit.lon);
+      return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+    } catch {
+      return null;
+    }
+  }
 }

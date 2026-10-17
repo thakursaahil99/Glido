@@ -5,5 +5,6 @@ import { GeocodeService } from "./geocode.service";
 @Module({
   controllers: [GeocodeController],
   providers: [GeocodeService],
+  exports: [GeocodeService],
 })
 export class GeocodeModule {}

@@ -385,3 +385,38 @@ export interface Ride {
   statusHistory?: RideStatusHistoryEntry[];
   review?: { id: string; rating: number; comment: string | null } | null;
 }
+
+/** GET /orders/:id/tracking — everything the live tracking map needs for a food order. */
+export interface OrderTracking {
+  orderId: string;
+  orderNumber: string;
+  status: OrderStatus;
+  restaurant: { name: string; addressLine?: string | null; lat: number | null; lng: number | null };
+  drop: { label: string; line1: string; line2?: string | null; lat: number | null; lng: number | null };
+  rider: {
+    name: string;
+    phone: string;
+    photoUrl?: string | null;
+    vehicleType: string;
+    vehicleNumber?: string | null;
+    ratingAvg: number;
+    lat: number | null;
+    lng: number | null;
+    heading: number | null;
+    lastLocationAt: string | null;
+  } | null;
+  etaMinutes: number | null;
+  remainingKm: number | null;
+  updatedAt: string;
+}
+
+/** Socket `order:location` — pushed each time the assigned rider's GPS fix changes. */
+export interface RiderLocationEvent {
+  orderId: string;
+  lat: number;
+  lng: number;
+  heading: number | null;
+  at: string;
+  etaMinutes: number | null;
+  remainingKm: number | null;
+}

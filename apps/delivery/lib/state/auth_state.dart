@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../core/api_client.dart';
+import '../core/location_tracker.dart';
 
 class DeliveryUser {
   final String id;
@@ -50,6 +51,7 @@ class AuthState extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    LocationTracker.instance.stop();
     await ApiClient.instance.clearTokens();
     user = null;
     notifyListeners();
