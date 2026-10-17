@@ -15,4 +15,11 @@ if (!process.env.DATABASE_URL) {
   process.exit(0);
 }
 console.log("[migrate] applying pending migrations…");
-execSync("npx prisma migrate deploy", { stdio: "inherit", cwd: __dirname + "/.." });
+// DATABASE_URL is Neon's pooled (PgBouncer) endpoint, which can't hold the session-level
+// advisory lock migrate deploy takes by default — it times out (P1002). Only one
+// build runs at a time per project, so the lock isn't needed for safety here.
+execSync("npx prisma migrate deploy", {
+  stdio: "inherit",
+  cwd: __dirname + "/..",
+  env: { ...process.env, PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK: "1" },
+});
